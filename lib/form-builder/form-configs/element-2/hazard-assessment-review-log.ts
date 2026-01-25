@@ -1,0 +1,245 @@
+/**
+ * Hazard Assessment Review Log
+ * COR Element 2: Hazard Identification & Assessment
+ * 
+ * Monthly/quarterly review of all hazard assessments to ensure they remain current.
+ */
+
+import type { FormConfig } from '../../import-forms';
+
+export const hazardAssessmentReviewLog: FormConfig = {
+  code: 'hazard_assessment_review_log',
+  name: 'Hazard Assessment Review Log',
+  description: 'Monthly/quarterly review of all hazard assessments to ensure they remain current and effective.',
+  cor_element: 2,
+  frequency: 'monthly',
+  estimated_time_minutes: 30,
+  icon: 'ClipboardCheck',
+  color: '#3B82F6',
+  is_mandatory: true,
+
+  sections: [
+    {
+      title: 'Review Period',
+      order_index: 0,
+      fields: [
+        {
+          code: 'review_date',
+          label: 'Review Date',
+          field_type: 'date',
+          default_value: 'today',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'half',
+        },
+        {
+          code: 'review_period',
+          label: 'Period Being Reviewed',
+          field_type: 'dropdown',
+          options: [
+            { value: 'last_month', label: 'Last Month' },
+            { value: 'last_quarter', label: 'Last Quarter' },
+            { value: 'last_6_months', label: 'Last 6 Months' },
+            { value: 'last_year', label: 'Last Year' },
+          ],
+          validation_rules: { required: true },
+          order_index: 1,
+          width: 'half',
+        },
+        {
+          code: 'reviewer',
+          label: 'Reviewed By',
+          field_type: 'worker_select',
+          validation_rules: { required: true },
+          order_index: 2,
+          width: 'full',
+        },
+        {
+          code: 'jobsite',
+          label: 'Jobsite/Location',
+          field_type: 'jobsite_select',
+          validation_rules: { required: true },
+          order_index: 3,
+          width: 'full',
+        },
+      ],
+    },
+    {
+      title: 'Hazard Assessments Reviewed',
+      description: 'List all hazard assessments reviewed during this period',
+      order_index: 1,
+      is_repeatable: true,
+      fields: [
+        {
+          code: 'assessment_id',
+          label: 'Assessment Reference Number',
+          field_type: 'text',
+          placeholder: 'JHA-2025-001',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'half',
+        },
+        {
+          code: 'assessment_title',
+          label: 'Assessment Title/Task',
+          field_type: 'text',
+          placeholder: 'e.g., Scaffold Erection',
+          validation_rules: { required: true },
+          order_index: 1,
+          width: 'half',
+        },
+        {
+          code: 'assessment_date',
+          label: 'Original Assessment Date',
+          field_type: 'date',
+          validation_rules: { required: true },
+          order_index: 2,
+          width: 'half',
+        },
+        {
+          code: 'last_review_date',
+          label: 'Last Review Date',
+          field_type: 'date',
+          order_index: 3,
+          width: 'half',
+        },
+        {
+          code: 'still_valid',
+          label: 'Is this assessment still valid?',
+          field_type: 'radio',
+          options: ['Yes', 'No', 'Needs Update'],
+          validation_rules: { required: true },
+          order_index: 4,
+          width: 'full',
+        },
+        {
+          code: 'changes_required',
+          label: 'Changes Required (if not valid)',
+          field_type: 'textarea',
+          placeholder: 'Describe what changes are needed...',
+          conditional_logic: {
+            field_code: 'still_valid',
+            operator: 'not_equals',
+            value: 'Yes',
+          },
+          order_index: 5,
+          width: 'full',
+        },
+        {
+          code: 'priority',
+          label: 'Update Priority',
+          field_type: 'dropdown',
+          options: [
+            { value: 'low', label: 'Low - Within 30 days' },
+            { value: 'medium', label: 'Medium - Within 14 days' },
+            { value: 'high', label: 'High - Within 7 days' },
+            { value: 'critical', label: 'Critical - Immediate' },
+          ],
+          conditional_logic: {
+            field_code: 'still_valid',
+            operator: 'not_equals',
+            value: 'Yes',
+          },
+          order_index: 6,
+          width: 'half',
+        },
+      ],
+    },
+    {
+      title: 'Overall Findings',
+      order_index: 2,
+      fields: [
+        {
+          code: 'total_reviewed',
+          label: 'Total Assessments Reviewed',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 0,
+          width: 'third',
+        },
+        {
+          code: 'total_valid',
+          label: 'Still Valid',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 1,
+          width: 'third',
+        },
+        {
+          code: 'total_require_update',
+          label: 'Require Update',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 2,
+          width: 'third',
+        },
+        {
+          code: 'new_hazards_identified',
+          label: 'Were any new hazards identified?',
+          field_type: 'radio',
+          options: ['Yes', 'No'],
+          validation_rules: { required: true },
+          order_index: 3,
+          width: 'full',
+        },
+        {
+          code: 'new_hazards_description',
+          label: 'Describe New Hazards',
+          field_type: 'textarea',
+          conditional_logic: {
+            field_code: 'new_hazards_identified',
+            operator: 'equals',
+            value: 'Yes',
+          },
+          order_index: 4,
+          width: 'full',
+        },
+        {
+          code: 'recommendations',
+          label: 'Recommendations',
+          field_type: 'textarea',
+          help_text: 'What improvements can be made to the hazard assessment process?',
+          order_index: 5,
+          width: 'full',
+        },
+        {
+          code: 'next_review_date',
+          label: 'Next Review Date',
+          field_type: 'date',
+          validation_rules: { required: true },
+          order_index: 6,
+          width: 'half',
+        },
+      ],
+    },
+    {
+      title: 'Sign-Off',
+      order_index: 3,
+      fields: [
+        {
+          code: 'reviewer_signature',
+          label: 'Reviewer Signature',
+          field_type: 'signature',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'half',
+        },
+        {
+          code: 'safety_manager_signature',
+          label: 'Safety Manager Approval',
+          field_type: 'signature',
+          validation_rules: { required: true },
+          order_index: 1,
+          width: 'half',
+        },
+      ],
+    },
+  ],
+
+  workflow: {
+    submit_to_role: 'supervisor',
+    notify_roles: ['admin', 'internal_auditor'],
+    sync_priority: 3,
+    requires_approval: true,
+  },
+};

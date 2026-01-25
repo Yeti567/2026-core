@@ -1,0 +1,258 @@
+/**
+ * Maintenance Schedule Checklist
+ * COR Element 7: Maintenance
+ * 
+ * Track scheduled preventive maintenance activities.
+ */
+
+import type { FormConfig } from '../../import-forms';
+
+export const maintenanceScheduleChecklist: FormConfig = {
+  code: 'maintenance_schedule_checklist',
+  name: 'Maintenance Schedule Checklist',
+  description: 'Track scheduled preventive maintenance activities for equipment and ensure compliance with maintenance schedules.',
+  cor_element: 7,
+  frequency: 'weekly',
+  estimated_time_minutes: 15,
+  icon: 'Calendar',
+  color: '#06B6D4',
+  is_mandatory: true,
+
+  sections: [
+    {
+      title: 'Schedule Information',
+      order_index: 0,
+      fields: [
+        {
+          code: 'review_date',
+          label: 'Review Date',
+          field_type: 'date',
+          default_value: 'today',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'half',
+        },
+        {
+          code: 'reviewer',
+          label: 'Reviewed By',
+          field_type: 'worker_select',
+          validation_rules: { required: true },
+          order_index: 1,
+          width: 'half',
+        },
+        {
+          code: 'jobsite',
+          label: 'Jobsite/Location',
+          field_type: 'jobsite_select',
+          validation_rules: { required: true },
+          order_index: 2,
+          width: 'full',
+        },
+        {
+          code: 'review_period',
+          label: 'Review Period',
+          field_type: 'dropdown',
+          options: [
+            { value: 'daily', label: 'Daily' },
+            { value: 'weekly', label: 'Weekly' },
+            { value: 'monthly', label: 'Monthly' },
+            { value: 'quarterly', label: 'Quarterly' },
+          ],
+          validation_rules: { required: true },
+          order_index: 3,
+          width: 'half',
+        },
+      ],
+    },
+    {
+      title: 'Scheduled Maintenance Items',
+      description: 'Review status of all scheduled maintenance',
+      order_index: 1,
+      is_repeatable: true,
+      fields: [
+        {
+          code: 'equipment_name',
+          label: 'Equipment Name',
+          field_type: 'text',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'half',
+        },
+        {
+          code: 'equipment_id',
+          label: 'Equipment ID/Asset Number',
+          field_type: 'text',
+          validation_rules: { required: true },
+          order_index: 1,
+          width: 'half',
+        },
+        {
+          code: 'maintenance_type',
+          label: 'Maintenance Type',
+          field_type: 'dropdown',
+          options: [
+            { value: 'inspection', label: 'Inspection' },
+            { value: 'oil_change', label: 'Oil Change' },
+            { value: 'filter_replacement', label: 'Filter Replacement' },
+            { value: 'lubrication', label: 'Lubrication' },
+            { value: 'calibration', label: 'Calibration' },
+            { value: 'belt_chain', label: 'Belt/Chain Check' },
+            { value: 'safety_check', label: 'Safety Device Check' },
+            { value: 'general_service', label: 'General Service' },
+            { value: 'certification', label: 'Certification/Recertification' },
+          ],
+          validation_rules: { required: true },
+          order_index: 2,
+          width: 'half',
+        },
+        {
+          code: 'scheduled_date',
+          label: 'Scheduled Date',
+          field_type: 'date',
+          validation_rules: { required: true },
+          order_index: 3,
+          width: 'half',
+        },
+        {
+          code: 'status',
+          label: 'Status',
+          field_type: 'dropdown',
+          options: [
+            { value: 'completed_on_time', label: 'Completed On Time' },
+            { value: 'completed_late', label: 'Completed Late' },
+            { value: 'overdue', label: 'Overdue' },
+            { value: 'in_progress', label: 'In Progress' },
+            { value: 'rescheduled', label: 'Rescheduled' },
+            { value: 'not_required', label: 'Not Required' },
+          ],
+          validation_rules: { required: true },
+          order_index: 4,
+          width: 'half',
+        },
+        {
+          code: 'completion_date',
+          label: 'Actual Completion Date',
+          field_type: 'date',
+          conditional_logic: {
+            field_code: 'status',
+            operator: 'contains',
+            value: 'completed',
+          },
+          order_index: 5,
+          width: 'half',
+        },
+        {
+          code: 'reason_delayed',
+          label: 'Reason for Delay/Reschedule',
+          field_type: 'textarea',
+          conditional_logic: {
+            field_code: 'status',
+            operator: 'not_equals',
+            value: 'completed_on_time',
+          },
+          order_index: 6,
+          width: 'full',
+        },
+        {
+          code: 'new_scheduled_date',
+          label: 'New Scheduled Date',
+          field_type: 'date',
+          conditional_logic: {
+            field_code: 'status',
+            operator: 'equals',
+            value: 'rescheduled',
+          },
+          order_index: 7,
+          width: 'half',
+        },
+      ],
+    },
+    {
+      title: 'Summary',
+      order_index: 2,
+      fields: [
+        {
+          code: 'total_scheduled',
+          label: 'Total Items Scheduled',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 0,
+          width: 'quarter',
+        },
+        {
+          code: 'completed_on_time',
+          label: 'Completed On Time',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 1,
+          width: 'quarter',
+        },
+        {
+          code: 'completed_late',
+          label: 'Completed Late',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 2,
+          width: 'quarter',
+        },
+        {
+          code: 'overdue',
+          label: 'Still Overdue',
+          field_type: 'number',
+          validation_rules: { required: true, min_value: 0 },
+          order_index: 3,
+          width: 'quarter',
+        },
+        {
+          code: 'compliance_concerns',
+          label: 'Any compliance concerns?',
+          field_type: 'radio',
+          options: ['Yes', 'No'],
+          validation_rules: { required: true },
+          order_index: 4,
+          width: 'full',
+        },
+        {
+          code: 'concern_details',
+          label: 'Describe Concerns',
+          field_type: 'textarea',
+          conditional_logic: {
+            field_code: 'compliance_concerns',
+            operator: 'equals',
+            value: 'Yes',
+          },
+          order_index: 5,
+          width: 'full',
+        },
+        {
+          code: 'corrective_actions',
+          label: 'Corrective Actions Needed',
+          field_type: 'textarea',
+          order_index: 6,
+          width: 'full',
+        },
+      ],
+    },
+    {
+      title: 'Sign-Off',
+      order_index: 3,
+      fields: [
+        {
+          code: 'reviewer_signature',
+          label: 'Reviewer Signature',
+          field_type: 'signature',
+          validation_rules: { required: true },
+          order_index: 0,
+          width: 'full',
+        },
+      ],
+    },
+  ],
+
+  workflow: {
+    submit_to_role: 'supervisor',
+    notify_roles: ['admin'],
+    sync_priority: 3,
+    requires_approval: false,
+  },
+};

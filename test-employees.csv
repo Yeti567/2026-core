@@ -1,0 +1,7 @@
+first_name,last_name,email,position,role,phone,hire_date
+John,Smith,john.smith@testco.com,Site Supervisor,supervisor,(613) 555-1001,2024-01-15
+Jane,Doe,jane.doe@testco.com,Concrete Finisher,worker,(613) 555-1002,2024-02-01
+Mike,Johnson,mike.j@testco.com,Safety Manager,internal_auditor,(613) 555-1003,2023-11-10
+Sarah,O'Brien,sarah.obrien@testco.com,Foreman,supervisor,(613) 555-1004,2024-03-01
+Invalid,Row,not-an-email,Worker,invalid_role,,2025-12-31
+,MissingFirst,another@testco.com,Laborer,worker,,2024-01-01

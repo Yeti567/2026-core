@@ -1,0 +1,32 @@
+Element,Element_Name,Form_Name,Form_Code,When_Used,Frequency,Who_Fills_Out,Est_Time_Minutes,Is_Mandatory,Sections_Count,Notes
+2,Hazard Identification & Assessment,Hazard Assessment Review Log,hazard_assessment_review_log,During periodic reviews,Monthly,Supervisor + Workers / Supervisor,30,Yes,4,Requires approval; COR audit requirement
+3,Hazard Control,Control Communication Record,control_communication_record,When situation arises,As Needed,Supervisor + Workers / Supervisor,15,Yes,5,COR audit requirement
+3,Hazard Control,Control Implementation Form,control_implementation,When situation arises,As Needed,Supervisor + Workers / Supervisor,20,Yes,4,Requires approval; COR audit requirement
+3,Hazard Control,Control Review & Approval,control_review_approval,During periodic reviews,As Needed,Supervisor + Workers / Administrator,25,Yes,5,Requires approval; COR audit requirement
+4,Competency & Training,Change Notification Form,change_notification,When situation arises,As Needed,Supervisor / Supervisor,20,Yes,5,Requires approval; COR audit requirement
+4,Competency & Training,Contractor Performance Evaluation,contractor_evaluation,During periodic reviews,As Needed,Supervisor / Administrator,20,Yes,5,COR audit requirement
+4,Competency & Training,Contractor Pre-Qualification,contractor_prequalification,When situation arises,As Needed,Supervisor / Administrator,45,Yes,6,Requires approval; COR audit requirement
+5,Workplace Behavior,Progressive Discipline Record,progressive_discipline,When situation arises,As Needed,Supervisor / Administrator,20,Yes,6,Requires approval; COR audit requirement
+5,Workplace Behavior,Safety Rule Communication Record,rule_communication_record,When situation arises,As Needed,Supervisor / Supervisor,15,Yes,5,COR audit requirement
+6,Personal Protective Equipment,PPE Fit Test Record,ppe_fit_test_record,Annual basis,Annual,Supervisor / Supervisor,15,Yes,5,COR audit requirement
+6,Personal Protective Equipment,PPE Maintenance Log,ppe_maintenance_log,Weekly basis,Weekly,Supervisor / Supervisor,10,Yes,7,COR audit requirement
+6,Personal Protective Equipment,PPE Training Sign-Off,ppe_training_signoff,After training sessions,As Needed,Supervisor / Supervisor,15,Yes,6,COR audit requirement
+7,Maintenance,Corrective Action Form,corrective_action_form,When situation arises,As Needed,Supervisor / Supervisor,15,Yes,6,Requires approval; COR audit requirement
+7,Maintenance,Maintenance Schedule Checklist,maintenance_schedule_checklist,During scheduled inspections,Weekly,Supervisor / Supervisor,15,Yes,4,COR audit requirement
+8,Training & Communication,Competency Assessment,competency_assessment,When situation arises,As Needed,Supervisor / Supervisor,20,Yes,5,COR audit requirement
+8,Training & Communication,Training Evaluation Form,training_evaluation,After training sessions,As Needed,Supervisor / Supervisor,15,No,5,Evaluate the effectiveness of training programs fr
+9,Workplace Inspections,Joint Health & Safety Committee Inspection,joint_health_safety_inspection,During scheduled inspections,Monthly,JHSC Member / Administrator,45,Yes,8,COR audit requirement
+10,Incident Investigation,Corrective Action Log,corrective_action_log,Weekly basis,Weekly,Safety Manager / Supervisor,15,Yes,4,COR audit requirement
+10,Incident Investigation,Incident Investigation Form,incident_investigation,After any incident occurs,As Needed,Safety Manager / Administrator,45,Yes,8,Requires approval; COR audit requirement
+10,Incident Investigation,Post-Incident Training Record,post_incident_training_record,After any incident occurs,As Needed,Safety Manager / Supervisor,15,Yes,6,COR audit requirement
+11,Emergency Preparedness,Emergency Equipment Inspection,emergency_equipment_inspection,During scheduled inspections,Monthly,Supervisor / Supervisor,20,Yes,8,COR audit requirement
+12,Statistics & Records,Injury/Illness Statistics Report,injury_illness_statistics,Monthly basis,Monthly,Management / Administrator,30,Yes,8,Requires approval; COR audit requirement
+12,Statistics & Records,Safety Performance Summary,safety_performance_summary,Monthly basis,Monthly,Management / Administrator,25,Yes,8,Requires approval; COR audit requirement
+12,Statistics & Records,Safety Trend Analysis Report,trend_analysis_report,When reporting is required,Quarterly,Management / Administrator,40,No,8,Requires approval
+13,Regulatory Awareness,Legal Posting Checklist,legal_posting_checklist,During scheduled inspections,Quarterly,Management / Supervisor,15,Yes,6,COR audit requirement
+13,Regulatory Awareness,Regulatory Change Log,regulatory_change_log,When situation arises,As Needed,Management / Administrator,20,Yes,7,Requires approval; COR audit requirement
+13,Regulatory Awareness,Regulatory Compliance Checklist,regulatory_compliance_checklist,During scheduled inspections,Quarterly,Management / Administrator,45,Yes,7,Requires approval; COR audit requirement
+14,Management System,Management Action Plan,management_action_plan,When situation arises,As Needed,Supervisor / Administrator,25,Yes,7,Requires approval; COR audit requirement
+14,Management System,Management Review Minutes,management_review_minutes,During periodic reviews,Quarterly,Supervisor / Administrator,45,Yes,9,COR audit requirement
+14,Management System,Safety KPI Review,kpi_review,During periodic reviews,Monthly,Management / Administrator,30,Yes,6,COR audit requirement
+14,Management System,Safety Management System Change Evaluation,change_evaluation,During periodic reviews,As Needed,Management / Administrator,30,Yes,7,Requires approval; COR audit requirement

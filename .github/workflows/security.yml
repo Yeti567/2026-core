@@ -1,0 +1,179 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+  schedule:
+    # Run weekly on Monday at midnight UTC
+    - cron: '0 0 * * 1'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    name: Security Audit
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        id: npm-audit
+        continue-on-error: true
+        run: |
+          echo "Running npm audit..."
+          npm audit --audit-level=moderate --json > npm-audit-report.json || true
+          
+          # Check if vulnerabilities found
+          if [ -f npm-audit-report.json ]; then
+            VULN_COUNT=$(node -e "const data = require('./npm-audit-report.json'); console.log(data.metadata?.vulnerabilities?.total || 0)")
+            echo "vulnerabilities=$VULN_COUNT" >> $GITHUB_OUTPUT
+            
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "⚠️ Found $VULN_COUNT vulnerabilities"
+              npm audit --audit-level=moderate
+            else
+              echo "✅ No vulnerabilities found"
+            fi
+          fi
+
+      - name: Upload npm audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit-report.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Run Snyk security scan
+        if: env.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=package.json
+
+      - name: Generate Snyk JSON report
+        if: env.SNYK_TOKEN != '' && always()
+        continue-on-error: true
+        run: |
+          npx snyk test --json --severity-threshold=high --file=package.json > snyk-report.json || true
+
+      - name: Upload Snyk report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-security-report
+          path: snyk-report.json
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Run ESLint security scan
+        continue-on-error: true
+        run: |
+          echo "Running ESLint security scan..."
+          npm run lint:security || true
+
+      - name: Security summary
+        if: always()
+        run: |
+          echo "## 🔒 Security Audit Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # npm audit summary
+          if [ -f npm-audit-report.json ]; then
+            VULN_COUNT=$(node -e "const data = require('./npm-audit-report.json'); console.log(data.metadata?.vulnerabilities?.total || 0)" 2>/dev/null || echo "0")
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "### ⚠️ npm audit" >> $GITHUB_STEP_SUMMARY
+              echo "- Found **$VULN_COUNT** vulnerabilities" >> $GITHUB_STEP_SUMMARY
+              echo "- Report available in artifacts" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "### ✅ npm audit" >> $GITHUB_STEP_SUMMARY
+              echo "- No vulnerabilities found" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          # Snyk summary
+          if [ -f snyk-report.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### Snyk Security Scan" >> $GITHUB_STEP_SUMMARY
+            echo "- Report available in artifacts" >> $GITHUB_STEP_SUMMARY
+            if [ "${{ env.SNYK_TOKEN }}" == "" ]; then
+              echo "- ⚠️ SNYK_TOKEN not configured (skipped)" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📄 Full reports available in workflow artifacts" >> $GITHUB_STEP_SUMMARY
+
+      - name: Comment PR with security results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        continue-on-error: true
+        with:
+          script: |
+            const fs = require('fs');
+            let comment = '## 🔒 Security Audit Results\n\n';
+            
+            // npm audit results
+            try {
+              const npmAudit = JSON.parse(fs.readFileSync('npm-audit-report.json', 'utf8'));
+              const vulns = npmAudit.metadata?.vulnerabilities || {};
+              const total = vulns.total || 0;
+              
+              if (total > 0) {
+                comment += `### ⚠️ npm audit\n`;
+                comment += `Found **${total}** vulnerabilities:\n`;
+                comment += `- 🔴 Critical: ${vulns.critical || 0}\n`;
+                comment += `- 🟠 High: ${vulns.high || 0}\n`;
+                comment += `- 🟡 Moderate: ${vulns.moderate || 0}\n`;
+                comment += `- 🟢 Low: ${vulns.low || 0}\n\n`;
+              } else {
+                comment += `### ✅ npm audit\n`;
+                comment += `No vulnerabilities found!\n\n`;
+              }
+            } catch (error) {
+              comment += `### npm audit\n`;
+              comment += `Report not available\n\n`;
+            }
+            
+            // Snyk results
+            try {
+              const snykReport = JSON.parse(fs.readFileSync('snyk-report.json', 'utf8'));
+              const vulnerabilities = snykReport.vulnerabilities || [];
+              
+              if (vulnerabilities.length > 0) {
+                comment += `### ⚠️ Snyk Security Scan\n`;
+                comment += `Found **${vulnerabilities.length}** vulnerabilities\n\n`;
+              } else {
+                comment += `### ✅ Snyk Security Scan\n`;
+                comment += `No vulnerabilities found!\n\n`;
+              }
+            } catch (error) {
+              if (process.env.SNYK_TOKEN) {
+                comment += `### Snyk Security Scan\n`;
+                comment += `Report not available\n\n`;
+              }
+            }
+            
+            comment += '---\n*Full reports available in workflow artifacts*';
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });

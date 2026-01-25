@@ -1,0 +1,111 @@
+name: Snyk Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  security:
+    runs-on: ubuntu-latest
+    name: Run Snyk Security Scan
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true # Don't fail the build, but still report issues
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high --file=package.json
+
+      - name: Upload Snyk results to GitHub Security tab
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        continue-on-error: true
+        with:
+          sarif_file: snyk.sarif
+
+      - name: Generate Snyk JSON report
+        if: always()
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: test --json --severity-threshold=high --file=package.json > snyk-report.json || true
+
+      - name: Upload Snyk report as artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: snyk-security-report
+          path: snyk-report.json
+          retention-days: 30
+
+      - name: Comment PR with Snyk results
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const report = JSON.parse(fs.readFileSync('snyk-report.json', 'utf8'));
+              const vulnerabilities = report.vulnerabilities || [];
+              
+              if (vulnerabilities.length > 0) {
+                let comment = '## 🔒 Snyk Security Scan Results\n\n';
+                comment += `Found **${vulnerabilities.length}** vulnerabilities:\n\n`;
+                
+                const high = vulnerabilities.filter(v => v.severity === 'high').length;
+                const medium = vulnerabilities.filter(v => v.severity === 'medium').length;
+                const low = vulnerabilities.filter(v => v.severity === 'low').length;
+                
+                comment += `- 🔴 High: ${high}\n`;
+                comment += `- 🟡 Medium: ${medium}\n`;
+                comment += `- 🟢 Low: ${low}\n\n`;
+                
+                comment += '### Top Vulnerabilities:\n\n';
+                vulnerabilities.slice(0, 10).forEach(vuln => {
+                  comment += `- **${vuln.name}** (${vuln.severity}) - [View Details](${vuln.url})\n`;
+                });
+                
+                comment += '\n---\n*Full report available in workflow artifacts*';
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              } else {
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: '## ✅ Snyk Security Scan\n\nNo vulnerabilities found!'
+                });
+              }
+            } catch (error) {
+              console.log('Could not parse Snyk report:', error.message);
+            }

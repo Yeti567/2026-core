@@ -1,0 +1,97 @@
+{
+  "name": "COR Pathways - Construction Safety Management",
+  "short_name": "COR Pathways",
+  "description": "Complete COR 2020 certification platform for construction companies in Ontario",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0066CC",
+  "theme_color": "#0066CC",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/mobile-1.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshots/desktop-1.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Submit Form",
+      "short_name": "New Form",
+      "description": "Submit a new safety form",
+      "url": "/forms/submit",
+      "icons": [{ "src": "/icons/shortcut-form.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Daily Hazard Assessment",
+      "short_name": "Hazard Assessment",
+      "url": "/forms/hazard-assessment",
+      "icons": [{ "src": "/icons/shortcut-hazard.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Documents",
+      "short_name": "Docs",
+      "url": "/documents",
+      "icons": [{ "src": "/icons/shortcut-docs.png", "sizes": "96x96" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

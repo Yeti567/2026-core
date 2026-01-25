@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366f1;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#4f46e5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#4338ca;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3.84" stdDeviation="5.76" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="192" height="192" fill="#0f172a" rx="96" ry="96"/>
+  
+  <!-- Icon circle with gradient -->
+  <circle cx="96" cy="96" r="58.367999999999995" fill="url(#grad)" filter="url(#shadow)"/>
+  
+  <!-- Checkmark/shield symbol -->
+  <g transform="translate(96, 96)">
+    <!-- Shield outline -->
+    <path d="M0,-38.4 
+             L30.72,-23.04
+             L30.72,12.288
+             C30.72,27.648 0,43.008 0,43.008
+             C0,43.008 -30.72,27.648 -30.72,12.288
+             L-30.72,-23.04
+             Z" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="2.88"
+          stroke-linejoin="round"/>
+    
+    <!-- Checkmark -->
+    <path d="M-12.288,3.072 
+             L-3.072,15.36 
+             L15.36,-7.68" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="4.800000000000001"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+</svg>

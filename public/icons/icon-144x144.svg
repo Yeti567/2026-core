@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="144" height="144" viewBox="0 0 144 144">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0077DD;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#004499;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="144" height="144" fill="url(#grad)" rx="21.599999999999998" ry="21.599999999999998"/>
+  
+  <!-- Shield icon -->
+  <g transform="translate(72, 72)">
+    <!-- Shield shape -->
+    <path d="M0,-46.08 
+             L40.32000000000001,-28.8
+             L40.32000000000001,11.52
+             C40.32000000000001,31.68 0,51.839999999999996 0,51.839999999999996
+             C0,51.839999999999996 -40.32000000000001,31.68 -40.32000000000001,11.52
+             L-40.32000000000001,-28.8
+             Z" 
+          fill="rgba(255,255,255,0.15)" 
+          stroke="#ffffff" 
+          stroke-width="2.88"
+          stroke-linejoin="round"/>
+    
+    <!-- Checkmark -->
+    <path d="M-14.4,2.88 
+             L-2.88,17.28 
+             L20.160000000000004,-11.52" 
+          fill="none" 
+          stroke="#ffffff" 
+          stroke-width="5.040000000000001"
+          stroke-linecap="round"
+          stroke-linejoin="round"/>
+  </g>
+</svg>
