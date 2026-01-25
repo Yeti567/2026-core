@@ -132,11 +132,29 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         handler: 'NetworkOnly',
         method: 'GET',
       },
-      // ✅ SECURITY: Network-only for all POST, PUT, DELETE, PATCH methods
+      // ✅ SECURITY: Network-only for all POST methods
       {
         urlPattern: /\/api\/.*$/i,
         handler: 'NetworkOnly',
-        method: /^(POST|PUT|DELETE|PATCH)$/i,
+        method: 'POST',
+      },
+      // ✅ SECURITY: Network-only for all PUT methods
+      {
+        urlPattern: /\/api\/.*$/i,
+        handler: 'NetworkOnly',
+        method: 'PUT',
+      },
+      // ✅ SECURITY: Network-only for all DELETE methods
+      {
+        urlPattern: /\/api\/.*$/i,
+        handler: 'NetworkOnly',
+        method: 'DELETE',
+      },
+      // ✅ SECURITY: Network-only for all PATCH methods
+      {
+        urlPattern: /\/api\/.*$/i,
+        handler: 'NetworkOnly',
+        method: 'PATCH',
       },
       // ✅ SECURITY: Network-only for all API routes by default (safest approach)
       {
@@ -207,43 +225,31 @@ const nextConfig = {
 
 const config = withPWA(nextConfig);
 
-// Wrap with Sentry configuration
-module.exports = withSentryConfig(
-  config,
-  {
-    // For all available options, see:
-    // https://github.com/getsentry/sentry-webpack-plugin#options
+// Wrap with Sentry configuration (v10+ format)
+module.exports = withSentryConfig(config, {
+  // Organization and project settings (can also be set via env vars SENTRY_ORG and SENTRY_PROJECT)
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
 
-    // Suppresses source map uploading logs during build
-    silent: true,
+  // Only upload source maps in production
+  widenClientFileUpload: true,
 
-    org: process.env.SENTRY_ORG,
-    project: process.env.SENTRY_PROJECT,
+  // Hides source maps from the browser
+  hideSourceMaps: true,
 
-    // Only upload source maps in production
-    widenClientFileUpload: true,
-    hideSourceMaps: true,
+  // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
+  tunnelRoute: '/monitoring',
 
-    // Route browser requests to Sentry through a Next.js rewrite to circumvent ad-blockers
-    tunnelRoute: '/monitoring',
+  // Automatically inject the Sentry SDK into the page
+  automaticVercelMonitors: true,
 
-    // Webpack-specific options (moved from deprecated top-level)
-    webpack: {
-      // Automatically tree-shake Sentry logger statements to reduce bundle size
-      treeshake: {
-        removeDebugLogging: true,
-      },
-      // Automatically annotate React components to show their props/state in Sentry
-      reactComponentAnnotation: {
-        enabled: true,
-      },
-    },
-  },
-  {
-    // For all available options, see:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
+  // Disable making builds in CI wait for source map upload
+  disableClientWebpackPlugin: false,
 
-    // Automatically inject the Sentry SDK into the page
-    automaticVercelMonitors: true,
-  }
-);
+  // Suppresses source map uploading logs during build
+  silent: false,
+
+  // Enable debug mode for troubleshooting if needed
+  // debug: true,
+});
+
