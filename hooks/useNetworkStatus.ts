@@ -61,9 +61,11 @@ export function useNetworkStatus(
   pingUrl?: string,
   pingInterval: number = 30000
 ): NetworkStatus {
+  // Always start as online to prevent hydration mismatch
+  // The real status will be detected in useEffect after mount
   const [status, setStatus] = useState<NetworkStatus>({
-    isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
-    isConnected: typeof navigator !== 'undefined' ? navigator.onLine : true,
+    isOnline: true,
+    isConnected: true,
     lastChecked: null,
     connectionType: null,
     effectiveType: null,
@@ -74,11 +76,11 @@ export function useNetworkStatus(
   // Get connection info from Network Information API
   const getConnectionInfo = useCallback(() => {
     if (typeof navigator === 'undefined') return {};
-    
-    const connection = navigator.connection || 
-                       navigator.mozConnection || 
-                       navigator.webkitConnection;
-    
+
+    const connection = navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
+
     if (!connection) return {};
 
     return {
@@ -128,7 +130,7 @@ export function useNetworkStatus(
     const handleOnline = () => {
       updateStatus(true);
       if (pingUrl) verifyConnectivity();
-      
+
       // Trigger background sync when coming back online
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
@@ -163,10 +165,10 @@ export function useNetworkStatus(
     window.addEventListener('offline', handleOffline);
 
     // Network Information API
-    const connection = navigator.connection || 
-                       navigator.mozConnection || 
-                       navigator.webkitConnection;
-    
+    const connection = navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
+
     if (connection) {
       connection.addEventListener('change', handleConnectionChange);
     }
@@ -191,11 +193,11 @@ export function useNetworkStatus(
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      
+
       if (connection) {
         connection.removeEventListener('change', handleConnectionChange);
       }
-      
+
       if (intervalId) {
         clearInterval(intervalId);
       }
