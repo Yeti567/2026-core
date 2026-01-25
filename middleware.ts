@@ -110,7 +110,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Generate CSP nonce for XSS protection (needed for all routes)
-  const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
+  const nonce = btoa(crypto.randomUUID());
   const cspHeader = generateCSPHeaders(nonce);
 
   // Create response and Supabase client
