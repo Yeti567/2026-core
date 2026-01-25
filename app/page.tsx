@@ -18,6 +18,15 @@ export default function HomePage() {
           </p>
         </div>
 
+        <div className="mt-6">
+          <Link
+            href="/overview"
+            className="text-sm text-[var(--primary)] hover:underline"
+          >
+            Explore all features →
+          </Link>
+        </div>
+
         <div className="mt-8 pt-6 border-t border-[var(--border)]">
           <p className="text-sm text-[var(--muted)] mb-3">Already have an account?</p>
           <Link href="/login" className="btn w-full block border border-[var(--border)]">

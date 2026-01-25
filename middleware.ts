@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
   '/login',
   '/signup',
   '/register',         // Company registration page
+  '/overview',         // App overview/features page
   '/public',
   '/auth/callback',
   '/auth/confirm',
