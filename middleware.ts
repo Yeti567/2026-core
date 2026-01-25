@@ -20,10 +20,10 @@ import type { UserRole } from '@/lib/db/types';
 
 /** Routes that don't require authentication */
 const PUBLIC_ROUTES = [
+  '/',                 // Home page (app overview)
   '/login',
   '/signup',
   '/register',         // Company registration page
-  '/overview',         // App overview/features page
   '/public',
   '/auth/callback',
   '/auth/confirm',

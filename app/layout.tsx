@@ -3,6 +3,7 @@ import './globals.css';
 import OfflineIndicator from '@/components/offline-indicator';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { IOSInstallPrompt } from '@/components/pwa/ios-install-prompt';
+import { FloatingHomeButton } from '@/components/navigation/floating-home-button';
 import { headers } from 'next/headers';
 
 // PWA Metadata
@@ -250,6 +251,7 @@ export default async function RootLayout({
         <OfflineIndicator />
         <InstallPrompt />
         <IOSInstallPrompt />
+        <FloatingHomeButton />
         {children}
       </body>
     </html>
