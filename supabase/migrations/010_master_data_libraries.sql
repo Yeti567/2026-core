@@ -20,7 +20,8 @@
 -- controls, PPE requirements, and risk ratings
 
 -- Hazard categories enum
-CREATE TYPE hazard_category AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE hazard_category AS ENUM (
     'physical',           -- Noise, vibration, temperature extremes
     'chemical',           -- Dust, fumes, solvents, gases
     'biological',         -- Mold, bacteria, viruses
@@ -37,27 +38,38 @@ CREATE TYPE hazard_category AS ENUM (
     'radiation',          -- UV, welding arc, x-ray
     'other'               -- Miscellaneous hazards
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Risk level enum
-CREATE TYPE risk_level AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE risk_level AS ENUM (
     'negligible',         -- Risk Score 1-4: Green
     'low',                -- Risk Score 5-9: Yellow
     'medium',             -- Risk Score 10-14: Orange
     'high',               -- Risk Score 15-19: Red
     'critical'            -- Risk Score 20-25: Black
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Hierarchy of controls type
-CREATE TYPE control_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE control_type AS ENUM (
     'elimination',        -- Remove the hazard entirely
     'substitution',       -- Replace with less hazardous alternative
     'engineering',        -- Isolate people from the hazard
     'administrative',     -- Change the way people work
     'ppe'                 -- Personal Protective Equipment
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Master hazard library table
-CREATE TABLE hazard_library (
+CREATE TABLE IF NOT EXISTS hazard_library (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Global (NULL) or company-specific hazards
@@ -113,7 +125,7 @@ COMMENT ON COLUMN hazard_library.default_risk_score IS 'Auto-calculated: severit
 COMMENT ON COLUMN hazard_library.recommended_controls IS 'JSON array of control measures using hierarchy of controls';
 
 -- Control measures lookup table (for consistent dropdown options)
-CREATE TABLE control_measures (
+CREATE TABLE IF NOT EXISTS control_measures (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     
@@ -137,7 +149,7 @@ CREATE TABLE control_measures (
 COMMENT ON TABLE control_measures IS 'Standard control measures for consistent selection in hazard assessments';
 
 -- PPE types lookup table
-CREATE TABLE ppe_types (
+CREATE TABLE IF NOT EXISTS ppe_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
     
@@ -166,7 +178,8 @@ COMMENT ON TABLE ppe_types IS 'Standard PPE types for consistent selection';
 -- Complete equipment tracking with inspection schedules and maintenance history
 
 -- Equipment status enum
-CREATE TYPE equipment_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE equipment_status AS ENUM (
     'available',          -- Ready for use
     'in_use',             -- Currently deployed
     'under_inspection',   -- Being inspected
@@ -175,9 +188,13 @@ CREATE TYPE equipment_status AS ENUM (
     'retired',            -- Permanently removed from service
     'lost'                -- Cannot be located
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Equipment categories enum
-CREATE TYPE equipment_category AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE equipment_category AS ENUM (
     'fall_protection',    -- Harnesses, lanyards, anchors
     'lifting',            -- Cranes, hoists, forklifts
     'scaffolding',        -- Frames, planks, accessories
@@ -196,9 +213,12 @@ CREATE TYPE equipment_category AS ENUM (
     'measurement',        -- Meters, gauges, detectors
     'other'               -- Miscellaneous equipment
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Main equipment inventory table
-CREATE TABLE equipment_inventory (
+CREATE TABLE IF NOT EXISTS equipment_inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     
@@ -262,11 +282,113 @@ CREATE TABLE equipment_inventory (
     UNIQUE(company_id, equipment_number)
 );
 
+
+
+
+DROP VIEW IF EXISTS equipment_maintenance_summary;
+
+DO $$ 
+BEGIN
+    -- Add category if not exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'category') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN category equipment_category DEFAULT 'other'::equipment_category NOT NULL;
+    END IF;
+
+    -- Add next_inspection_due
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'next_inspection_due') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN next_inspection_due DATE;
+    END IF;
+    
+    -- Add last_inspection_date
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'last_inspection_date') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN last_inspection_date DATE;
+    END IF;
+
+    -- Add current_worker_id
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'current_worker_id') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN current_worker_id UUID REFERENCES workers(id);
+    END IF;
+
+    -- Handle status conversion (Text -> Enum)
+    -- Check if status is text
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'status' AND data_type = 'text') THEN
+        -- Drop incompatible default first
+        ALTER TABLE equipment_inventory ALTER COLUMN status DROP DEFAULT;
+        
+        -- Update values to match enum
+        UPDATE equipment_inventory SET status = 'available' WHERE status = 'active';
+        -- Cast
+        ALTER TABLE equipment_inventory ALTER COLUMN status TYPE equipment_status USING status::equipment_status;
+        -- Set default
+        ALTER TABLE equipment_inventory ALTER COLUMN status SET DEFAULT 'available'::equipment_status;
+    END IF;
+
+END $$;
+
+-- Recreate view from 00802
+CREATE OR REPLACE VIEW equipment_maintenance_summary AS
+SELECT 
+    ei.id AS equipment_id,
+    ei.equipment_number,
+    ei.equipment_type,
+    ei.name AS equipment_name,
+    ei.company_id,
+    ei.status AS equipment_status,
+    ei.current_hours,
+    ei.current_km,
+    
+    -- Maintenance counts
+    COUNT(DISTINCT mr.id) AS total_maintenance_records,
+    COUNT(DISTINCT mr.id) FILTER (WHERE mr.maintenance_type = 'preventive') AS preventive_count,
+    COUNT(DISTINCT mr.id) FILTER (WHERE mr.maintenance_type = 'corrective') AS corrective_count,
+    COUNT(DISTINCT mr.id) FILTER (WHERE mr.maintenance_type = 'inspection') AS inspection_count,
+    COUNT(DISTINCT mr.id) FILTER (WHERE mr.maintenance_type = 'certification') AS certification_count,
+    
+    -- Last maintenance
+    MAX(mr.actual_date) AS last_maintenance_date,
+    MAX(mr.actual_date) FILTER (WHERE mr.maintenance_type = 'preventive') AS last_preventive_date,
+    
+    -- Next maintenance due
+    MIN(ms.next_due_date) FILTER (WHERE ms.is_active = true AND ms.next_due_date >= CURRENT_DATE) AS next_maintenance_due,
+    
+    -- Overdue count
+    COUNT(DISTINCT ms.id) FILTER (WHERE ms.is_active = true AND ms.next_due_date < CURRENT_DATE) AS overdue_schedules,
+    
+    -- Costs (last 12 months)
+    COALESCE(SUM(mr.cost_total) FILTER (WHERE mr.actual_date >= CURRENT_DATE - INTERVAL '12 months'), 0) AS maintenance_cost_12m,
+    COALESCE(SUM(mr.cost_total), 0) AS total_maintenance_cost,
+    
+    -- Attachments
+    COUNT(DISTINCT ma.id) AS total_attachments,
+    COUNT(DISTINCT ma.id) FILTER (WHERE ma.attachment_type = 'receipt') AS receipt_count,
+    
+    -- Work orders
+    COUNT(DISTINCT wo.id) AS total_work_orders,
+    COUNT(DISTINCT wo.id) FILTER (WHERE wo.status IN ('submitted', 'assigned', 'in_progress')) AS open_work_orders,
+    COUNT(DISTINCT wo.id) FILTER (WHERE wo.priority = 'critical' AND wo.status NOT IN ('completed', 'cancelled')) AS critical_work_orders,
+    
+    -- Downtime (last 30 days)
+    COALESCE(SUM(edl.downtime_duration_hours) FILTER (WHERE edl.downtime_start >= CURRENT_DATE - INTERVAL '30 days'), 0) AS downtime_hours_30d,
+    
+    -- Availability (last 30 days)
+    calculate_equipment_availability(ei.id, CURRENT_DATE - 30, CURRENT_DATE) AS availability_30_days
+    
+FROM equipment_inventory ei
+LEFT JOIN maintenance_records mr ON mr.equipment_id = ei.id
+LEFT JOIN maintenance_schedules ms ON ms.equipment_id = ei.id
+LEFT JOIN maintenance_attachments ma ON ma.equipment_id = ei.id AND ma.is_archived = false
+LEFT JOIN work_orders wo ON wo.equipment_id = ei.id
+LEFT JOIN equipment_downtime_log edl ON edl.equipment_id = ei.id
+GROUP BY ei.id, ei.equipment_number, ei.equipment_type, ei.name, ei.company_id, 
+         ei.status, ei.current_hours, ei.current_km;
+
+COMMENT ON VIEW equipment_maintenance_summary IS 'Comprehensive maintenance statistics per equipment';
+
 COMMENT ON TABLE equipment_inventory IS 'Complete equipment inventory with inspection tracking';
 COMMENT ON COLUMN equipment_inventory.next_inspection_due IS 'Auto-calculated or manually set inspection due date';
 
 -- Equipment inspection records
-CREATE TABLE equipment_inspections (
+CREATE TABLE IF NOT EXISTS equipment_inspections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -305,7 +427,7 @@ CREATE TABLE equipment_inspections (
 COMMENT ON TABLE equipment_inspections IS 'Equipment inspection history and records';
 
 -- Equipment maintenance records
-CREATE TABLE equipment_maintenance (
+CREATE TABLE IF NOT EXISTS equipment_maintenance (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -348,7 +470,8 @@ COMMENT ON TABLE equipment_maintenance IS 'Equipment maintenance and repair hist
 -- Standard tasks by trade with pre-built hazard assessments and competency requirements
 
 -- Trade categories enum
-CREATE TYPE trade_category AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE trade_category AS ENUM (
     'concrete',           -- Concrete placement, finishing
     'formwork',           -- Form building, shoring
     'structural_steel',   -- Steel erection, welding
@@ -373,9 +496,12 @@ CREATE TYPE trade_category AS ENUM (
     'supervision',        -- Site supervision
     'other'               -- Miscellaneous trades
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Job/Task library table
-CREATE TABLE job_task_library (
+CREATE TABLE IF NOT EXISTS job_task_library (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Global (NULL) or company-specific tasks
@@ -437,7 +563,7 @@ COMMENT ON TABLE job_task_library IS 'Standard tasks by trade with pre-built haz
 COMMENT ON COLUMN job_task_library.hazard_assessment IS 'Pre-populated hazard assessment template';
 
 -- Task hazard mapping table (many-to-many relationship)
-CREATE TABLE task_hazard_mappings (
+CREATE TABLE IF NOT EXISTS task_hazard_mappings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     task_id UUID NOT NULL REFERENCES job_task_library(id) ON DELETE CASCADE,
     hazard_id UUID NOT NULL REFERENCES hazard_library(id) ON DELETE CASCADE,
@@ -461,25 +587,33 @@ COMMENT ON TABLE task_hazard_mappings IS 'Links tasks to their associated hazard
 -- Extend the existing workers table with competency tracking
 
 -- Competency types enum
-CREATE TYPE competency_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE competency_type AS ENUM (
     'certification',      -- External certification (WHMIS, Working at Heights)
     'license',            -- Professional license
     'training',           -- Company training completed
     'skill',              -- Demonstrated skill/ability
     'authorization'       -- Company authorization (equipment operation)
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Competency status enum
-CREATE TYPE competency_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE competency_status AS ENUM (
     'active',             -- Current and valid
     'expired',            -- Past expiry date
     'pending_renewal',    -- Coming up for renewal
     'revoked',            -- Manually revoked
     'in_progress'         -- Currently being obtained
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Worker competencies table (extends existing certifications concept)
-CREATE TABLE worker_competencies (
+CREATE TABLE IF NOT EXISTS worker_competencies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -526,7 +660,7 @@ COMMENT ON TABLE worker_competencies IS 'Worker certifications, licenses, traini
 COMMENT ON COLUMN worker_competencies.renewal_reminder_days IS 'Days before expiry to send reminder';
 
 -- Training records table
-CREATE TABLE training_records (
+CREATE TABLE IF NOT EXISTS training_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -577,7 +711,8 @@ COMMENT ON TABLE training_records IS 'Detailed training records for each worker'
 -- Active projects with site-specific hazards and emergency contacts
 
 -- Project status enum
-CREATE TYPE project_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE project_status AS ENUM (
     'planning',           -- Pre-construction
     'active',             -- Work in progress
     'on_hold',            -- Temporarily stopped
@@ -586,9 +721,13 @@ CREATE TYPE project_status AS ENUM (
     'warranty',           -- In warranty period
     'closed'              -- Fully closed out
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Project type enum
-CREATE TYPE project_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE project_type AS ENUM (
     'commercial_new',     -- New commercial construction
     'commercial_reno',    -- Commercial renovation
     'residential_new',    -- New residential
@@ -600,9 +739,12 @@ CREATE TYPE project_type AS ENUM (
     'maintenance',        -- Ongoing maintenance
     'other'               -- Other project types
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Jobsite registry table
-CREATE TABLE jobsites (
+CREATE TABLE IF NOT EXISTS jobsites (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     
@@ -680,7 +822,7 @@ COMMENT ON COLUMN jobsites.emergency_info IS 'JSON with hospital, fire, police c
 COMMENT ON COLUMN jobsites.site_specific_hazards IS 'Unique hazards at this specific site';
 
 -- Jobsite emergency contacts table
-CREATE TABLE jobsite_emergency_contacts (
+CREATE TABLE IF NOT EXISTS jobsite_emergency_contacts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     jobsite_id UUID NOT NULL REFERENCES jobsites(id) ON DELETE CASCADE,
     
@@ -705,7 +847,7 @@ CREATE TABLE jobsite_emergency_contacts (
 COMMENT ON TABLE jobsite_emergency_contacts IS 'Emergency contacts specific to each jobsite';
 
 -- Workers assigned to jobsites (many-to-many)
-CREATE TABLE jobsite_workers (
+CREATE TABLE IF NOT EXISTS jobsite_workers (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     jobsite_id UUID NOT NULL REFERENCES jobsites(id) ON DELETE CASCADE,
     worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -738,16 +880,20 @@ COMMENT ON TABLE jobsite_workers IS 'Workers assigned to specific jobsites';
 -- Ontario OHSA with full text search, O. Reg. 213/91, O. Reg. 851
 
 -- Legislation type enum
-CREATE TYPE legislation_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE legislation_type AS ENUM (
     'act',                -- Primary legislation (OHSA)
     'regulation',         -- Regulations under an act
     'code',               -- Building codes, electrical codes
     'standard',           -- CSA, ANSI standards
     'guideline'           -- MOL guidelines, best practices
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Main legislation table
-CREATE TABLE legislation_library (
+CREATE TABLE IF NOT EXISTS legislation_library (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Identification
@@ -782,7 +928,7 @@ CREATE TABLE legislation_library (
 COMMENT ON TABLE legislation_library IS 'Master list of applicable legislation';
 
 -- Legislation sections/clauses table
-CREATE TABLE legislation_sections (
+CREATE TABLE IF NOT EXISTS legislation_sections (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     legislation_id UUID NOT NULL REFERENCES legislation_library(id) ON DELETE CASCADE,
     
@@ -822,7 +968,7 @@ COMMENT ON TABLE legislation_sections IS 'Individual sections/clauses with full 
 COMMENT ON COLUMN legislation_sections.plain_language_summary IS 'Worker-friendly explanation of requirement';
 
 -- Quick reference guides table
-CREATE TABLE legislative_quick_references (
+CREATE TABLE IF NOT EXISTS legislative_quick_references (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Reference identification
@@ -854,7 +1000,8 @@ COMMENT ON TABLE legislative_quick_references IS 'Topic-based quick reference gu
 -- Chemical products with WHMIS 2015 classifications and emergency info
 
 -- WHMIS 2015 hazard classes
-CREATE TYPE whmis_hazard_class AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE whmis_hazard_class AS ENUM (
     'flammable_gas',
     'flammable_aerosol',
     'oxidizing_gas',
@@ -885,17 +1032,24 @@ CREATE TYPE whmis_hazard_class AS ENUM (
     'aquatic_chronic',
     'biohazard'
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- SDS status enum
-CREATE TYPE sds_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE sds_status AS ENUM (
     'current',            -- Up to date SDS
     'expired',            -- Older than 3 years
     'pending_update',     -- New SDS being obtained
     'archived'            -- No longer used
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Main SDS library table
-CREATE TABLE sds_library (
+CREATE TABLE IF NOT EXISTS sds_library (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     
@@ -972,7 +1126,7 @@ COMMENT ON COLUMN sds_library.hazard_classes IS 'WHMIS 2015 hazard classificatio
 COMMENT ON COLUMN sds_library.pictograms IS 'WHMIS pictogram identifiers: flame, skull, exclamation_mark, etc.';
 
 -- SDS inventory tracking (which products are at which locations)
-CREATE TABLE sds_inventory (
+CREATE TABLE IF NOT EXISTS sds_inventory (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     sds_id UUID NOT NULL REFERENCES sds_library(id) ON DELETE CASCADE,
     jobsite_id UUID REFERENCES jobsites(id) ON DELETE CASCADE,
@@ -997,52 +1151,61 @@ CREATE TABLE sds_inventory (
 COMMENT ON TABLE sds_inventory IS 'Tracks SDS products at specific jobsite locations';
 
 
+-- Fix equipment_inventory schema (must be done after jobsites is created)
+DO $$ 
+BEGIN
+    -- Add current_jobsite_id
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'current_jobsite_id') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN current_jobsite_id UUID REFERENCES jobsites(id);
+    END IF;
+END $$;
+
 -- ============================================================================
 -- 8. INDEXES FOR PERFORMANCE
 -- ============================================================================
 
 -- Hazard Library indexes
-CREATE INDEX idx_hazard_library_company ON hazard_library(company_id, is_active);
-CREATE INDEX idx_hazard_library_category ON hazard_library(category);
-CREATE INDEX idx_hazard_library_trades ON hazard_library USING GIN(applicable_trades);
-CREATE INDEX idx_hazard_library_risk ON hazard_library(default_risk_level);
+CREATE INDEX IF NOT EXISTS idx_hazard_library_company ON hazard_library(company_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_hazard_library_category ON hazard_library(category);
+CREATE INDEX IF NOT EXISTS idx_hazard_library_trades ON hazard_library USING GIN(applicable_trades);
+CREATE INDEX IF NOT EXISTS idx_hazard_library_risk ON hazard_library(default_risk_level);
 
 -- Equipment indexes
-CREATE INDEX idx_equipment_company ON equipment_inventory(company_id, status);
-CREATE INDEX idx_equipment_category ON equipment_inventory(category, status);
-CREATE INDEX idx_equipment_inspection ON equipment_inventory(next_inspection_due) WHERE status = 'available' OR status = 'in_use';
-CREATE INDEX idx_equipment_jobsite ON equipment_inventory(current_jobsite_id) WHERE current_jobsite_id IS NOT NULL;
-CREATE INDEX idx_equipment_inspections ON equipment_inspections(equipment_id, inspection_date DESC);
-CREATE INDEX idx_equipment_maintenance ON equipment_maintenance(equipment_id, maintenance_date DESC);
+CREATE INDEX IF NOT EXISTS idx_equipment_company ON equipment_inventory(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_equipment_category ON equipment_inventory(category, status);
+CREATE INDEX IF NOT EXISTS idx_equipment_inspection ON equipment_inventory(next_inspection_due) WHERE status = 'available' OR status = 'in_use';
+CREATE INDEX IF NOT EXISTS idx_equipment_jobsite ON equipment_inventory(current_jobsite_id) WHERE current_jobsite_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_equipment_inspections ON equipment_inspections(equipment_id, inspection_date DESC);
+CREATE INDEX IF NOT EXISTS idx_equipment_maintenance ON equipment_maintenance(equipment_id, maintenance_date DESC);
 
 -- Job/Task Library indexes
-CREATE INDEX idx_task_library_company ON job_task_library(company_id, is_active);
-CREATE INDEX idx_task_library_trade ON job_task_library(trade);
-CREATE INDEX idx_task_hazard_mappings ON task_hazard_mappings(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_library_company ON job_task_library(company_id, is_active);
+CREATE INDEX IF NOT EXISTS idx_task_library_trade ON job_task_library(trade);
+CREATE INDEX IF NOT EXISTS idx_task_hazard_mappings ON task_hazard_mappings(task_id);
 
 -- Worker competencies indexes
-CREATE INDEX idx_worker_competencies ON worker_competencies(worker_id, status);
-CREATE INDEX idx_worker_competencies_expiry ON worker_competencies(expiry_date) WHERE status = 'active';
-CREATE INDEX idx_training_records ON training_records(worker_id, training_date DESC);
+CREATE INDEX IF NOT EXISTS idx_worker_competencies ON worker_competencies(worker_id, status);
+CREATE INDEX IF NOT EXISTS idx_worker_competencies_expiry ON worker_competencies(expiry_date) WHERE status = 'active';
+CREATE INDEX IF NOT EXISTS idx_training_records ON training_records(worker_id, training_date DESC);
 
 -- Jobsite indexes
-CREATE INDEX idx_jobsites_company ON jobsites(company_id, status);
-CREATE INDEX idx_jobsites_location ON jobsites(city, province);
-CREATE INDEX idx_jobsite_workers ON jobsite_workers(jobsite_id);
-CREATE INDEX idx_jobsite_workers_worker ON jobsite_workers(worker_id);
+CREATE INDEX IF NOT EXISTS idx_jobsites_company ON jobsites(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_jobsites_location ON jobsites(city, province);
+CREATE INDEX IF NOT EXISTS idx_jobsite_workers ON jobsite_workers(jobsite_id);
+CREATE INDEX IF NOT EXISTS idx_jobsite_workers_worker ON jobsite_workers(worker_id);
 
 -- Legislative library indexes
-CREATE INDEX idx_legislation_type ON legislation_library(legislation_type, jurisdiction);
-CREATE INDEX idx_legislation_sections ON legislation_sections(legislation_id);
-CREATE INDEX idx_legislation_sections_search ON legislation_sections USING GIN(search_vector);
-CREATE INDEX idx_legislation_sections_topics ON legislation_sections USING GIN(topics);
+CREATE INDEX IF NOT EXISTS idx_legislation_type ON legislation_library(legislation_type, jurisdiction);
+CREATE INDEX IF NOT EXISTS idx_legislation_sections ON legislation_sections(legislation_id);
+CREATE INDEX IF NOT EXISTS idx_legislation_sections_search ON legislation_sections USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_legislation_sections_topics ON legislation_sections USING GIN(topics);
 
 -- SDS Library indexes
-CREATE INDEX idx_sds_company ON sds_library(company_id, status);
-CREATE INDEX idx_sds_manufacturer ON sds_library(manufacturer);
-CREATE INDEX idx_sds_search ON sds_library USING GIN(search_vector);
-CREATE INDEX idx_sds_hazards ON sds_library USING GIN(hazard_classes);
-CREATE INDEX idx_sds_inventory ON sds_inventory(sds_id, jobsite_id);
+CREATE INDEX IF NOT EXISTS idx_sds_company ON sds_library(company_id, status);
+CREATE INDEX IF NOT EXISTS idx_sds_manufacturer ON sds_library(manufacturer);
+CREATE INDEX IF NOT EXISTS idx_sds_search ON sds_library USING GIN(search_vector);
+CREATE INDEX IF NOT EXISTS idx_sds_hazards ON sds_library USING GIN(hazard_classes);
+CREATE INDEX IF NOT EXISTS idx_sds_inventory ON sds_inventory(sds_id, jobsite_id);
 
 
 -- ============================================================================
@@ -1064,6 +1227,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tr_legislation_sections_search ON legislation_sections;
 CREATE TRIGGER tr_legislation_sections_search
     BEFORE INSERT OR UPDATE OF section_number, title, plain_language_summary, full_text
     ON legislation_sections
@@ -1086,6 +1250,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tr_sds_search ON sds_library;
 CREATE TRIGGER tr_sds_search
     BEFORE INSERT OR UPDATE OF product_name, manufacturer, supplier, hazard_statements, extracted_text
     ON sds_library
@@ -1103,12 +1268,26 @@ BEGIN
 END;
 $$;
 
+
+DROP TRIGGER IF EXISTS tr_hazard_library_updated_at ON hazard_library;
 CREATE TRIGGER tr_hazard_library_updated_at BEFORE UPDATE ON hazard_library FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_equipment_inventory_updated_at ON equipment_inventory;
 CREATE TRIGGER tr_equipment_inventory_updated_at BEFORE UPDATE ON equipment_inventory FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_job_task_library_updated_at ON job_task_library;
 CREATE TRIGGER tr_job_task_library_updated_at BEFORE UPDATE ON job_task_library FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_worker_competencies_updated_at ON worker_competencies;
 CREATE TRIGGER tr_worker_competencies_updated_at BEFORE UPDATE ON worker_competencies FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_jobsites_updated_at ON jobsites;
 CREATE TRIGGER tr_jobsites_updated_at BEFORE UPDATE ON jobsites FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_legislation_library_updated_at ON legislation_library;
 CREATE TRIGGER tr_legislation_library_updated_at BEFORE UPDATE ON legislation_library FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
+
+DROP TRIGGER IF EXISTS tr_sds_library_updated_at ON sds_library;
 CREATE TRIGGER tr_sds_library_updated_at BEFORE UPDATE ON sds_library FOR EACH ROW EXECUTE FUNCTION update_master_data_timestamp();
 
 
@@ -1142,10 +1321,12 @@ ALTER TABLE sds_inventory ENABLE ROW LEVEL SECURITY;
 -- Pattern: Users see global (company_id IS NULL) + their company's data
 
 -- Hazard Library
+DROP POLICY IF EXISTS "hazard_library_select" ON hazard_library;
 CREATE POLICY "hazard_library_select" ON hazard_library
     FOR SELECT TO authenticated
     USING (company_id IS NULL OR company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "hazard_library_insert" ON hazard_library;
 CREATE POLICY "hazard_library_insert" ON hazard_library
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -1153,6 +1334,7 @@ CREATE POLICY "hazard_library_insert" ON hazard_library
         OR (company_id IS NULL AND is_super_admin())
     );
 
+DROP POLICY IF EXISTS "hazard_library_update" ON hazard_library;
 CREATE POLICY "hazard_library_update" ON hazard_library
     FOR UPDATE TO authenticated
     USING (
@@ -1160,6 +1342,7 @@ CREATE POLICY "hazard_library_update" ON hazard_library
         OR (company_id IS NULL AND is_super_admin())
     );
 
+DROP POLICY IF EXISTS "hazard_library_delete" ON hazard_library;
 CREATE POLICY "hazard_library_delete" ON hazard_library
     FOR DELETE TO authenticated
     USING (
@@ -1168,10 +1351,12 @@ CREATE POLICY "hazard_library_delete" ON hazard_library
     );
 
 -- Control Measures
+DROP POLICY IF EXISTS "control_measures_select" ON control_measures;
 CREATE POLICY "control_measures_select" ON control_measures
     FOR SELECT TO authenticated
     USING (company_id IS NULL OR company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "control_measures_manage" ON control_measures;
 CREATE POLICY "control_measures_manage" ON control_measures
     FOR ALL TO authenticated
     USING (
@@ -1184,10 +1369,12 @@ CREATE POLICY "control_measures_manage" ON control_measures
     );
 
 -- PPE Types
+DROP POLICY IF EXISTS "ppe_types_select" ON ppe_types;
 CREATE POLICY "ppe_types_select" ON ppe_types
     FOR SELECT TO authenticated
     USING (company_id IS NULL OR company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "ppe_types_manage" ON ppe_types;
 CREATE POLICY "ppe_types_manage" ON ppe_types
     FOR ALL TO authenticated
     USING (
@@ -1200,19 +1387,23 @@ CREATE POLICY "ppe_types_manage" ON ppe_types
     );
 
 -- Equipment Inventory (company-only)
+DROP POLICY IF EXISTS "equipment_select" ON equipment_inventory;
 CREATE POLICY "equipment_select" ON equipment_inventory
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_insert" ON equipment_inventory;
 CREATE POLICY "equipment_insert" ON equipment_inventory
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_update" ON equipment_inventory;
 CREATE POLICY "equipment_update" ON equipment_inventory
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_delete" ON equipment_inventory;
 CREATE POLICY "equipment_delete" ON equipment_inventory
     FOR DELETE TO authenticated
     USING (
@@ -1221,28 +1412,34 @@ CREATE POLICY "equipment_delete" ON equipment_inventory
     );
 
 -- Equipment Inspections
+DROP POLICY IF EXISTS "equipment_inspections_select" ON equipment_inspections;
 CREATE POLICY "equipment_inspections_select" ON equipment_inspections
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_inspections_insert" ON equipment_inspections;
 CREATE POLICY "equipment_inspections_insert" ON equipment_inspections
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
 -- Equipment Maintenance
+DROP POLICY IF EXISTS "equipment_maintenance_select" ON equipment_maintenance;
 CREATE POLICY "equipment_maintenance_select" ON equipment_maintenance
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_maintenance_insert" ON equipment_maintenance;
 CREATE POLICY "equipment_maintenance_insert" ON equipment_maintenance
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
 -- Job/Task Library
+DROP POLICY IF EXISTS "task_library_select" ON job_task_library;
 CREATE POLICY "task_library_select" ON job_task_library
     FOR SELECT TO authenticated
     USING (company_id IS NULL OR company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "task_library_insert" ON job_task_library;
 CREATE POLICY "task_library_insert" ON job_task_library
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -1250,6 +1447,7 @@ CREATE POLICY "task_library_insert" ON job_task_library
         OR (company_id IS NULL AND is_super_admin())
     );
 
+DROP POLICY IF EXISTS "task_library_update" ON job_task_library;
 CREATE POLICY "task_library_update" ON job_task_library
     FOR UPDATE TO authenticated
     USING (
@@ -1257,6 +1455,7 @@ CREATE POLICY "task_library_update" ON job_task_library
         OR (company_id IS NULL AND is_super_admin())
     );
 
+DROP POLICY IF EXISTS "task_library_delete" ON job_task_library;
 CREATE POLICY "task_library_delete" ON job_task_library
     FOR DELETE TO authenticated
     USING (
@@ -1265,6 +1464,7 @@ CREATE POLICY "task_library_delete" ON job_task_library
     );
 
 -- Task Hazard Mappings
+DROP POLICY IF EXISTS "task_hazard_mappings_select" ON task_hazard_mappings;
 CREATE POLICY "task_hazard_mappings_select" ON task_hazard_mappings
     FOR SELECT TO authenticated
     USING (
@@ -1275,6 +1475,7 @@ CREATE POLICY "task_hazard_mappings_select" ON task_hazard_mappings
         )
     );
 
+DROP POLICY IF EXISTS "task_hazard_mappings_manage" ON task_hazard_mappings;
 CREATE POLICY "task_hazard_mappings_manage" ON task_hazard_mappings
     FOR ALL TO authenticated
     USING (
@@ -1295,19 +1496,23 @@ CREATE POLICY "task_hazard_mappings_manage" ON task_hazard_mappings
     );
 
 -- Worker Competencies
+DROP POLICY IF EXISTS "worker_competencies_select" ON worker_competencies;
 CREATE POLICY "worker_competencies_select" ON worker_competencies
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "worker_competencies_insert" ON worker_competencies;
 CREATE POLICY "worker_competencies_insert" ON worker_competencies
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "worker_competencies_update" ON worker_competencies;
 CREATE POLICY "worker_competencies_update" ON worker_competencies
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "worker_competencies_delete" ON worker_competencies;
 CREATE POLICY "worker_competencies_delete" ON worker_competencies
     FOR DELETE TO authenticated
     USING (
@@ -1316,28 +1521,34 @@ CREATE POLICY "worker_competencies_delete" ON worker_competencies
     );
 
 -- Training Records
+DROP POLICY IF EXISTS "training_records_select" ON training_records;
 CREATE POLICY "training_records_select" ON training_records
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "training_records_insert" ON training_records;
 CREATE POLICY "training_records_insert" ON training_records
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
 -- Jobsites
+DROP POLICY IF EXISTS "jobsites_select" ON jobsites;
 CREATE POLICY "jobsites_select" ON jobsites
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "jobsites_insert" ON jobsites;
 CREATE POLICY "jobsites_insert" ON jobsites
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "jobsites_update" ON jobsites;
 CREATE POLICY "jobsites_update" ON jobsites
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "jobsites_delete" ON jobsites;
 CREATE POLICY "jobsites_delete" ON jobsites
     FOR DELETE TO authenticated
     USING (
@@ -1346,6 +1557,7 @@ CREATE POLICY "jobsites_delete" ON jobsites
     );
 
 -- Jobsite Emergency Contacts
+DROP POLICY IF EXISTS "jobsite_contacts_select" ON jobsite_emergency_contacts;
 CREATE POLICY "jobsite_contacts_select" ON jobsite_emergency_contacts
     FOR SELECT TO authenticated
     USING (
@@ -1356,6 +1568,7 @@ CREATE POLICY "jobsite_contacts_select" ON jobsite_emergency_contacts
         )
     );
 
+DROP POLICY IF EXISTS "jobsite_contacts_manage" ON jobsite_emergency_contacts;
 CREATE POLICY "jobsite_contacts_manage" ON jobsite_emergency_contacts
     FOR ALL TO authenticated
     USING (
@@ -1374,6 +1587,7 @@ CREATE POLICY "jobsite_contacts_manage" ON jobsite_emergency_contacts
     );
 
 -- Jobsite Workers
+DROP POLICY IF EXISTS "jobsite_workers_select" ON jobsite_workers;
 CREATE POLICY "jobsite_workers_select" ON jobsite_workers
     FOR SELECT TO authenticated
     USING (
@@ -1384,6 +1598,7 @@ CREATE POLICY "jobsite_workers_select" ON jobsite_workers
         )
     );
 
+DROP POLICY IF EXISTS "jobsite_workers_manage" ON jobsite_workers;
 CREATE POLICY "jobsite_workers_manage" ON jobsite_workers
     FOR ALL TO authenticated
     USING (
@@ -1402,16 +1617,19 @@ CREATE POLICY "jobsite_workers_manage" ON jobsite_workers
     );
 
 -- Legislation Library (global, readable by all)
+DROP POLICY IF EXISTS "legislation_select" ON legislation_library;
 CREATE POLICY "legislation_select" ON legislation_library
     FOR SELECT TO authenticated
     USING (is_active = true OR is_super_admin());
 
+DROP POLICY IF EXISTS "legislation_manage" ON legislation_library;
 CREATE POLICY "legislation_manage" ON legislation_library
     FOR ALL TO authenticated
     USING (is_super_admin())
     WITH CHECK (is_super_admin());
 
 -- Legislation Sections
+DROP POLICY IF EXISTS "legislation_sections_select" ON legislation_sections;
 CREATE POLICY "legislation_sections_select" ON legislation_sections
     FOR SELECT TO authenticated
     USING (
@@ -1422,35 +1640,42 @@ CREATE POLICY "legislation_sections_select" ON legislation_sections
         )
     );
 
+DROP POLICY IF EXISTS "legislation_sections_manage" ON legislation_sections;
 CREATE POLICY "legislation_sections_manage" ON legislation_sections
     FOR ALL TO authenticated
     USING (is_super_admin())
     WITH CHECK (is_super_admin());
 
 -- Legislative Quick References
+DROP POLICY IF EXISTS "quick_references_select" ON legislative_quick_references;
 CREATE POLICY "quick_references_select" ON legislative_quick_references
     FOR SELECT TO authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "quick_references_manage" ON legislative_quick_references;
 CREATE POLICY "quick_references_manage" ON legislative_quick_references
     FOR ALL TO authenticated
     USING (is_super_admin())
     WITH CHECK (is_super_admin());
 
 -- SDS Library
+DROP POLICY IF EXISTS "sds_select" ON sds_library;
 CREATE POLICY "sds_select" ON sds_library
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "sds_insert" ON sds_library;
 CREATE POLICY "sds_insert" ON sds_library
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "sds_update" ON sds_library;
 CREATE POLICY "sds_update" ON sds_library
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "sds_delete" ON sds_library;
 CREATE POLICY "sds_delete" ON sds_library
     FOR DELETE TO authenticated
     USING (
@@ -1459,6 +1684,7 @@ CREATE POLICY "sds_delete" ON sds_library
     );
 
 -- SDS Inventory
+DROP POLICY IF EXISTS "sds_inventory_select" ON sds_inventory;
 CREATE POLICY "sds_inventory_select" ON sds_inventory
     FOR SELECT TO authenticated
     USING (
@@ -1469,6 +1695,7 @@ CREATE POLICY "sds_inventory_select" ON sds_inventory
         )
     );
 
+DROP POLICY IF EXISTS "sds_inventory_manage" ON sds_inventory;
 CREATE POLICY "sds_inventory_manage" ON sds_inventory
     FOR ALL TO authenticated
     USING (

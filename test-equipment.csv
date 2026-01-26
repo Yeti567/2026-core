@@ -1,0 +1,7 @@
+equipment_number,equipment_type,name,make,model,serial_number,status,current_location,department_id,inspection_frequency_days,next_inspection_date
+EQ001,Ladder,Extension Ladder 28',Werner,D6228-2,WL123456,active,Main Warehouse,1,30,2025-02-15
+EQ002,Scaffold,Mobile Scaffold,Baker,SAF-2000,SC789012,active,Site A,2,7,2025-01-28
+EQ003,Power Tool,Impact Driver,DeWalt,DCF887,DW345678,maintenance,Workshop,1,14,2025-02-10
+EQ004,Heavy Equipment,Excavator,Caterpillar,320D,CE901234,active,Site B,2,30,2025-03-01
+EQ005,Aerial Platform,Scissor Lift,Genie,GS-1932,GE567890,active,Site A,2,14,2025-02-05
+InvalidRow,MissingType,,BadMake,BadModel,BadSerial,invalid_status,BadLocation,999,0,2020-01-01

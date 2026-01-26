@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  Upload, FolderOpen, FileText, Search, Plus, Filter, 
+import {
+  Upload, FolderOpen, FileText, Search, Plus, Filter,
   ChevronRight, ChevronDown, MoreVertical, Edit, Trash2,
   Move, Tag, CheckCircle, AlertCircle, Clock, Archive,
   Folder, FolderPlus, Grid, List, SortAsc, SortDesc,
@@ -60,6 +60,8 @@ export default function DocumentRegistryPage() {
   const [showBatchTagModal, setShowBatchTagModal] = useState(false);
   const [showMoveModal, setShowMoveModal] = useState(false);
   const [folderStats, setFolderStats] = useState<Map<string, number>>(new Map());
+  const [sortBy, setSortBy] = useState<string>('updated_at');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
 
   // Fetch folders
   const fetchFolders = useCallback(async () => {
@@ -82,7 +84,9 @@ export default function DocumentRegistryPage() {
       if (searchQuery) params.set('q', searchQuery);
       if (typeFilter) params.set('type', typeFilter);
       if (statusFilter) params.set('status', statusFilter);
-      
+      if (sortBy) params.set('sort', sortBy);
+      if (sortOrder) params.set('order', sortOrder);
+
       const response = await fetch(`/api/documents?${params}`);
       const data = await response.json();
       setDocuments(data.documents || []);
@@ -91,7 +95,7 @@ export default function DocumentRegistryPage() {
     } finally {
       setLoading(false);
     }
-  }, [selectedFolderId, searchQuery, typeFilter, statusFilter]);
+  }, [selectedFolderId, searchQuery, typeFilter, statusFilter, sortBy, sortOrder]);
 
   useEffect(() => {
     fetchFolders();
@@ -165,7 +169,7 @@ export default function DocumentRegistryPage() {
                 Upload, organize, and manage your safety documents
               </p>
             </div>
-            
+
             <div className="flex items-center gap-3">
               <button
                 onClick={() => setShowUploadPanel(true)}
@@ -206,8 +210,8 @@ export default function DocumentRegistryPage() {
                 <button
                   onClick={() => selectFolder(null)}
                   className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all
-                    ${!selectedFolderId 
-                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30' 
+                    ${!selectedFolderId
+                      ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
                       : 'text-slate-300 hover:bg-slate-700/30'
                     }`}
                 >
@@ -255,11 +259,10 @@ export default function DocumentRegistryPage() {
                       <ChevronRight className="w-4 h-4 text-slate-600" />
                       <button
                         onClick={() => selectFolder(folder.id)}
-                        className={`transition-colors ${
-                          idx === breadcrumbs.length - 1
-                            ? 'text-violet-400 font-medium'
-                            : 'text-slate-400 hover:text-white'
-                        }`}
+                        className={`transition-colors ${idx === breadcrumbs.length - 1
+                          ? 'text-violet-400 font-medium'
+                          : 'text-slate-400 hover:text-white'
+                          }`}
                       >
                         {folder.name}
                       </button>
@@ -310,19 +313,39 @@ export default function DocumentRegistryPage() {
                 <div className="flex items-center gap-1 bg-slate-900/50 border border-slate-700/50 rounded-xl p-1">
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'list' ? 'bg-violet-500/20 text-violet-400' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'list' ? 'bg-violet-500/20 text-violet-400' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <List className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded-lg transition-colors ${
-                      viewMode === 'grid' ? 'bg-violet-500/20 text-violet-400' : 'text-slate-400 hover:text-white'
-                    }`}
+                    className={`p-2 rounded-lg transition-colors ${viewMode === 'grid' ? 'bg-violet-500/20 text-violet-400' : 'text-slate-400 hover:text-white'
+                      }`}
                   >
                     <Grid className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-4 py-2.5 bg-slate-900/50 border border-slate-700/50 rounded-xl 
+                             text-white focus:outline-none focus:border-violet-500/50 min-w-[140px]"
+                  >
+                    <option value="updated_at">Last Updated</option>
+                    <option value="title">Title</option>
+                    <option value="control_number">Control #</option>
+                    <option value="effective_date">Effective Date</option>
+                  </select>
+
+                  <button
+                    onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}
+                    className="p-2.5 text-slate-400 hover:text-white bg-slate-900/50 border border-slate-700/50 
+                             rounded-xl hover:bg-slate-700/50 transition-colors"
+                  >
+                    {sortOrder === 'asc' ? <SortAsc className="w-5 h-5" /> : <SortDesc className="w-5 h-5" />}
                   </button>
                 </div>
 
@@ -375,7 +398,7 @@ export default function DocumentRegistryPage() {
                   <Loader2 className="w-8 h-8 text-violet-400 animate-spin" />
                 </div>
               ) : documents.length === 0 ? (
-                <EmptyState 
+                <EmptyState
                   folder={currentFolder}
                   onUpload={() => setShowUploadPanel(true)}
                 />
@@ -399,60 +422,68 @@ export default function DocumentRegistryPage() {
       </div>
 
       {/* Upload Panel */}
-      {showUploadPanel && (
-        <UploadPanel
-          folderId={selectedFolderId}
-          folders={folders}
-          onClose={() => setShowUploadPanel(false)}
-          onSuccess={() => {
-            setShowUploadPanel(false);
-            fetchDocuments();
-            fetchFolders();
-          }}
-        />
-      )}
+      {
+        showUploadPanel && (
+          <UploadPanel
+            folderId={selectedFolderId}
+            folders={folders}
+            onClose={() => setShowUploadPanel(false)}
+            onSuccess={() => {
+              setShowUploadPanel(false);
+              fetchDocuments();
+              fetchFolders();
+            }}
+          />
+        )
+      }
 
       {/* Create Folder Modal */}
-      {showCreateFolderModal && (
-        <CreateFolderModal
-          parentFolder={currentFolder}
-          onClose={() => setShowCreateFolderModal(false)}
-          onCreated={() => {
-            setShowCreateFolderModal(false);
-            fetchFolders();
-          }}
-        />
-      )}
+      {
+        showCreateFolderModal && (
+          <CreateFolderModal
+            parentFolder={currentFolder}
+            onClose={() => setShowCreateFolderModal(false)}
+            onCreated={() => {
+              setShowCreateFolderModal(false);
+              fetchFolders();
+            }}
+          />
+        )
+      }
 
       {/* Batch Tag Modal */}
-      {showBatchTagModal && selectedDocuments.size > 0 && (
-        <BatchTagModal
-          documentIds={Array.from(selectedDocuments)}
-          onClose={() => setShowBatchTagModal(false)}
-          onSuccess={() => {
-            setShowBatchTagModal(false);
-            setSelectedDocuments(new Set());
-            fetchDocuments();
-          }}
-        />
-      )}
+      {
+        showBatchTagModal && selectedDocuments.size > 0 && (
+          <BatchTagModal
+            documentIds={Array.from(selectedDocuments)}
+            onClose={() => setShowBatchTagModal(false)}
+            onSuccess={() => {
+              setShowBatchTagModal(false);
+              setSelectedDocuments(new Set());
+              fetchDocuments();
+            }}
+          />
+        )
+      }
 
       {/* Move Modal */}
-      {showMoveModal && selectedDocuments.size > 0 && (
-        <MoveDocumentsModal
-          documentIds={Array.from(selectedDocuments)}
-          folders={folders}
-          currentFolderId={selectedFolderId}
-          onClose={() => setShowMoveModal(false)}
-          onSuccess={() => {
-            setShowMoveModal(false);
-            setSelectedDocuments(new Set());
-            fetchDocuments();
-            fetchFolders();
-          }}
-        />
-      )}
-    </div>
+      {
+        showMoveModal && selectedDocuments.size > 0 && (
+          <MoveDocumentsModal
+            documentIds={Array.from(selectedDocuments)}
+            folders={folders}
+            currentFolderId={selectedFolderId}
+            onClose={() => setShowMoveModal(false)}
+            onSuccess={() => {
+              setShowMoveModal(false);
+              setSelectedDocuments(new Set());
+              fetchDocuments();
+              fetchFolders();
+            }}
+          />
+        )
+      }
+    </div >
   );
 }
 
@@ -487,8 +518,8 @@ function FolderTreeItem({
     <div>
       <div
         className={`flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition-all
-          ${isSelected 
-            ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30' 
+          ${isSelected
+            ? 'bg-violet-500/20 text-violet-300 border border-violet-500/30'
             : 'text-slate-300 hover:bg-slate-700/30'
           }`}
         style={{ paddingLeft: `${12 + depth * 16}px` }}
@@ -507,13 +538,13 @@ function FolderTreeItem({
         ) : (
           <span className="w-5" />
         )}
-        
+
         <button
           onClick={() => onSelect(folder.id)}
           className="flex items-center gap-2 flex-1 min-w-0"
         >
-          <IconComponent 
-            className="w-4 h-4 flex-shrink-0" 
+          <IconComponent
+            className="w-4 h-4 flex-shrink-0"
             style={{ color: folder.color }}
           />
           <span className="truncate text-sm font-medium">{folder.name}</span>
@@ -618,9 +649,9 @@ function DocumentRow({
           className="w-4 h-4 rounded border-slate-600 bg-slate-800 text-violet-500 focus:ring-violet-500/50"
         />
       </label>
-      
+
       <div className="w-24 font-mono text-sm text-violet-400">{doc.control_number}</div>
-      
+
       <div className="flex-1 min-w-0">
         <p className="text-white font-medium truncate group-hover:text-violet-300 transition-colors">
           {doc.title}
@@ -628,24 +659,36 @@ function DocumentRow({
         {doc.description && (
           <p className="text-slate-500 text-sm truncate">{doc.description}</p>
         )}
+        {doc.tags && doc.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-1">
+            {doc.tags.slice(0, 3).map(tag => (
+              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-slate-800/80 text-slate-400 rounded-md border border-slate-700/50">
+                {tag}
+              </span>
+            ))}
+            {doc.tags.length > 3 && (
+              <span className="text-[10px] text-slate-500">+{doc.tags.length - 3}</span>
+            )}
+          </div>
+        )}
       </div>
-      
+
       <div className="w-32">
         <span className="text-slate-300 text-sm">
           {DOCUMENT_TYPE_LABELS[doc.document_type_code]}
         </span>
       </div>
-      
+
       <div className="w-24">
         <span className={`inline-flex px-2 py-0.5 text-xs rounded-full ${statusColors.bg} ${statusColors.text} ${statusColors.border} border`}>
           {DOCUMENT_STATUS_LABELS[doc.status]}
         </span>
       </div>
-      
+
       <div className="w-24 text-right text-sm text-slate-400">
         {new Date(doc.updated_at).toLocaleDateString()}
       </div>
-      
+
       <div className="w-10 flex justify-end">
         <button className="p-1.5 text-slate-400 hover:text-white opacity-0 group-hover:opacity-100 transition-opacity">
           <MoreVertical className="w-4 h-4" />
@@ -700,7 +743,7 @@ function DocumentCard({
                 ${isSelected ? 'border-violet-500 bg-violet-500/10' : 'border-slate-700/50'}`}
     >
       {/* Selection Checkbox */}
-      <label 
+      <label
         className="absolute top-3 left-3 z-10"
         onClick={(e) => e.stopPropagation()}
       >
@@ -727,6 +770,17 @@ function DocumentCard({
         <h3 className="text-white font-medium text-sm text-center line-clamp-2 mb-2 group-hover:text-violet-300 transition-colors">
           {doc.title}
         </h3>
+
+        {/* Tags */}
+        {doc.tags && doc.tags.length > 0 && (
+          <div className="flex flex-wrap justify-center gap-1 mb-3">
+            {doc.tags.slice(0, 2).map(tag => (
+              <span key={tag} className="text-[10px] px-1.5 py-0.5 bg-slate-800/80 text-slate-400 rounded-md border border-slate-700/50">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Status */}
         <div className="flex justify-center">
@@ -759,7 +813,7 @@ function EmptyState({
         {folder ? `No documents in "${folder.name}"` : 'No documents found'}
       </h3>
       <p className="text-sm mb-6">
-        {folder 
+        {folder
           ? 'Upload documents to this folder to get started'
           : 'Start by uploading your safety documents'
         }
@@ -799,7 +853,7 @@ function UploadPanel({
   // Handle file selection
   const handleFiles = async (fileList: FileList) => {
     const newFiles: BulkUploadFile[] = [];
-    
+
     for (let i = 0; i < fileList.length; i++) {
       // Safe: i is a numeric loop index bounded by fileList.length, standard array access
       // eslint-disable-next-line security/detect-object-injection
@@ -813,9 +867,9 @@ function UploadPanel({
         });
       }
     }
-    
+
     setFiles(prev => [...prev, ...newFiles]);
-    
+
     // Auto-suggest metadata
     for (const fileItem of newFiles) {
       await suggestMetadataForFile(fileItem);
@@ -830,10 +884,10 @@ function UploadPanel({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ filename: fileItem.file.name }),
       });
-      
+
       if (response.ok) {
         const suggestion = await response.json();
-        setFiles(prev => prev.map(f => 
+        setFiles(prev => prev.map(f =>
           f.id === fileItem.id ? { ...f, suggestedMetadata: suggestion } : f
         ));
       }
@@ -845,14 +899,14 @@ function UploadPanel({
   // Upload all files
   const handleUpload = async () => {
     setUploading(true);
-    
+
     for (const fileItem of files) {
       if (fileItem.status !== 'pending') continue;
-      
-      setFiles(prev => prev.map(f => 
+
+      setFiles(prev => prev.map(f =>
         f.id === fileItem.id ? { ...f, status: 'processing', progress: 10 } : f
       ));
-      
+
       try {
         const formData = new FormData();
         formData.append('file', fileItem.file);
@@ -869,38 +923,38 @@ function UploadPanel({
         if (fileItem.suggestedMetadata?.cor_elements?.length) {
           formData.append('cor_elements', fileItem.suggestedMetadata.cor_elements.join(','));
         }
-        
+
         const response = await fetch('/api/documents/upload', {
           method: 'POST',
           body: formData,
         });
-        
+
         if (response.ok) {
           const result = await response.json();
-          setFiles(prev => prev.map(f => 
-            f.id === fileItem.id 
+          setFiles(prev => prev.map(f =>
+            f.id === fileItem.id
               ? { ...f, status: 'success', progress: 100, document: result.document }
               : f
           ));
         } else {
           const error = await response.json();
-          setFiles(prev => prev.map(f => 
-            f.id === fileItem.id 
+          setFiles(prev => prev.map(f =>
+            f.id === fileItem.id
               ? { ...f, status: 'error', error: error.error || 'Upload failed' }
               : f
           ));
         }
       } catch (error) {
-        setFiles(prev => prev.map(f => 
-          f.id === fileItem.id 
+        setFiles(prev => prev.map(f =>
+          f.id === fileItem.id
             ? { ...f, status: 'error', error: 'Network error' }
             : f
         ));
       }
     }
-    
+
     setUploading(false);
-    
+
     // Check if all succeeded
     const allSuccess = files.every(f => f.status === 'success');
     if (allSuccess) {
@@ -915,8 +969,8 @@ function UploadPanel({
 
   // Update file metadata
   const updateFileMetadata = (id: string, updates: Partial<SuggestedMetadata>) => {
-    setFiles(prev => prev.map(f => 
-      f.id === id 
+    setFiles(prev => prev.map(f =>
+      f.id === id
         ? { ...f, suggestedMetadata: { ...f.suggestedMetadata!, ...updates } }
         : f
     ));
@@ -951,8 +1005,8 @@ function UploadPanel({
             }}
             onClick={() => fileInputRef.current?.click()}
             className={`border-2 border-dashed rounded-2xl p-12 text-center cursor-pointer transition-all
-              ${dragOver 
-                ? 'border-violet-500 bg-violet-500/10' 
+              ${dragOver
+                ? 'border-violet-500 bg-violet-500/10'
                 : 'border-slate-700 hover:border-violet-500/50 hover:bg-slate-800/30'
               }`}
           >
@@ -1060,8 +1114,8 @@ function FileUploadItem({
     <div className={`border rounded-xl overflow-hidden transition-colors
       ${file.status === 'success' ? 'border-emerald-500/30 bg-emerald-500/5' :
         file.status === 'error' ? 'border-rose-500/30 bg-rose-500/5' :
-        file.status === 'processing' ? 'border-violet-500/30 bg-violet-500/5' :
-        'border-slate-700/50 bg-slate-800/30'
+          file.status === 'processing' ? 'border-violet-500/30 bg-violet-500/5' :
+            'border-slate-700/50 bg-slate-800/30'
       }`}
     >
       {/* Main Row */}
@@ -1105,9 +1159,20 @@ function FileUploadItem({
 
         {/* Actions */}
         <div className="flex items-center gap-2">
-          {file.status === 'pending' && file.suggestedMetadata && (
+          {file.status === 'pending' && (
             <button
-              onClick={() => setExpanded(!expanded)}
+              onClick={() => {
+                if (!file.suggestedMetadata) {
+                  onUpdateMetadata({
+                    title: file.file.name.replace(/\.[^/.]+$/, ""),
+                    document_type_code: 'FRM',
+                    confidence: 0,
+                    tags: [],
+                    cor_elements: []
+                  });
+                }
+                setExpanded(!expanded);
+              }}
               className="p-2 text-slate-400 hover:text-white hover:bg-slate-700/50 rounded-lg transition-colors"
               title="Edit Metadata"
             >
@@ -1129,7 +1194,7 @@ function FileUploadItem({
       {/* Progress Bar */}
       {file.status === 'processing' && (
         <div className="h-1 bg-slate-800">
-          <div 
+          <div
             className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 transition-all duration-300"
             style={{ width: `${file.progress}%` }}
           />
@@ -1171,7 +1236,7 @@ function FileUploadItem({
             <input
               type="text"
               value={file.suggestedMetadata.cor_elements.join(', ')}
-              onChange={(e) => onUpdateMetadata({ 
+              onChange={(e) => onUpdateMetadata({
                 cor_elements: e.target.value.split(',').map(n => parseInt(n.trim())).filter(n => !isNaN(n))
               })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg 
@@ -1186,7 +1251,7 @@ function FileUploadItem({
             <input
               type="text"
               value={file.suggestedMetadata.tags.join(', ')}
-              onChange={(e) => onUpdateMetadata({ 
+              onChange={(e) => onUpdateMetadata({
                 tags: e.target.value.split(',').map(t => t.trim()).filter(Boolean)
               })}
               className="w-full px-3 py-2 bg-slate-900/50 border border-slate-700/50 rounded-lg 
@@ -1495,14 +1560,14 @@ function MoveDocumentsModal({
   const renderFolderOption = (folder: FolderTreeNode, depth: number = 0): JSX.Element[] => {
     const items: JSX.Element[] = [];
     const isDisabled = folder.id === currentFolderId;
-    
+
     items.push(
       <button
         key={folder.id}
         onClick={() => !isDisabled && setSelectedFolderId(folder.id)}
         disabled={isDisabled}
         className={`w-full flex items-center gap-2 px-4 py-2.5 transition-colors text-left
-          ${selectedFolderId === folder.id ? 'bg-violet-500/20 text-violet-300' : 
+          ${selectedFolderId === folder.id ? 'bg-violet-500/20 text-violet-300' :
             isDisabled ? 'opacity-50 cursor-not-allowed text-slate-500' : 'text-slate-300 hover:bg-slate-700/30'}`}
         style={{ paddingLeft: `${16 + depth * 20}px` }}
       >
@@ -1547,7 +1612,7 @@ function MoveDocumentsModal({
             <button
               onClick={() => setSelectedFolderId(null)}
               className={`w-full flex items-center gap-2 px-4 py-2.5 transition-colors text-left
-                ${selectedFolderId === null && currentFolderId !== null ? 'bg-violet-500/20 text-violet-300' : 
+                ${selectedFolderId === null && currentFolderId !== null ? 'bg-violet-500/20 text-violet-300' :
                   currentFolderId === null ? 'opacity-50 cursor-not-allowed text-slate-500' : 'text-slate-300 hover:bg-slate-700/30'}`}
               disabled={currentFolderId === null}
             >
@@ -1586,7 +1651,7 @@ function findFolder(folders: FolderTreeNode[], id: string): FolderTreeNode | nul
 
 function getBreadcrumbs(folders: FolderTreeNode[], target: FolderTreeNode): FolderTreeNode[] {
   const path: FolderTreeNode[] = [];
-  
+
   const findPath = (nodes: FolderTreeNode[], current: FolderTreeNode[]): boolean => {
     for (const node of nodes) {
       if (node.id === target.id) {
@@ -1599,7 +1664,7 @@ function getBreadcrumbs(folders: FolderTreeNode[], target: FolderTreeNode): Fold
     }
     return false;
   };
-  
+
   findPath(folders, []);
   return path;
 }

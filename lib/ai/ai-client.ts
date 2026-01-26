@@ -42,15 +42,16 @@ export async function callAI(
         throw new Error('No AI provider API keys found. Please set ANTHROPIC_API_KEY or OPENROUTER_API_KEY.');
     }
 
-    // Prefer direct Anthropic if available, unless OpenRouter is specifically requested or Anthropic key is missing
-    if (anthropicKey && !openRouterKey) {
-        return callAnthropic(messages, options, anthropicKey);
-    } else if (openRouterKey) {
+    // Priority: OpenRouter (DeepSeek) > Anthropic (Claude)
+    if (openRouterKey) {
         return callOpenRouter(messages, options, openRouterKey);
+    } else if (anthropicKey) {
+        return callAnthropic(messages, options, anthropicKey);
     }
 
     // Default to Anthropic if both are present (can be changed based on project preference)
-    return callAnthropic(messages, options, anthropicKey!);
+    // Default to OpenRouter if both are present (can be changed based on project preference)
+    return callOpenRouter(messages, options, openRouterKey!);
 }
 
 /**

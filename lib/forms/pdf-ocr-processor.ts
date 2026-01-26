@@ -570,7 +570,7 @@ Respond ONLY with valid JSON in this exact format:
     const aiResponse = await callAI([
       { role: 'user', content: prompt }
     ], {
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'deepseek/deepseek-chat',
       max_tokens: 1000
     });
 

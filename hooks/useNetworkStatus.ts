@@ -132,7 +132,7 @@ export function useNetworkStatus(
       if (pingUrl) verifyConnectivity();
 
       // Trigger background sync when coming back online
-      if ('serviceWorker' in navigator) {
+      if (process.env.NODE_ENV !== 'development' && 'serviceWorker' in navigator) {
         navigator.serviceWorker.ready.then((registration) => {
           if ('sync' in registration) {
             (registration as any).sync.register('sync-forms').catch(() => {

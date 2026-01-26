@@ -19,67 +19,71 @@ export async function subscribeToPushNotifications(
   userId: string
 ): Promise<PushSubscriptionResult> {
   // Check browser support
+  if (process.env.NODE_ENV === 'development') {
+    return { success: false, error: 'Push notifications disabled in development' };
+  }
+
   if (!('serviceWorker' in navigator)) {
     return { success: false, error: 'Service workers not supported' };
   }
-  
+
   if (!('PushManager' in window)) {
     return { success: false, error: 'Push notifications not supported' };
   }
-  
+
   if (!('Notification' in window)) {
     return { success: false, error: 'Notifications not supported' };
   }
-  
+
   try {
     // Request notification permission
     const permission = await Notification.requestPermission();
-    
+
     if (permission !== 'granted') {
-      return { 
-        success: false, 
-        error: permission === 'denied' 
+      return {
+        success: false,
+        error: permission === 'denied'
           ? 'Notification permission denied. Please enable in browser settings.'
           : 'Notification permission not granted'
       };
     }
-    
+
     // Get service worker registration
     const registration = await navigator.serviceWorker.ready;
-    
+
     // Check if already subscribed
     let subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       console.log('[Push] Already subscribed, updating backend');
       await saveSubscriptionToBackend(userId, subscription);
       return { success: true, subscription };
     }
-    
+
     // Get VAPID public key
     const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-    
+
     if (!vapidPublicKey) {
       return { success: false, error: 'Push notification configuration missing' };
     }
-    
+
     // Subscribe to push notifications
     subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey) as unknown as BufferSource
     });
-    
+
     console.log('[Push] New subscription created:', subscription.endpoint);
-    
+
     // Save subscription to backend
     await saveSubscriptionToBackend(userId, subscription);
-    
+
     return { success: true, subscription };
-    
+
   } catch (error) {
     console.error('[Push] Subscription failed:', error);
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : 'Failed to subscribe'
     };
   }
@@ -92,16 +96,17 @@ export async function unsubscribeFromPushNotifications(
   userId: string
 ): Promise<boolean> {
   try {
+    if (process.env.NODE_ENV === 'development') return false;
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.getSubscription();
-    
+
     if (subscription) {
       await subscription.unsubscribe();
       await removeSubscriptionFromBackend(userId, subscription.endpoint);
       console.log('[Push] Unsubscribed successfully');
       return true;
     }
-    
+
     return false;
   } catch (error) {
     console.error('[Push] Failed to unsubscribe:', error);
@@ -122,13 +127,17 @@ export async function getSubscriptionStatus(): Promise<{
     permission: 'default' as NotificationPermission,
     subscription: null as PushSubscription | null
   };
-  
+
+  if (process.env.NODE_ENV === 'development') {
+    return result;
+  }
+
   if (!('Notification' in window)) {
     return result;
   }
-  
+
   result.permission = Notification.permission;
-  
+
   if ('serviceWorker' in navigator && 'PushManager' in window) {
     try {
       const registration = await navigator.serviceWorker.ready;
@@ -139,7 +148,7 @@ export async function getSubscriptionStatus(): Promise<{
       console.error('[Push] Failed to get subscription status:', error);
     }
   }
-  
+
   return result;
 }
 
@@ -158,7 +167,7 @@ export function isPushSupported(): boolean {
  * Save subscription to backend
  */
 async function saveSubscriptionToBackend(
-  userId: string, 
+  userId: string,
   subscription: PushSubscription
 ): Promise<void> {
   const response = await fetch('/api/push/subscribe', {
@@ -169,7 +178,7 @@ async function saveSubscriptionToBackend(
       subscription: subscription.toJSON()
     })
   });
-  
+
   if (!response.ok) {
     const error = await response.json();
     throw new Error(error.message || 'Failed to save subscription');
@@ -198,15 +207,15 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   const base64 = (base64String + padding)
     .replace(/-/g, '+')
     .replace(/_/g, '/');
-  
+
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
-  
+
   for (let i = 0; i < rawData.length; ++i) {
     // Safe: i is a controlled loop index within bounds of rawData string and outputArray
     // eslint-disable-next-line security/detect-object-injection
     outputArray[i] = rawData.charCodeAt(i);
   }
-  
+
   return outputArray;
 }

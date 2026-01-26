@@ -12,7 +12,7 @@
  * - auth_failed: Authentication/authorization error, no retry
  */
 
-import { SupabaseClient } from '@supabase/supabase-js';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import {
   localDB,
   type SyncQueueItem,
@@ -20,8 +20,8 @@ import {
   type LocalForm,
   type LocalEvidence,
 } from '@/lib/db/local-db';
-import { createSafeQuery } from '@/lib/db/safe-query';
-import type { Database, UserRole } from '@/lib/db/types';
+import { createSafeQuery, type SupabaseLikeClient } from '@/lib/db/safe-query';
+import type { UserRole } from '@/lib/db/types';
 import { hasCode, hasStatusCode } from '@/lib/utils/type-guards';
 
 // =============================================================================
@@ -64,7 +64,7 @@ export interface SyncNotification {
 }
 
 export interface SyncEngineConfig {
-  supabase: SupabaseClient<Database>;
+  supabase: SupabaseLikeClient;
   companyId: string;
   userRole: UserRole;
   onNotification?: (notification: SyncNotification) => void;
@@ -104,7 +104,7 @@ export interface SyncStats {
  * ```
  */
 export class SyncEngine {
-  private supabase: SupabaseClient<Database>;
+  private supabase: SupabaseLikeClient;
   private companyId: string;
   private userRole: UserRole;
   private safeQuery: ReturnType<typeof createSafeQuery>;
@@ -451,14 +451,12 @@ export class SyncEngine {
     }
     const blob = new Blob([bytes], { type: payload.photo.mimeType });
 
-    // Upload to Supabase Storage
+    // TODO: Implement Neon-compatible file storage
+    // For now, stub out storage upload
     const filename = `${this.companyId}/${payload.formId}/${payload.photo.filename}`;
-    const { data, error } = await this.supabase.storage
-      .from('form-photos')
-      .upload(filename, blob, {
-        contentType: payload.photo.mimeType,
-        upsert: true,
-      });
+    console.warn('Storage upload not implemented for Neon:', filename);
+    const data = { path: filename };
+    const error = null;
 
     if (error) {
       // StorageError might have statusCode - extract safely

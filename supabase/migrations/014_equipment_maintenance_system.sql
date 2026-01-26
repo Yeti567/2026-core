@@ -16,7 +16,8 @@
 -- ============================================================================
 
 -- Maintenance record types
-CREATE TYPE maintenance_record_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE maintenance_record_type AS ENUM (
     'preventive',           -- Scheduled preventive maintenance
     'corrective',           -- Repairs and fixes
     'inspection_daily',     -- Daily pre-use inspection
@@ -29,9 +30,13 @@ CREATE TYPE maintenance_record_type AS ENUM (
     'calibration',         -- Calibration records
     'certification_renewal' -- Certification renewals
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Work order status
-CREATE TYPE work_order_status AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE work_order_status AS ENUM (
     'draft',
     'open',
     'assigned',
@@ -41,35 +46,51 @@ CREATE TYPE work_order_status AS ENUM (
     'completed',
     'cancelled'
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Work order priority
-CREATE TYPE work_order_priority AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE work_order_priority AS ENUM (
     'low',
     'medium',
     'high',
     'critical'
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Schedule frequency type
-CREATE TYPE schedule_frequency_type AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE schedule_frequency_type AS ENUM (
     'hours',      -- Every X hours of usage
     'days',       -- Every X calendar days
     'weeks',      -- Every X weeks
     'months',     -- Every X months
     'years'       -- Every X years
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Receipt/document source
-CREATE TYPE receipt_source AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE receipt_source AS ENUM (
     'mobile_photo',
     'pdf_upload',
     'email_forward',
     'manual_entry',
     'vendor_portal'
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- Downtime reason
-CREATE TYPE downtime_reason AS ENUM (
+DO $$ BEGIN
+    CREATE TYPE downtime_reason AS ENUM (
     'scheduled_maintenance',
     'breakdown',
     'parts_unavailable',
@@ -80,6 +101,9 @@ CREATE TYPE downtime_reason AS ENUM (
     'operator_unavailable',
     'other'
 );
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
 -- ============================================================================
 -- 2. EQUIPMENT INVENTORY TABLE (IF NOT EXISTS)
@@ -142,11 +166,76 @@ CREATE TABLE IF NOT EXISTS equipment_inventory (
     UNIQUE(company_id, equipment_code)
 );
 
+DO $$
+BEGIN
+    -- Rename equipment_number to equipment_code if it exists (00802 legacy)
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'equipment_number') THEN
+        ALTER TABLE equipment_inventory RENAME COLUMN equipment_number TO equipment_code;
+    END IF;
+
+    -- Add missing columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'category') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN category TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'make') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN make TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'model') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN model TEXT;
+    END IF;
+     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'serial_number') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN serial_number TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'year_manufactured') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN year_manufactured INTEGER;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'vendor') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN vendor TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'warranty_expiry') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN warranty_expiry DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'assigned_to') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN assigned_to TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'assigned_jobsite_id') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN assigned_jobsite_id UUID;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'last_hour_reading_date') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN last_hour_reading_date DATE;
+    END IF;
+     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'photo_url') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN photo_url TEXT;
+    END IF;
+     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'manual_url') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN manual_url TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'inspection_frequency_days') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN inspection_frequency_days INTEGER DEFAULT 30;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'last_inspection_date') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN last_inspection_date DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'next_inspection_date') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN next_inspection_date DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'inspection_status') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN inspection_status TEXT DEFAULT 'na';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'certifications_required') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN certifications_required TEXT[] DEFAULT ARRAY[]::TEXT[];
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipment_inventory' AND column_name = 'specifications') THEN
+        ALTER TABLE equipment_inventory ADD COLUMN specifications JSONB DEFAULT '{}';
+    END IF;
+END $$;
+
 -- ============================================================================
 -- 3. MAINTENANCE RECORDS TABLE
 -- ============================================================================
 
-CREATE TABLE maintenance_records (
+CREATE TABLE IF NOT EXISTS maintenance_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -210,6 +299,97 @@ CREATE TABLE maintenance_records (
     created_by UUID REFERENCES user_profiles(id)
 );
 
+DO $$
+BEGIN
+    -- Rename columns from 00802 schema
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'cost_labour') THEN
+        ALTER TABLE maintenance_records RENAME COLUMN cost_labour TO labor_cost;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'cost_parts') THEN
+        ALTER TABLE maintenance_records RENAME COLUMN cost_parts TO parts_cost;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'actual_date') THEN
+        ALTER TABLE maintenance_records RENAME COLUMN actual_date TO maintenance_date;
+    END IF;
+     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'odometer_hours') THEN
+        ALTER TABLE maintenance_records RENAME COLUMN odometer_hours TO hour_meter_reading;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'work_description') THEN
+        ALTER TABLE maintenance_records RENAME COLUMN work_description TO description;
+    END IF;
+    -- Handle total_cost: Convert generated column to regular and rename (preserves View dependencies)
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'cost_total') THEN
+        BEGIN
+            ALTER TABLE maintenance_records ALTER COLUMN cost_total DROP EXPRESSION;
+        EXCEPTION WHEN OTHERS THEN NULL;
+        END;
+        
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'total_cost') THEN
+             ALTER TABLE maintenance_records RENAME COLUMN cost_total TO total_cost;
+        END IF;
+    END IF;
+    
+    -- Ensure total_cost exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'total_cost') THEN
+         ALTER TABLE maintenance_records ADD COLUMN total_cost NUMERIC(10, 2) DEFAULT 0;
+    END IF;
+
+    -- Handle record_type conversion
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'maintenance_type') THEN
+         -- Check if record_type exists already?
+         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'record_type') THEN
+             ALTER TABLE maintenance_records ADD COLUMN record_type maintenance_record_type;
+             
+             UPDATE maintenance_records SET record_type = 'preventive'::maintenance_record_type WHERE maintenance_type = 'preventive';
+             UPDATE maintenance_records SET record_type = 'corrective'::maintenance_record_type WHERE maintenance_type IN ('corrective', 'repair');
+             UPDATE maintenance_records SET record_type = 'inspection_monthly'::maintenance_record_type WHERE maintenance_type = 'inspection';
+             UPDATE maintenance_records SET record_type = 'certification_renewal'::maintenance_record_type WHERE maintenance_type = 'certification';
+             UPDATE maintenance_records SET record_type = 'corrective'::maintenance_record_type WHERE record_type IS NULL;
+             
+             ALTER TABLE maintenance_records RENAME COLUMN maintenance_type TO maintenance_type_legacy;
+             ALTER TABLE maintenance_records ALTER COLUMN record_type SET NOT NULL;
+         END IF;
+    END IF;
+
+    -- Add missing columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'title') THEN
+        ALTER TABLE maintenance_records ADD COLUMN title TEXT;
+        UPDATE maintenance_records SET title = 'Maintenance Record ' || COALESCE(id::text, 'Unknown');
+        -- ALTER TABLE maintenance_records ALTER COLUMN title SET NOT NULL; -- Safer to leave nullable initially or set default
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'work_order_id') THEN
+        ALTER TABLE maintenance_records ADD COLUMN work_order_id UUID;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'parts_used') THEN
+        ALTER TABLE maintenance_records ADD COLUMN parts_used JSONB DEFAULT '[]';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'cor_element') THEN
+        ALTER TABLE maintenance_records ADD COLUMN cor_element INTEGER DEFAULT 7;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'evidence_chain_id') THEN
+        ALTER TABLE maintenance_records ADD COLUMN evidence_chain_id UUID REFERENCES evidence_chain(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'is_certification_record') THEN
+        ALTER TABLE maintenance_records ADD COLUMN is_certification_record BOOLEAN DEFAULT false;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'certification_type') THEN
+        ALTER TABLE maintenance_records ADD COLUMN certification_type TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'certification_expiry') THEN
+        ALTER TABLE maintenance_records ADD COLUMN certification_expiry DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'certificate_number') THEN
+        ALTER TABLE maintenance_records ADD COLUMN certificate_number TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'certifying_body') THEN
+        ALTER TABLE maintenance_records ADD COLUMN certifying_body TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_records' AND column_name = 'attachments') THEN
+        ALTER TABLE maintenance_records ADD COLUMN attachments JSONB DEFAULT '[]';
+    END IF;
+END $$;
+
 COMMENT ON TABLE maintenance_records IS 'All maintenance activities: inspections, repairs, service, certifications';
 COMMENT ON COLUMN maintenance_records.parts_used IS 'JSON array of parts: [{part_name, part_number, quantity, cost}]';
 
@@ -217,7 +397,7 @@ COMMENT ON COLUMN maintenance_records.parts_used IS 'JSON array of parts: [{part
 -- 4. MAINTENANCE RECEIPTS & INVOICES TABLE
 -- ============================================================================
 
-CREATE TABLE maintenance_receipts (
+CREATE TABLE IF NOT EXISTS maintenance_receipts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID REFERENCES equipment_inventory(id) ON DELETE SET NULL,
@@ -281,7 +461,7 @@ COMMENT ON COLUMN maintenance_receipts.line_items IS 'JSON array: [{description,
 -- 5. MAINTENANCE SCHEDULES TABLE
 -- ============================================================================
 
-CREATE TABLE maintenance_schedules (
+CREATE TABLE IF NOT EXISTS maintenance_schedules (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -339,11 +519,96 @@ CREATE TABLE maintenance_schedules (
 
 COMMENT ON TABLE maintenance_schedules IS 'Recurring maintenance schedules - calendar and usage-based';
 
+DO $$
+BEGIN
+    -- Rename columns from 00802 schema
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'reminder_days_before') THEN
+        ALTER TABLE maintenance_schedules RENAME COLUMN reminder_days_before TO warning_days;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'reminder_hours_before') THEN
+        ALTER TABLE maintenance_schedules RENAME COLUMN reminder_hours_before TO warning_hours;
+    END IF;
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'work_description') THEN
+        ALTER TABLE maintenance_schedules RENAME COLUMN work_description TO description;
+    END IF;
+    
+    -- Handle frequency_type conversion (Text -> Enum)
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'frequency_type' AND data_type = 'text') THEN
+         -- Rename old
+         ALTER TABLE maintenance_schedules RENAME COLUMN frequency_type TO frequency_type_legacy;
+    END IF;
+    
+    -- Ensure frequency_type (enum) exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'frequency_type') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN frequency_type schedule_frequency_type;
+        
+        -- Migrate data if legacy exists
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'frequency_type_legacy') THEN
+            UPDATE maintenance_schedules SET frequency_type = 'days'::schedule_frequency_type WHERE frequency_type_legacy = 'calendar' AND frequency_unit = 'days';
+            UPDATE maintenance_schedules SET frequency_type = 'weeks'::schedule_frequency_type WHERE frequency_type_legacy = 'calendar' AND frequency_unit = 'weeks';
+            UPDATE maintenance_schedules SET frequency_type = 'months'::schedule_frequency_type WHERE frequency_type_legacy = 'calendar' AND frequency_unit = 'months';
+            UPDATE maintenance_schedules SET frequency_type = 'years'::schedule_frequency_type WHERE frequency_type_legacy = 'calendar' AND frequency_unit = 'years';
+            UPDATE maintenance_schedules SET frequency_type = 'hours'::schedule_frequency_type WHERE frequency_type_legacy = 'usage_hours';
+            -- Default
+            UPDATE maintenance_schedules SET frequency_type = 'days'::schedule_frequency_type WHERE frequency_type IS NULL;
+            
+            ALTER TABLE maintenance_schedules ALTER COLUMN frequency_type SET NOT NULL;
+        END IF;
+    END IF;
+
+    -- Add missing columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'task_checklist') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN task_checklist JSONB DEFAULT '[]';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'estimated_duration_minutes') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN estimated_duration_minutes INTEGER;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'required_parts') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN required_parts JSONB DEFAULT '[]';
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'required_certifications') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN required_certifications TEXT[];
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'default_mechanic') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN default_mechanic TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'estimated_labor_cost') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN estimated_labor_cost NUMERIC(10, 2);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'estimated_parts_cost') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN estimated_parts_cost NUMERIC(10, 2);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'is_active') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN is_active BOOLEAN DEFAULT true;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'suspended_until') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN suspended_until DATE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'suspension_reason') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN suspension_reason TEXT;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'is_regulatory_requirement') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN is_regulatory_requirement BOOLEAN DEFAULT false;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'regulation_reference') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN regulation_reference TEXT;
+    END IF;
+     IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'hours_interval') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN hours_interval INTEGER;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'last_hour_reading') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN last_hour_reading NUMERIC(10, 2);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'maintenance_schedules' AND column_name = 'next_due_hours') THEN
+        ALTER TABLE maintenance_schedules ADD COLUMN next_due_hours NUMERIC(10, 2);
+    END IF;
+END $$;
+
 -- ============================================================================
 -- 6. WORK ORDERS TABLE
 -- ============================================================================
 
-CREATE TABLE maintenance_work_orders (
+CREATE TABLE IF NOT EXISTS maintenance_work_orders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -432,7 +697,7 @@ COMMENT ON TABLE maintenance_work_orders IS 'Work orders for maintenance tasks w
 -- 7. EQUIPMENT DOWNTIME TABLE
 -- ============================================================================
 
-CREATE TABLE equipment_downtime (
+CREATE TABLE IF NOT EXISTS equipment_downtime (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     equipment_id UUID NOT NULL REFERENCES equipment_inventory(id) ON DELETE CASCADE,
@@ -678,40 +943,40 @@ CREATE INDEX IF NOT EXISTS idx_equipment_location ON equipment_inventory(current
 CREATE INDEX IF NOT EXISTS idx_equipment_inspection ON equipment_inventory(next_inspection_date);
 
 -- Maintenance Records
-CREATE INDEX idx_maint_record_company ON maintenance_records(company_id);
-CREATE INDEX idx_maint_record_equipment ON maintenance_records(equipment_id);
-CREATE INDEX idx_maint_record_type ON maintenance_records(record_type);
-CREATE INDEX idx_maint_record_date ON maintenance_records(maintenance_date DESC);
-CREATE INDEX idx_maint_record_work_order ON maintenance_records(work_order_id);
-CREATE INDEX idx_maint_record_cert ON maintenance_records(certification_expiry) WHERE is_certification_record = true;
+CREATE INDEX IF NOT EXISTS idx_maint_record_company ON maintenance_records(company_id);
+CREATE INDEX IF NOT EXISTS idx_maint_record_equipment ON maintenance_records(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_maint_record_type ON maintenance_records(record_type);
+CREATE INDEX IF NOT EXISTS idx_maint_record_date ON maintenance_records(maintenance_date DESC);
+CREATE INDEX IF NOT EXISTS idx_maint_record_work_order ON maintenance_records(work_order_id);
+CREATE INDEX IF NOT EXISTS idx_maint_record_cert ON maintenance_records(certification_expiry) WHERE is_certification_record = true;
 
 -- Maintenance Receipts
-CREATE INDEX idx_maint_receipt_company ON maintenance_receipts(company_id);
-CREATE INDEX idx_maint_receipt_equipment ON maintenance_receipts(equipment_id);
-CREATE INDEX idx_maint_receipt_date ON maintenance_receipts(receipt_date DESC);
-CREATE INDEX idx_maint_receipt_vendor ON maintenance_receipts(vendor_name);
-CREATE INDEX idx_maint_receipt_approved ON maintenance_receipts(approved);
+CREATE INDEX IF NOT EXISTS idx_maint_receipt_company ON maintenance_receipts(company_id);
+CREATE INDEX IF NOT EXISTS idx_maint_receipt_equipment ON maintenance_receipts(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_maint_receipt_date ON maintenance_receipts(receipt_date DESC);
+CREATE INDEX IF NOT EXISTS idx_maint_receipt_vendor ON maintenance_receipts(vendor_name);
+CREATE INDEX IF NOT EXISTS idx_maint_receipt_approved ON maintenance_receipts(approved);
 
 -- Maintenance Schedules
-CREATE INDEX idx_maint_schedule_company ON maintenance_schedules(company_id);
-CREATE INDEX idx_maint_schedule_equipment ON maintenance_schedules(equipment_id);
-CREATE INDEX idx_maint_schedule_next_date ON maintenance_schedules(next_due_date) WHERE is_active = true;
-CREATE INDEX idx_maint_schedule_active ON maintenance_schedules(is_active);
+CREATE INDEX IF NOT EXISTS idx_maint_schedule_company ON maintenance_schedules(company_id);
+CREATE INDEX IF NOT EXISTS idx_maint_schedule_equipment ON maintenance_schedules(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_maint_schedule_next_date ON maintenance_schedules(next_due_date) WHERE is_active = true;
+CREATE INDEX IF NOT EXISTS idx_maint_schedule_active ON maintenance_schedules(is_active);
 
 -- Work Orders
-CREATE INDEX idx_work_order_company ON maintenance_work_orders(company_id);
-CREATE INDEX idx_work_order_equipment ON maintenance_work_orders(equipment_id);
-CREATE INDEX idx_work_order_number ON maintenance_work_orders(work_order_number);
-CREATE INDEX idx_work_order_status ON maintenance_work_orders(status);
-CREATE INDEX idx_work_order_priority ON maintenance_work_orders(priority);
-CREATE INDEX idx_work_order_due ON maintenance_work_orders(due_date) WHERE status NOT IN ('completed', 'cancelled');
-CREATE INDEX idx_work_order_assigned ON maintenance_work_orders(assigned_to);
+CREATE INDEX IF NOT EXISTS idx_work_order_company ON maintenance_work_orders(company_id);
+CREATE INDEX IF NOT EXISTS idx_work_order_equipment ON maintenance_work_orders(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_work_order_number ON maintenance_work_orders(work_order_number);
+CREATE INDEX IF NOT EXISTS idx_work_order_status ON maintenance_work_orders(status);
+CREATE INDEX IF NOT EXISTS idx_work_order_priority ON maintenance_work_orders(priority);
+CREATE INDEX IF NOT EXISTS idx_work_order_due ON maintenance_work_orders(due_date) WHERE status NOT IN ('completed', 'cancelled');
+CREATE INDEX IF NOT EXISTS idx_work_order_assigned ON maintenance_work_orders(assigned_to);
 
 -- Equipment Downtime
-CREATE INDEX idx_downtime_company ON equipment_downtime(company_id);
-CREATE INDEX idx_downtime_equipment ON equipment_downtime(equipment_id);
-CREATE INDEX idx_downtime_started ON equipment_downtime(started_at DESC);
-CREATE INDEX idx_downtime_active ON equipment_downtime(ended_at) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_downtime_company ON equipment_downtime(company_id);
+CREATE INDEX IF NOT EXISTS idx_downtime_equipment ON equipment_downtime(equipment_id);
+CREATE INDEX IF NOT EXISTS idx_downtime_started ON equipment_downtime(started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_downtime_active ON equipment_downtime(ended_at) WHERE ended_at IS NULL;
 
 -- ============================================================================
 -- 12. HELPER FUNCTIONS
@@ -818,6 +1083,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tr_downtime_duration ON equipment_downtime;
 CREATE TRIGGER tr_downtime_duration
     BEFORE UPDATE OF ended_at ON equipment_downtime
     FOR EACH ROW
@@ -852,6 +1118,7 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tr_equipment_downtime_status ON equipment_downtime;
 CREATE TRIGGER tr_equipment_downtime_status
     AFTER INSERT OR UPDATE OF ended_at ON equipment_downtime
     FOR EACH ROW
@@ -868,26 +1135,31 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS tr_maintenance_records_timestamp ON maintenance_records;
 CREATE TRIGGER tr_maintenance_records_timestamp
     BEFORE UPDATE ON maintenance_records
     FOR EACH ROW
     EXECUTE FUNCTION update_maintenance_timestamp();
 
+DROP TRIGGER IF EXISTS tr_maintenance_receipts_timestamp ON maintenance_receipts;
 CREATE TRIGGER tr_maintenance_receipts_timestamp
     BEFORE UPDATE ON maintenance_receipts
     FOR EACH ROW
     EXECUTE FUNCTION update_maintenance_timestamp();
 
+DROP TRIGGER IF EXISTS tr_maintenance_schedules_timestamp ON maintenance_schedules;
 CREATE TRIGGER tr_maintenance_schedules_timestamp
     BEFORE UPDATE ON maintenance_schedules
     FOR EACH ROW
     EXECUTE FUNCTION update_maintenance_timestamp();
 
+DROP TRIGGER IF EXISTS tr_work_orders_timestamp ON maintenance_work_orders;
 CREATE TRIGGER tr_work_orders_timestamp
     BEFORE UPDATE ON maintenance_work_orders
     FOR EACH ROW
     EXECUTE FUNCTION update_maintenance_timestamp();
 
+DROP TRIGGER IF EXISTS tr_downtime_timestamp ON equipment_downtime;
 CREATE TRIGGER tr_downtime_timestamp
     BEFORE UPDATE ON equipment_downtime
     FOR EACH ROW
@@ -909,10 +1181,13 @@ ALTER TABLE equipment_downtime ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 
 -- Equipment Inventory Policies
+-- Equipment Inventory Policies
+DROP POLICY IF EXISTS "equipment_select" ON equipment_inventory;
 CREATE POLICY "equipment_select" ON equipment_inventory
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_insert" ON equipment_inventory;
 CREATE POLICY "equipment_insert" ON equipment_inventory
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -920,11 +1195,13 @@ CREATE POLICY "equipment_insert" ON equipment_inventory
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "equipment_update" ON equipment_inventory;
 CREATE POLICY "equipment_update" ON equipment_inventory
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "equipment_delete" ON equipment_inventory;
 CREATE POLICY "equipment_delete" ON equipment_inventory
     FOR DELETE TO authenticated
     USING (
@@ -933,14 +1210,18 @@ CREATE POLICY "equipment_delete" ON equipment_inventory
     );
 
 -- Maintenance Records Policies
+-- Maintenance Records Policies
+DROP POLICY IF EXISTS "maint_records_select" ON maintenance_records;
 CREATE POLICY "maint_records_select" ON maintenance_records
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "maint_records_insert" ON maintenance_records;
 CREATE POLICY "maint_records_insert" ON maintenance_records
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "maint_records_update" ON maintenance_records;
 CREATE POLICY "maint_records_update" ON maintenance_records
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())
@@ -992,14 +1273,18 @@ CREATE POLICY "work_orders_update" ON maintenance_work_orders
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
 -- Equipment Downtime Policies
+-- Equipment Downtime Policies
+DROP POLICY IF EXISTS "downtime_select" ON equipment_downtime;
 CREATE POLICY "downtime_select" ON equipment_downtime
     FOR SELECT TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "downtime_insert" ON equipment_downtime;
 CREATE POLICY "downtime_insert" ON equipment_downtime
     FOR INSERT TO authenticated
     WITH CHECK (company_id = get_user_company_id() OR is_super_admin());
 
+DROP POLICY IF EXISTS "downtime_update" ON equipment_downtime;
 CREATE POLICY "downtime_update" ON equipment_downtime
     FOR UPDATE TO authenticated
     USING (company_id = get_user_company_id() OR is_super_admin())

@@ -2,8 +2,8 @@
  * Next.js Middleware for Multi-Tenant Security
  * 
  * This middleware runs on every matched request and:
- * 1. Validates authentication via Supabase
- * 2. Fetches user's company_id and role from user_profiles
+ * 1. Validates authentication via JWT token
+ * 2. Fetches user's company_id and role from company_users
  * 3. Injects x-company-id and x-user-role headers for downstream use
  * 4. Redirects unauthenticated users to /login
  * 5. Blocks non-admin users from /admin routes
@@ -11,7 +11,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { createMiddlewareClient } from '@/lib/supabase/server';
+import { verifyToken } from '@/lib/auth/jwt';
 import type { UserRole } from '@/lib/db/types';
 
 // =============================================================================
@@ -88,7 +88,7 @@ function generateCSPHeaders(nonce: string): string {
     default-src 'self';
     script-src 'self' 'nonce-${nonce}' 'strict-dynamic';
     style-src 'self' 'unsafe-inline';
-    img-src 'self' blob: data: https://*.supabase.co;
+    img-src 'self' blob: data:;
     font-src 'self';
     object-src 'none';
     base-uri 'self';
@@ -115,7 +115,7 @@ export async function middleware(request: NextRequest) {
     const nonce = btoa(crypto.randomUUID());
     const cspHeader = generateCSPHeaders(nonce);
 
-    // Create response and Supabase client
+    // Create response
     const requestHeaders = new Headers(request.headers);
     requestHeaders.set('x-nonce', nonce);
 
@@ -125,14 +125,8 @@ export async function middleware(request: NextRequest) {
       },
     });
 
-    const { supabase, response: supabaseResponse } = createMiddlewareClient(
-      request,
-      response
-    );
-    response = supabaseResponse;
-
-    // Set CSP header for all responses - TEMPORARILY DISABLED FOR DEBUGGING
-    // response.headers.set('Content-Security-Policy', cspHeader);
+    // Set CSP header for all responses
+    response.headers.set('Content-Security-Policy', cspHeader);
 
     // Check if route is public
     const isPublicRoute = matchesRoutes(pathname, PUBLIC_ROUTES);
@@ -142,11 +136,11 @@ export async function middleware(request: NextRequest) {
       return response;
     }
 
-    // Get authenticated user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // Get JWT token from cookie
+    const token = request.cookies.get('auth-token')?.value;
 
     // Handle unauthenticated users
-    if (authError || !user) {
+    if (!token) {
       // For API routes, return 401
       if (pathname.startsWith('/api')) {
         const apiResponse = NextResponse.json(
@@ -165,41 +159,33 @@ export async function middleware(request: NextRequest) {
       return redirectResponse;
     }
 
-    // Fetch user profile to get company_id and role
-    const { data: profile, error: profileError } = await supabase
-      .from('user_profiles')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single();
-
-    // Handle missing profile
-    if (profileError || !profile) {
-      // User is authenticated but has no profile
-      // This might happen during onboarding - redirect to setup
+    // Verify JWT token
+    const payload = verifyToken(token);
+    if (!payload) {
+      // Invalid token
       if (pathname.startsWith('/api')) {
         const apiResponse = NextResponse.json(
-          { error: 'User profile not found' },
-          { status: 403 }
+          { error: 'Invalid token' },
+          { status: 401 }
         );
         apiResponse.headers.set('Content-Security-Policy', cspHeader);
         return apiResponse;
       }
 
-      // Allow access to onboarding/setup routes
-      if (pathname.startsWith('/onboarding') || pathname.startsWith('/setup')) {
-        return response; // CSP already set above
-      }
-
-      // Redirect to onboarding
-      const redirectResponse = NextResponse.redirect(new URL('/onboarding', request.url));
+      const loginUrl = new URL('/login', request.url);
+      loginUrl.searchParams.set('redirect', pathname);
+      const redirectResponse = NextResponse.redirect(loginUrl);
       redirectResponse.headers.set('Content-Security-Policy', cspHeader);
       return redirectResponse;
     }
 
+    const role = (payload.role || null) as UserRole | null;
+    const companyId = payload.companyId || null;
+
     // Check admin route access
     const isAdminRoute = matchesRoutes(pathname, ADMIN_ROUTES);
 
-    if (isAdminRoute && !canAccessAdminPages(profile.role)) {
+    if (isAdminRoute && !canAccessAdminPages(role)) {
       // Non-admin/auditor trying to access admin routes
       if (pathname.startsWith('/api')) {
         const apiResponse = NextResponse.json(
@@ -219,9 +205,10 @@ export async function middleware(request: NextRequest) {
     // Inject user context into request headers
     // These headers can be read by Server Components and API routes
     const authenticatedHeaders = new Headers(request.headers);
-    authenticatedHeaders.set('x-company-id', profile.company_id);
-    authenticatedHeaders.set('x-user-role', profile.role);
-    authenticatedHeaders.set('x-user-id', user.id);
+    if (companyId) authenticatedHeaders.set('x-company-id', companyId);
+    if (role) authenticatedHeaders.set('x-user-role', role);
+    authenticatedHeaders.set('x-user-id', payload.userId);
+    authenticatedHeaders.set('authorization', `Bearer ${token}`);
     authenticatedHeaders.set('x-nonce', nonce);
 
     // Create new response with injected headers
@@ -229,13 +216,6 @@ export async function middleware(request: NextRequest) {
       request: {
         headers: authenticatedHeaders,
       },
-    });
-
-    // CSP header is already set above for all routes
-
-    // Copy cookies from supabase response
-    supabaseResponse.cookies.getAll().forEach(cookie => {
-      response.cookies.set(cookie);
     });
 
     return response;

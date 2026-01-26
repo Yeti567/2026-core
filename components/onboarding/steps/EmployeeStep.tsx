@@ -108,9 +108,8 @@ export default function EmployeeStep({ companyId, onComplete }: Step2Props) {
                             placeholder="First Name"
                             value={emp.firstName}
                             onChange={(e) => {
-                                const newEmps = [...manualEmployees];
-                                newEmps[index].firstName = e.target.value;
-                                setManualEmployees(newEmps);
+                                const val = e.target.value;
+                                setManualEmployees(prev => prev.map((emp, i) => i === index ? { ...emp, firstName: val } : emp));
                             }}
                         />
                         <input
@@ -118,9 +117,8 @@ export default function EmployeeStep({ companyId, onComplete }: Step2Props) {
                             placeholder="Last Name"
                             value={emp.lastName}
                             onChange={(e) => {
-                                const newEmps = [...manualEmployees];
-                                newEmps[index].lastName = e.target.value;
-                                setManualEmployees(newEmps);
+                                const val = e.target.value;
+                                setManualEmployees(prev => prev.map((emp, i) => i === index ? { ...emp, lastName: val } : emp));
                             }}
                         />
                         <input
@@ -129,9 +127,8 @@ export default function EmployeeStep({ companyId, onComplete }: Step2Props) {
                             type="email"
                             value={emp.email}
                             onChange={(e) => {
-                                const newEmps = [...manualEmployees];
-                                newEmps[index].email = e.target.value;
-                                setManualEmployees(newEmps);
+                                const val = e.target.value;
+                                setManualEmployees(prev => prev.map((emp, i) => i === index ? { ...emp, email: val } : emp));
                             }}
                         />
                         <input
@@ -139,9 +136,8 @@ export default function EmployeeStep({ companyId, onComplete }: Step2Props) {
                             placeholder="Position"
                             value={emp.position}
                             onChange={(e) => {
-                                const newEmps = [...manualEmployees];
-                                newEmps[index].position = e.target.value;
-                                setManualEmployees(newEmps);
+                                const val = e.target.value;
+                                setManualEmployees(prev => prev.map((emp, i) => i === index ? { ...emp, position: val } : emp));
                             }}
                         />
                     </div>

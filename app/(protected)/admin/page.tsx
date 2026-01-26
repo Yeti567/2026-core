@@ -26,7 +26,7 @@ export default async function AdminPage() {
           <h2 className="text-lg font-semibold mb-2">Access Verified</h2>
           <p className="text-sm text-[var(--muted)]">
             You have successfully accessed the admin area. This page is protected
-            by the middleware which checks that your role is either 
+            by the middleware which checks that your role is either
             <code className="mx-1 px-1 py-0.5 bg-[var(--background)] rounded">admin</code>
             or
             <code className="mx-1 px-1 py-0.5 bg-[var(--background)] rounded">super_admin</code>.
@@ -50,8 +50,8 @@ export default async function AdminPage() {
         )}
 
         {/* COR Audit Dashboard Highlight */}
-        <Link 
-          href="/admin/audit-dashboard" 
+        <Link
+          href="/admin/audit-dashboard"
           className="block card mt-6 border-indigo-500/30 bg-gradient-to-br from-indigo-500/10 via-purple-500/5 to-transparent hover:border-indigo-500/50 transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -67,8 +67,8 @@ export default async function AdminPage() {
         </Link>
 
         {/* Certification Tracker Highlight */}
-        <Link 
-          href="/admin/certifications" 
+        <Link
+          href="/admin/certifications"
           className="block card mt-6 border-amber-500/30 bg-gradient-to-br from-amber-500/10 via-orange-500/5 to-transparent hover:border-amber-500/50 transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -84,8 +84,8 @@ export default async function AdminPage() {
         </Link>
 
         {/* Master Libraries Highlight */}
-        <Link 
-          href="/admin/libraries" 
+        <Link
+          href="/admin/libraries"
           className="block card mt-6 border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-transparent hover:border-emerald-500/50 transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -101,8 +101,8 @@ export default async function AdminPage() {
         </Link>
 
         {/* AuditSoft Integration Highlight */}
-        <Link 
-          href="/admin/auditsoft" 
+        <Link
+          href="/admin/auditsoft"
           className="block card mt-6 border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-blue-500/5 to-transparent hover:border-cyan-500/50 transition-all group"
         >
           <div className="flex items-center gap-4">
@@ -147,6 +147,11 @@ export default async function AdminPage() {
             <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🎤</div>
             <h3 className="font-semibold">Mock Audit</h3>
             <p className="text-xs text-[var(--muted)]">AI interview practice</p>
+          </Link>
+          <Link href="/admin/document-registry" className="card text-center hover:border-violet-500 transition-colors group">
+            <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">📂</div>
+            <h3 className="font-semibold">Document Control</h3>
+            <p className="text-xs text-[var(--muted)]">Registry & folders</p>
           </Link>
           <Link href="/admin/action-plan" className="card text-center hover:border-[var(--primary)] transition-colors group">
             <div className="text-3xl mb-2 group-hover:scale-110 transition-transform">🎯</div>

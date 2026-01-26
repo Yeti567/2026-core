@@ -478,10 +478,11 @@ BEGIN
     BEGIN
         SELECT UPPER(
             SUBSTRING(
-                string_agg(SUBSTRING(word, 1, 1), '')
-                FROM regexp_split_to_table(v_document.name, '\s+') AS word
-            ), 1, 4
-        ) INTO v_initials;
+                string_agg(SUBSTRING(word, 1, 1), ''),
+                1, 4
+            )
+        ) INTO v_initials
+        FROM regexp_split_to_table(v_document.name, '\s+') AS t(word);
         
         -- Extract control numbers from document content
         v_control_numbers := extract_control_numbers_from_text(v_document.extracted_text, v_initials);
@@ -719,15 +720,7 @@ CREATE INDEX IF NOT EXISTS idx_documents_applicable_roles ON documents USING gin
 CREATE INDEX IF NOT EXISTS idx_documents_is_critical ON documents(company_id, is_critical) WHERE is_critical = true;
 CREATE INDEX IF NOT EXISTS idx_documents_must_acknowledge ON documents(company_id, worker_must_acknowledge) WHERE worker_must_acknowledge = true;
 CREATE INDEX IF NOT EXISTS idx_documents_related ON documents USING gin(related_document_ids);
-CREATE INDEX IF NOT EXISTS idx_documents_fulltext_enhanced ON documents USING gin(
-    to_tsvector('english', 
-        COALESCE(title, '') || ' ' || 
-        COALESCE(description, '') || ' ' || 
-        COALESCE(extracted_text, '') || ' ' ||
-        COALESCE(array_to_string(keywords, ' '), '') || ' ' ||
-        COALESCE(array_to_string(tags, ' '), '')
-    )
-);
+
 
 -- Acknowledgment indexes
 CREATE INDEX IF NOT EXISTS idx_acknowledgments_worker_status ON document_acknowledgments(worker_id, status);

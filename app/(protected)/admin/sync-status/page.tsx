@@ -5,8 +5,7 @@ import { useNetworkStatus, type NetworkStatus } from '@/hooks/useNetworkStatus';
 import { useSyncStatus, type SyncLogEntry } from '@/hooks/useSyncStatus';
 import { localDB, type SyncQueueItem } from '@/lib/db/local-db';
 import { SyncEngine, type SyncNotification } from '@/lib/sync/sync-engine';
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '@/lib/db/types';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import Link from 'next/link';
 
 // =============================================================================
@@ -239,40 +238,12 @@ export default function SyncStatusPage() {
       : 'Sync Status - COR 2026';
   }, [counts.pending, counts.failed]);
 
-  // Initialize sync engine
+  // Initialize sync engine (server-only)
   useEffect(() => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-    if (!supabaseUrl || !supabaseKey) {
-      console.warn('Supabase not configured');
-      return;
-    }
-
-    const supabase = createClient<Database>(supabaseUrl, supabaseKey);
-
-    // TODO: Get actual user context from auth
-    syncEngineRef.current = new SyncEngine({
-      supabase,
-      companyId: 'current-company-id', // Replace with actual
-      userRole: 'admin',
-      onNotification: (n: SyncNotification) => {
-        console.log('[Sync]', n.message);
-      },
-      onStateChange: (itemId, oldStatus, newStatus) => {
-        addLogEntry({
-          itemId,
-          itemType: 'item',
-          oldStatus,
-          newStatus,
-        });
-      },
-    });
-
-    return () => {
-      syncEngineRef.current?.destroy();
-    };
-  }, [addLogEntry]);
+    // TODO: Initialize SyncEngine on server side only
+    // For now, stub out client-side sync engine
+    console.warn('SyncEngine not available on client side');
+  }, []);
 
   // Force sync all
   const handleForceSync = useCallback(async () => {

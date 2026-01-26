@@ -21,31 +21,35 @@ CREATE TABLE IF NOT EXISTS audit_scores (
 );
 
 -- Index for quick lookups
-CREATE INDEX idx_audit_scores_company ON audit_scores(company_id);
-CREATE INDEX idx_audit_scores_expires ON audit_scores(expires_at);
+CREATE INDEX IF NOT EXISTS idx_audit_scores_company ON audit_scores(company_id);
+CREATE INDEX IF NOT EXISTS idx_audit_scores_expires ON audit_scores(expires_at);
 
 -- Enable RLS
 ALTER TABLE audit_scores ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies
+DROP POLICY IF EXISTS "audit_scores_select" ON audit_scores;
 CREATE POLICY "audit_scores_select" ON audit_scores
     FOR SELECT USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "audit_scores_insert" ON audit_scores;
 CREATE POLICY "audit_scores_insert" ON audit_scores
     FOR INSERT WITH CHECK (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "audit_scores_update" ON audit_scores;
 CREATE POLICY "audit_scores_update" ON audit_scores
     FOR UPDATE USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "audit_scores_delete" ON audit_scores;
 CREATE POLICY "audit_scores_delete" ON audit_scores
     FOR DELETE USING (
         company_id = get_user_company_id()

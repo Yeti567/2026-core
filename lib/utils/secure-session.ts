@@ -1,0 +1,591 @@
+/**
+ * Secure Session Management
+ * 
+ * Provides secure session management with proper token handling,
+ * session invalidation, and security controls.
+ */
+
+import { verifyToken, generateToken, JWTPayload } from './auth/jwt';
+import { getEnvVar } from './secure-env';
+
+/**
+ * Session configuration
+ */
+export interface SessionConfig {
+  tokenExpiry: number;
+  refreshTokenExpiry: number;
+  maxSessionsPerUser: number;
+  requireReauth: boolean;
+  idleTimeout: number;
+  absoluteTimeout: number;
+  secureCookies: boolean;
+  sameSitePolicy: 'strict' | 'lax' | 'none';
+}
+
+/**
+ * Session data interface
+ */
+export interface SessionData {
+  userId: string;
+  email: string;
+  companyId?: string;
+  role?: string;
+  sessionId: string;
+  createdAt: Date;
+  lastAccessedAt: Date;
+  expiresAt: Date;
+  ipAddress: string;
+  userAgent: string;
+  isActive: boolean;
+}
+
+/**
+ * Refresh token interface
+ */
+export interface RefreshToken {
+  id: string;
+  userId: string;
+  sessionId: string;
+  token: string;
+  expiresAt: Date;
+  createdAt: Date;
+  isRevoked: boolean;
+  ipAddress: string;
+  userAgent: string;
+}
+
+/**
+ * Default session configuration
+ */
+const defaultSessionConfig: SessionConfig = {
+  tokenExpiry: parseInt(getEnvVar('JWT_EXPIRES_IN', false, '604800')) * 1000, // 7 days in ms
+  refreshTokenExpiry: 30 * 24 * 60 * 60 * 1000, // 30 days in ms
+  maxSessionsPerUser: 5,
+  requireReauth: false,
+  idleTimeout: 2 * 60 * 60 * 1000, // 2 hours in ms
+  absoluteTimeout: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
+  secureCookies: process.env.NODE_ENV === 'production',
+  sameSitePolicy: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+};
+
+/**
+ * Session Manager class
+ */
+export class SessionManager {
+  private config: SessionConfig;
+  private sessions: Map<string, SessionData> = new Map();
+  private refreshTokens: Map<string, RefreshToken> = new Map();
+  private userSessions: Map<string, Set<string>> = new Map();
+
+  constructor(config: Partial<SessionConfig> = {}) {
+    this.config = { ...defaultSessionConfig, ...config };
+    
+    // Clean up expired sessions periodically
+    setInterval(() => this.cleanupExpiredSessions(), 5 * 60 * 1000); // Every 5 minutes
+  }
+
+  /**
+   * Create a new session
+   */
+  createSession(
+    payload: JWTPayload,
+    ipAddress: string,
+    userAgent: string
+  ): { accessToken: string; refreshToken: string; session: SessionData } {
+    const sessionId = this.generateSessionId();
+    const now = new Date();
+    const expiresAt = new Date(now.getTime() + this.config.tokenExpiry);
+
+    // Check session limit for user
+    this.enforceSessionLimit(payload.userId);
+
+    const session: SessionData = {
+      userId: payload.userId,
+      email: payload.email,
+      companyId: payload.companyId,
+      role: payload.role,
+      sessionId,
+      createdAt: now,
+      lastAccessedAt: now,
+      expiresAt,
+      ipAddress,
+      userAgent,
+      isActive: true
+    };
+
+    // Store session
+    this.sessions.set(sessionId, session);
+    
+    // Track user sessions
+    if (!this.userSessions.has(payload.userId)) {
+      this.userSessions.set(payload.userId, new Set());
+    }
+    this.userSessions.get(payload.userId)!.add(sessionId);
+
+    // Generate tokens
+    const accessToken = this.generateAccessToken(payload, sessionId);
+    const refreshToken = this.generateRefreshToken(sessionId, payload.userId, ipAddress, userAgent);
+
+    return { accessToken, refreshToken, session };
+  }
+
+  /**
+   * Validate and refresh a session
+   */
+  async refreshSession(
+    refreshToken: string,
+    ipAddress: string,
+    userAgent: string
+  ): Promise<{ accessToken: string; refreshToken: string; session: SessionData } | null> {
+    const tokenData = this.refreshTokens.get(refreshToken);
+    
+    if (!tokenData || tokenData.isRevoked || tokenData.expiresAt < new Date()) {
+      return null;
+    }
+
+    const session = this.sessions.get(tokenData.sessionId);
+    if (!session || !session.isActive || session.expiresAt < new Date()) {
+      return null;
+    }
+
+    // Check for suspicious activity
+    if (this.detectSuspiciousActivity(tokenData, ipAddress, userAgent)) {
+      this.revokeUserSessions(session.userId);
+      return null;
+    }
+
+    // Update session
+    session.lastAccessedAt = new Date();
+    session.expiresAt = new Date(Date.now() + this.config.tokenExpiry);
+
+    // Generate new tokens
+    const payload: JWTPayload = {
+      userId: session.userId,
+      email: session.email,
+      companyId: session.companyId,
+      role: session.role
+    };
+
+    const newAccessToken = this.generateAccessToken(payload, session.sessionId);
+    const newRefreshToken = this.generateRefreshToken(
+      session.sessionId,
+      session.userId,
+      ipAddress,
+      userAgent
+    );
+
+    // Revoke old refresh token
+    tokenData.isRevoked = true;
+
+    return { accessToken: newAccessToken, refreshToken: newRefreshToken, session };
+  }
+
+  /**
+   * Validate access token
+   */
+  validateAccessToken(token: string): { payload: JWTPayload; session: SessionData } | null {
+    try {
+      const payload = verifyToken(token);
+      if (!payload || !payload.sessionId) {
+        return null;
+      }
+
+      const session = this.sessions.get(payload.sessionId);
+      if (!session || !session.isActive || session.expiresAt < new Date()) {
+        return null;
+      }
+
+      // Check idle timeout
+      const now = new Date();
+      const idleTime = now.getTime() - session.lastAccessedAt.getTime();
+      if (idleTime > this.config.idleTimeout) {
+        this.invalidateSession(session.sessionId);
+        return null;
+      }
+
+      // Check absolute timeout
+      const absoluteTime = now.getTime() - session.createdAt.getTime();
+      if (absoluteTime > this.config.absoluteTimeout) {
+        this.invalidateSession(session.sessionId);
+        return null;
+      }
+
+      // Update last accessed time
+      session.lastAccessedAt = now;
+
+      return { payload, session };
+    } catch (error) {
+      return null;
+    }
+  }
+
+  /**
+   * Invalidate a specific session
+   */
+  invalidateSession(sessionId: string): boolean {
+    const session = this.sessions.get(sessionId);
+    if (!session) {
+      return false;
+    }
+
+    session.isActive = false;
+
+    // Revoke associated refresh tokens
+    for (const [token, tokenData] of this.refreshTokens.entries()) {
+      if (tokenData.sessionId === sessionId) {
+        tokenData.isRevoked = true;
+      }
+    }
+
+    // Remove from user sessions tracking
+    const userSessionSet = this.userSessions.get(session.userId);
+    if (userSessionSet) {
+      userSessionSet.delete(sessionId);
+    }
+
+    return true;
+  }
+
+  /**
+   * Revoke all sessions for a user
+   */
+  revokeUserSessions(userId: string): number {
+    const userSessionSet = this.userSessions.get(userId);
+    if (!userSessionSet) {
+      return 0;
+    }
+
+    let revokedCount = 0;
+    for (const sessionId of userSessionSet) {
+      if (this.invalidateSession(sessionId)) {
+        revokedCount++;
+      }
+    }
+
+    return revokedCount;
+  }
+
+  /**
+   * Get active sessions for a user
+   */
+  getUserSessions(userId: string): SessionData[] {
+    const userSessionSet = this.userSessions.get(userId);
+    if (!userSessionSet) {
+      return [];
+    }
+
+    const sessions: SessionData[] = [];
+    for (const sessionId of userSessionSet) {
+      const session = this.sessions.get(sessionId);
+      if (session && session.isActive) {
+        sessions.push(session);
+      }
+    }
+
+    return sessions.sort((a, b) => b.lastAccessedAt.getTime() - a.lastAccessedAt.getTime());
+  }
+
+  /**
+   * Clean up expired sessions
+   */
+  private cleanupExpiredSessions(): void {
+    const now = new Date();
+    const expiredSessions: string[] = [];
+
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.expiresAt < now || !session.isActive) {
+        expiredSessions.push(sessionId);
+      }
+    }
+
+    for (const sessionId of expiredSessions) {
+      this.invalidateSession(sessionId);
+    }
+
+    // Clean up expired refresh tokens
+    const expiredTokens: string[] = [];
+    for (const [token, tokenData] of this.refreshTokens.entries()) {
+      if (tokenData.expiresAt < now || tokenData.isRevoked) {
+        expiredTokens.push(token);
+      }
+    }
+
+    for (const token of expiredTokens) {
+      this.refreshTokens.delete(token);
+    }
+  }
+
+  /**
+   * Enforce session limit per user
+   */
+  private enforceSessionLimit(userId: string): void {
+    const userSessionSet = this.userSessions.get(userId);
+    if (!userSessionSet) {
+      return;
+    }
+
+    const activeSessions: string[] = [];
+    for (const sessionId of userSessionSet) {
+      const session = this.sessions.get(sessionId);
+      if (session && session.isActive) {
+        activeSessions.push(sessionId);
+      }
+    }
+
+    // If over limit, revoke oldest sessions
+    if (activeSessions.length >= this.config.maxSessionsPerUser) {
+      const sortedSessions = activeSessions
+        .map(sessionId => this.sessions.get(sessionId)!)
+        .sort((a, b) => a.lastAccessedAt.getTime() - b.lastAccessedAt.getTime());
+
+      const sessionsToRevoke = sortedSessions.slice(0, activeSessions.length - this.config.maxSessionsPerUser + 1);
+      for (const session of sessionsToRevoke) {
+        this.invalidateSession(session.sessionId);
+      }
+    }
+  }
+
+  /**
+   * Detect suspicious activity
+   */
+  private detectSuspiciousActivity(
+    tokenData: RefreshToken,
+    ipAddress: string,
+    userAgent: string
+  ): boolean {
+    // Check IP address change
+    if (tokenData.ipAddress !== ipAddress) {
+      // Log suspicious activity
+      console.warn(`IP address changed for user ${tokenData.userId}: ${tokenData.ipAddress} -> ${ipAddress}`);
+      
+      // For high security, this could be considered suspicious
+      if (this.config.requireReauth) {
+        return true;
+      }
+    }
+
+    // Check user agent change
+    if (tokenData.userAgent !== userAgent) {
+      console.warn(`User agent changed for user ${tokenData.userId}`);
+      
+      // For high security, this could be considered suspicious
+      if (this.config.requireReauth) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Generate session ID
+   */
+  private generateSessionId(): string {
+    return crypto.randomUUID();
+  }
+
+  /**
+   * Generate access token
+   */
+  private generateAccessToken(payload: JWTPayload, sessionId: string): string {
+    const tokenPayload = {
+      ...payload,
+      sessionId,
+      type: 'access'
+    };
+    return generateToken(tokenPayload);
+  }
+
+  /**
+   * Generate refresh token
+   */
+  private generateRefreshToken(
+    sessionId: string,
+    userId: string,
+    ipAddress: string,
+    userAgent: string
+  ): string {
+    const token = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + this.config.refreshTokenExpiry);
+
+    const refreshTokenData: RefreshToken = {
+      id: crypto.randomUUID(),
+      userId,
+      sessionId,
+      token,
+      expiresAt,
+      createdAt: new Date(),
+      isRevoked: false,
+      ipAddress,
+      userAgent
+    };
+
+    this.refreshTokens.set(token, refreshTokenData);
+    return token;
+  }
+
+  /**
+   * Set secure cookie headers
+   */
+  setSecureCookieHeaders(
+    headers: Headers,
+    name: string,
+    value: string,
+    expires?: Date
+  ): void {
+    let cookieString = `${name}=${value}; Path=/; HttpOnly`;
+
+    if (this.config.secureCookies) {
+      cookieString += '; Secure';
+    }
+
+    cookieString += `; SameSite=${this.config.sameSitePolicy}`;
+
+    if (expires) {
+      cookieString += `; Expires=${expires.toUTCString()}`;
+    }
+
+    headers.set('Set-Cookie', cookieString);
+  }
+
+  /**
+   * Clear cookie
+   */
+  clearCookie(headers: Headers, name: string): void {
+    const cookieString = `${name}=; Path=/; HttpOnly; Expires=Thu, 01 Jan 1970 00:00:00 GMT`;
+    
+    if (this.config.secureCookies) {
+      cookieString += '; Secure';
+    }
+
+    cookieString += `; SameSite=${this.config.sameSitePolicy}`;
+    
+    headers.set('Set-Cookie', cookieString);
+  }
+}
+
+/**
+ * Global session manager instance
+ */
+export const sessionManager = new SessionManager();
+
+/**
+ * Session middleware for API routes
+ */
+export function withSessionManagement(
+  handler: (request: Request, context: { session: SessionData; payload: JWTPayload }) => Promise<Response>
+) {
+  return async (request: Request): Promise<Response> => {
+    const token = request.headers.get('Authorization')?.replace('Bearer ', '') ||
+                   request.cookies.get('auth-token')?.value;
+
+    if (!token) {
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const validation = sessionManager.validateAccessToken(token);
+    if (!validation) {
+      return new Response(JSON.stringify({ error: 'Invalid or expired token' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const { session, payload } = validation;
+
+    // Add session context to request
+    const context = {
+      session,
+      payload,
+      userId: payload.userId,
+      companyId: payload.companyId,
+      role: payload.role
+    };
+
+    return handler(request, context);
+  };
+}
+
+/**
+ * Rate limiting based on session
+ */
+export function createSessionRateLimiter(maxRequests: number, windowMs: number) {
+  const requests = new Map<string, { count: number; resetTime: number }>();
+
+  return (session: SessionData): boolean => {
+    const now = Date.now();
+    const key = session.sessionId;
+
+    const current = requests.get(key);
+    
+    if (!current || now > current.resetTime) {
+      requests.set(key, { count: 1, resetTime: now + windowMs });
+      return true;
+    }
+
+    if (current.count >= maxRequests) {
+      return false;
+    }
+
+    current.count++;
+    return true;
+  };
+}
+
+/**
+ * Session security utilities
+ */
+export const sessionSecurity = {
+  /**
+   * Check if session is from trusted device
+   */
+  isTrustedDevice(session: SessionData): boolean {
+    // Implement device fingerprinting logic here
+    // For now, just check if session is older than 24 hours
+    const sessionAge = Date.now() - session.createdAt.getTime();
+    return sessionAge > 24 * 60 * 60 * 1000;
+  },
+
+  /**
+   * Get session risk score
+   */
+  getRiskScore(session: SessionData): number {
+    let score = 0;
+
+    // New sessions are higher risk
+    const sessionAge = Date.now() - session.createdAt.getTime();
+    if (sessionAge < 60 * 60 * 1000) { // Less than 1 hour
+      score += 20;
+    } else if (sessionAge < 24 * 60 * 60 * 1000) { // Less than 1 day
+      score += 10;
+    }
+
+    // Sessions from different IPs are higher risk
+    if (session.ipAddress !== session.lastAccessedAt.toString()) {
+      score += 15;
+    }
+
+    // Inactive sessions are higher risk
+    const idleTime = Date.now() - session.lastAccessedAt.getTime();
+    if (idleTime > 60 * 60 * 1000) { // More than 1 hour idle
+      score += 10;
+    }
+
+    return Math.min(score, 100);
+  },
+
+  /**
+   * Determine if re-authentication is required
+   */
+  requiresReauth(session: SessionData, action: 'sensitive' | 'normal' = 'normal'): boolean {
+    if (action === 'sensitive') {
+      return true;
+    }
+
+    const riskScore = this.getRiskScore(session);
+    return riskScore > 50;
+  }
+};

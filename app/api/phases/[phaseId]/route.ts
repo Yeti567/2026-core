@@ -14,7 +14,9 @@ export async function GET(
     const supabase = await createClient();
     
     // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // TODO: Implement user authentication without Supabase
+      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
+      const { data: { user }, error: authError } = authResult;
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -132,7 +134,9 @@ export async function PATCH(
     const supabase = await createClient();
     
     // Get current user
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // TODO: Implement user authentication without Supabase
+      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
+      const { data: { user }, error: authError } = authResult;
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

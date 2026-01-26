@@ -10,11 +10,11 @@ export function UpdateNotification() {
   const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'development' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.ready.then((reg) => {
         reg.addEventListener('updatefound', () => {
           const newWorker = reg.installing;
-          
+
           newWorker?.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               setShowUpdate(true);
@@ -45,14 +45,14 @@ export function UpdateNotification() {
             A new version of COR Pathways is ready. Update now for the latest features and fixes.
           </p>
           <div className="flex gap-2">
-            <Button 
+            <Button
               onClick={handleUpdate}
               size="sm"
               className="bg-blue-600 hover:bg-blue-700"
             >
               Update Now
             </Button>
-            <Button 
+            <Button
               onClick={() => setShowUpdate(false)}
               size="sm"
               variant="outline"

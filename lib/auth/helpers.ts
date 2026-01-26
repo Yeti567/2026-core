@@ -7,10 +7,8 @@
 
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
-import {
-  createServerComponentClient,
-  createRouteHandlerClient,
-} from '@/lib/supabase/server';
+import { verifyToken } from './jwt';
+import { getPostgresClient } from '../db/postgres-client';
 import type { UserRole } from '@/lib/db/types';
 
 // =============================================================================
@@ -36,7 +34,7 @@ export interface AuthError {
  * Gets the current user context in Server Components.
  * 
  * Reads the x-company-id and x-user-role headers that were injected
- * by the middleware, along with the authenticated user from Supabase.
+ * by the middleware, along with the authenticated user from JWT token.
  * 
  * @returns The user context or null if not authenticated
  * 
@@ -57,41 +55,46 @@ export interface AuthError {
  * ```
  */
 export async function getServerUser(): Promise<ServerUserContext | null> {
-  const supabase = createServerComponentClient();
+  // Get token from headers
+  const headersList = headers();
+  const token = headersList.get('authorization')?.replace('Bearer ', '');
   
-  // Get the authenticated user
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
+  if (!token) {
     return null;
   }
-
+  
+  // Verify token
+  const payload = verifyToken(token);
+  if (!payload) {
+    return null;
+  }
+  
   // Read headers injected by middleware
-  const headersList = headers();
   const companyId = headersList.get('x-company-id');
   const role = headersList.get('x-user-role') as UserRole | null;
 
   // If headers aren't present, query directly (fallback)
   if (!companyId || !role) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single();
+    const client = getPostgresClient();
+    const profileResult = await client.query(
+      'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
+      [payload.userId]
+    );
 
-    if (!profile) {
+    if (profileResult.rows.length === 0) {
       return null;
     }
 
+    const profile = profileResult.rows[0];
     return {
-      userId: user.id,
+      userId: payload.userId,
       companyId: profile.company_id,
       role: profile.role,
     };
   }
 
   return {
-    userId: user.id,
+    userId: payload.userId,
     companyId,
     role,
   };
@@ -195,32 +198,41 @@ export async function requireRole(
  * ```
  */
 export async function requireAuth(): Promise<ServerUserContext> {
-  const supabase = createRouteHandlerClient();
+  // Get token from headers
+  const headersList = headers();
+  const token = headersList.get('authorization')?.replace('Bearer ', '');
   
-  const { data: { user }, error } = await supabase.auth.getUser();
-  
-  if (error || !user) {
+  if (!token) {
     const authError: AuthError = {
       status: 401,
       message: 'Unauthorized: Authentication required',
     };
     throw authError;
   }
+  
+  // Verify token
+  const payload = verifyToken(token);
+  if (!payload) {
+    const authError: AuthError = {
+      status: 401,
+      message: 'Unauthorized: Invalid token',
+    };
+    throw authError;
+  }
 
   // Read headers injected by middleware
-  const headersList = headers();
   const companyId = headersList.get('x-company-id');
   const role = headersList.get('x-user-role') as UserRole | null;
 
   // If headers aren't present, query directly (fallback)
   if (!companyId || !role) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('company_id, role')
-      .eq('user_id', user.id)
-      .single();
+    const client = getPostgresClient();
+    const profileResult = await client.query(
+      'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
+      [payload.userId]
+    );
 
-    if (!profile) {
+    if (profileResult.rows.length === 0) {
       const authError: AuthError = {
         status: 500,
         message: 'User profile not found',
@@ -228,15 +240,16 @@ export async function requireAuth(): Promise<ServerUserContext> {
       throw authError;
     }
 
+    const profile = profileResult.rows[0];
     return {
-      userId: user.id,
+      userId: payload.userId,
       companyId: profile.company_id,
       role: profile.role,
     };
   }
 
   return {
-    userId: user.id,
+    userId: payload.userId,
     companyId,
     role,
   };

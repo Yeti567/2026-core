@@ -6,33 +6,36 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import type { DetectedField, SectionConfig, WorkflowConfig } from '@/lib/pdf-converter/types';
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // TODO: Implement user authentication without Supabase
+      const { data: { user: authUser }, error: authError } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };;
+    if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
     // Rate limiting: 10 form conversions per hour per user
-    const rateLimitResult = await rateLimitByUser(user.id, 10, '1h');
+    const rateLimitResult = await rateLimitByUser(authUser.id, 10, '1h');
     if (!rateLimitResult.success) {
       return createRateLimitResponse(rateLimitResult);
     }
     
     // Get user's company and role
-    const { data: profile } = await supabase
+    const profileResult = await supabase
       .from('user_profiles')
       .select('company_id, role, id')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single();
+    
+    const profile = profileResult.data;
     
     if (!profile || !['admin', 'internal_auditor'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
@@ -81,8 +84,8 @@ export async function POST(request: NextRequest) {
         .select('*')
         .eq('pdf_upload_id', upload.id)
         .eq('is_excluded', false)
-        .order('section_order', { ascending: true })
-        .order('field_order', { ascending: true });
+        .order('created_at', false)
+        .order('updated_at', false);
       
       const detectedFields = (fields || []) as DetectedField[];
       const sectionsConfig = (session.sections_config || []) as SectionConfig[];
@@ -118,7 +121,7 @@ export async function POST(request: NextRequest) {
           color: '#6366f1',
           is_active: true,
           is_mandatory: false,
-          created_by: user.id,
+          created_by: authUser.id,
         })
         .select()
         .single();

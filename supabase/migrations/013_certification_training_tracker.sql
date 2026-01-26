@@ -14,7 +14,7 @@
 -- 1. CREATE CERTIFICATION TYPES TABLE (Master list of certification types)
 -- ============================================================================
 
-CREATE TABLE certification_types (
+CREATE TABLE IF NOT EXISTS certification_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,  -- NULL = system default
     
@@ -45,6 +45,59 @@ CREATE TABLE certification_types (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DO $$
+BEGIN
+    -- Handle renaming from 00700 schema to 013 schema
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'certification_name') THEN
+        ALTER TABLE certification_types RENAME COLUMN certification_name TO name;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'certification_code') THEN
+        ALTER TABLE certification_types RENAME COLUMN certification_code TO short_code;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'company_id') THEN
+        ALTER TABLE certification_types ADD COLUMN company_id UUID REFERENCES companies(id) ON DELETE CASCADE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'category') THEN
+        ALTER TABLE certification_types ADD COLUMN category TEXT DEFAULT 'safety';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'required_for_work') THEN
+        ALTER TABLE certification_types ADD COLUMN required_for_work BOOLEAN DEFAULT FALSE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'short_code') THEN
+        ALTER TABLE certification_types ADD COLUMN short_code TEXT;
+    END IF;
+
+    -- Ensure is_system_default column exists
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'is_system_default') THEN
+        ALTER TABLE certification_types ADD COLUMN is_system_default BOOLEAN DEFAULT FALSE;
+    END IF;
+    
+    -- Ensure alert columns exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'alert_at_60_days') THEN
+        ALTER TABLE certification_types ADD COLUMN alert_at_60_days BOOLEAN DEFAULT TRUE;
+        ALTER TABLE certification_types ADD COLUMN alert_at_30_days BOOLEAN DEFAULT TRUE;
+        ALTER TABLE certification_types ADD COLUMN alert_at_7_days BOOLEAN DEFAULT TRUE;
+        ALTER TABLE certification_types ADD COLUMN alert_on_expiry BOOLEAN DEFAULT TRUE;
+    END IF;
+
+     -- Ensure expiry_warning_days column exist
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'certification_types' AND column_name = 'expiry_warning_days') THEN
+        ALTER TABLE certification_types ADD COLUMN expiry_warning_days INTEGER[] DEFAULT ARRAY[60, 30, 7];
+    END IF;
+
+    -- Drop legacy unique constraint from 00700 which conflicts with 013 inserts (name mismatch but code match)
+    IF EXISTS (
+        SELECT 1 FROM pg_constraint WHERE conname = 'certification_types_certification_code_key'
+    ) THEN
+        ALTER TABLE certification_types DROP CONSTRAINT certification_types_certification_code_key;
+    END IF;
+END $$;
+
 -- ============================================================================
 -- 2. EXTEND CERTIFICATIONS TABLE (Worker's actual certifications)
 -- ============================================================================
@@ -70,7 +123,7 @@ ALTER TABLE certifications
 -- 3. CREATE TRAINING RECORD TYPES TABLE
 -- ============================================================================
 
-CREATE TABLE training_record_types (
+CREATE TABLE IF NOT EXISTS training_record_types (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID REFERENCES companies(id) ON DELETE CASCADE,  -- NULL = system default
     
@@ -96,7 +149,7 @@ CREATE TABLE training_record_types (
 -- 4. CREATE TRAINING RECORDS TABLE
 -- ============================================================================
 
-CREATE TABLE training_records (
+CREATE TABLE IF NOT EXISTS training_records (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -138,11 +191,49 @@ CREATE TABLE training_records (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+DO $$
+BEGIN
+    -- Handle renaming from 00700 schema to 013 schema for training_records
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'training_topic') THEN
+        ALTER TABLE training_records RENAME COLUMN training_topic TO title;
+    END IF;
+
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'training_date') THEN
+        ALTER TABLE training_records RENAME COLUMN training_date TO completed_date;
+    END IF;
+
+     IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'duration_hours') THEN
+        ALTER TABLE training_records RENAME COLUMN duration_hours TO hours_completed;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'training_type_id') THEN
+        ALTER TABLE training_records ADD COLUMN training_type_id UUID REFERENCES training_record_types(id) ON DELETE SET NULL;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'category') THEN
+        ALTER TABLE training_records ADD COLUMN category TEXT;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'completed_date') THEN
+         -- If it didn't exist and wasn't renamed (fresh table?)
+         NULL;
+    END IF;
+    
+    -- Ensure other columns
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'instructor_name') THEN
+        ALTER TABLE training_records ADD COLUMN instructor_name TEXT;
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'training_records' AND column_name = 'competency_level') THEN
+        ALTER TABLE training_records ADD COLUMN competency_level TEXT;
+    END IF;
+END $$;
+
 -- ============================================================================
 -- 5. CREATE CERTIFICATION ALERTS TABLE (Tracking sent alerts)
 -- ============================================================================
 
-CREATE TABLE certification_alerts (
+CREATE TABLE IF NOT EXISTS certification_alerts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     certification_id UUID NOT NULL REFERENCES certifications(id) ON DELETE CASCADE,
@@ -172,7 +263,7 @@ CREATE TABLE certification_alerts (
 -- 6. CREATE WORK RESTRICTIONS TABLE (Track workers restricted from tasks)
 -- ============================================================================
 
-CREATE TABLE work_restrictions (
+CREATE TABLE IF NOT EXISTS work_restrictions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     company_id UUID NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
     worker_id UUID NOT NULL REFERENCES workers(id) ON DELETE CASCADE,
@@ -217,9 +308,10 @@ ALTER TABLE workers
 -- ============================================================================
 
 -- Certification types indexes
-CREATE INDEX idx_certification_types_company_id ON certification_types(company_id);
-CREATE INDEX idx_certification_types_category ON certification_types(category);
-CREATE INDEX idx_certification_types_active ON certification_types(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_certification_types_company_id ON certification_types(company_id);
+CREATE INDEX IF NOT EXISTS idx_certification_types_category ON certification_types(category);
+CREATE INDEX IF NOT EXISTS idx_certification_types_active ON certification_types(is_active) WHERE is_active = TRUE;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_certification_types_system_unique ON certification_types(name) WHERE company_id IS NULL;
 
 -- Certifications indexes (additional)
 CREATE INDEX IF NOT EXISTS idx_certifications_type_id ON certifications(certification_type_id);
@@ -228,26 +320,27 @@ CREATE INDEX IF NOT EXISTS idx_certifications_expiring ON certifications(expiry_
     WHERE status = 'active' AND expiry_date IS NOT NULL;
 
 -- Training record types indexes
-CREATE INDEX idx_training_record_types_company_id ON training_record_types(company_id);
-CREATE INDEX idx_training_record_types_category ON training_record_types(category);
+CREATE INDEX IF NOT EXISTS idx_training_record_types_company_id ON training_record_types(company_id);
+CREATE INDEX IF NOT EXISTS idx_training_record_types_category ON training_record_types(category);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_training_record_types_system_unique ON training_record_types(name) WHERE company_id IS NULL;
 
 -- Training records indexes
-CREATE INDEX idx_training_records_company_id ON training_records(company_id);
-CREATE INDEX idx_training_records_worker_id ON training_records(worker_id);
-CREATE INDEX idx_training_records_type_id ON training_records(training_type_id);
-CREATE INDEX idx_training_records_category ON training_records(category);
-CREATE INDEX idx_training_records_completed_date ON training_records(completed_date);
+CREATE INDEX IF NOT EXISTS idx_training_records_company_id ON training_records(company_id);
+CREATE INDEX IF NOT EXISTS idx_training_records_worker_id ON training_records(worker_id);
+CREATE INDEX IF NOT EXISTS idx_training_records_type_id ON training_records(training_type_id);
+CREATE INDEX IF NOT EXISTS idx_training_records_category ON training_records(category);
+CREATE INDEX IF NOT EXISTS idx_training_records_completed_date ON training_records(completed_date);
 
 -- Certification alerts indexes
-CREATE INDEX idx_certification_alerts_company_id ON certification_alerts(company_id);
-CREATE INDEX idx_certification_alerts_certification_id ON certification_alerts(certification_id);
-CREATE INDEX idx_certification_alerts_worker_id ON certification_alerts(worker_id);
-CREATE INDEX idx_certification_alerts_status ON certification_alerts(status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_certification_alerts_company_id ON certification_alerts(company_id);
+CREATE INDEX IF NOT EXISTS idx_certification_alerts_certification_id ON certification_alerts(certification_id);
+CREATE INDEX IF NOT EXISTS idx_certification_alerts_worker_id ON certification_alerts(worker_id);
+CREATE INDEX IF NOT EXISTS idx_certification_alerts_status ON certification_alerts(status) WHERE status = 'pending';
 
 -- Work restrictions indexes
-CREATE INDEX idx_work_restrictions_company_id ON work_restrictions(company_id);
-CREATE INDEX idx_work_restrictions_worker_id ON work_restrictions(worker_id);
-CREATE INDEX idx_work_restrictions_active ON work_restrictions(is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_work_restrictions_company_id ON work_restrictions(company_id);
+CREATE INDEX IF NOT EXISTS idx_work_restrictions_worker_id ON work_restrictions(worker_id);
+CREATE INDEX IF NOT EXISTS idx_work_restrictions_active ON work_restrictions(is_active) WHERE is_active = TRUE;
 
 -- Workers supervisor index
 CREATE INDEX IF NOT EXISTS idx_workers_supervisor_id ON workers(supervisor_id);
@@ -268,6 +361,7 @@ ALTER TABLE work_restrictions ENABLE ROW LEVEL SECURITY;
 -- ============================================================================
 
 -- Certification Types Policies
+DROP POLICY IF EXISTS "certification_types_select" ON certification_types;
 CREATE POLICY "certification_types_select" ON certification_types
     FOR SELECT USING (
         company_id IS NULL  -- System defaults visible to all
@@ -275,18 +369,21 @@ CREATE POLICY "certification_types_select" ON certification_types
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "certification_types_insert" ON certification_types;
 CREATE POLICY "certification_types_insert" ON certification_types
     FOR INSERT WITH CHECK (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin'))
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "certification_types_update" ON certification_types;
 CREATE POLICY "certification_types_update" ON certification_types
     FOR UPDATE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin'))
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "certification_types_delete" ON certification_types;
 CREATE POLICY "certification_types_delete" ON certification_types
     FOR DELETE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin') AND is_system_default = FALSE)
@@ -294,6 +391,7 @@ CREATE POLICY "certification_types_delete" ON certification_types
     );
 
 -- Training Record Types Policies
+DROP POLICY IF EXISTS "training_record_types_select" ON training_record_types;
 CREATE POLICY "training_record_types_select" ON training_record_types
     FOR SELECT USING (
         company_id IS NULL
@@ -301,18 +399,21 @@ CREATE POLICY "training_record_types_select" ON training_record_types
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_record_types_insert" ON training_record_types;
 CREATE POLICY "training_record_types_insert" ON training_record_types
     FOR INSERT WITH CHECK (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin'))
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_record_types_update" ON training_record_types;
 CREATE POLICY "training_record_types_update" ON training_record_types
     FOR UPDATE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin'))
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_record_types_delete" ON training_record_types;
 CREATE POLICY "training_record_types_delete" ON training_record_types
     FOR DELETE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'super_admin') AND is_system_default = FALSE)
@@ -320,24 +421,28 @@ CREATE POLICY "training_record_types_delete" ON training_record_types
     );
 
 -- Training Records Policies
+DROP POLICY IF EXISTS "training_records_select" ON training_records;
 CREATE POLICY "training_records_select" ON training_records
     FOR SELECT USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_records_insert" ON training_records;
 CREATE POLICY "training_records_insert" ON training_records
     FOR INSERT WITH CHECK (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_records_update" ON training_records;
 CREATE POLICY "training_records_update" ON training_records
     FOR UPDATE USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "training_records_delete" ON training_records;
 CREATE POLICY "training_records_delete" ON training_records
     FOR DELETE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'supervisor', 'super_admin'))
@@ -345,18 +450,21 @@ CREATE POLICY "training_records_delete" ON training_records
     );
 
 -- Certification Alerts Policies
+DROP POLICY IF EXISTS "certification_alerts_select" ON certification_alerts;
 CREATE POLICY "certification_alerts_select" ON certification_alerts
     FOR SELECT USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "certification_alerts_insert" ON certification_alerts;
 CREATE POLICY "certification_alerts_insert" ON certification_alerts
     FOR INSERT WITH CHECK (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "certification_alerts_update" ON certification_alerts;
 CREATE POLICY "certification_alerts_update" ON certification_alerts
     FOR UPDATE USING (
         company_id = get_user_company_id()
@@ -364,18 +472,21 @@ CREATE POLICY "certification_alerts_update" ON certification_alerts
     );
 
 -- Work Restrictions Policies
+DROP POLICY IF EXISTS "work_restrictions_select" ON work_restrictions;
 CREATE POLICY "work_restrictions_select" ON work_restrictions
     FOR SELECT USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "work_restrictions_insert" ON work_restrictions;
 CREATE POLICY "work_restrictions_insert" ON work_restrictions
     FOR INSERT WITH CHECK (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'supervisor', 'super_admin'))
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "work_restrictions_update" ON work_restrictions;
 CREATE POLICY "work_restrictions_update" ON work_restrictions
     FOR UPDATE USING (
         (company_id = get_user_company_id() AND get_user_role() IN ('admin', 'supervisor', 'super_admin'))
@@ -501,6 +612,7 @@ END;
 $$;
 
 -- Trigger to auto-create restrictions on certification update
+DROP TRIGGER IF EXISTS trg_certification_expiry_check ON certifications;
 CREATE TRIGGER trg_certification_expiry_check
     AFTER INSERT OR UPDATE OF status, expiry_date ON certifications
     FOR EACH ROW
@@ -616,7 +728,8 @@ INSERT INTO certification_types (
     
     (NULL, 'Trenching & Excavation', 'TRENCH', 
      'Excavation safety and trench rescue awareness', 
-     'safety', 36, TRUE, TRUE);
+     'safety', 36, TRUE, TRUE)
+ON CONFLICT (name) WHERE company_id IS NULL DO NOTHING;
 
 -- ============================================================================
 -- 14. SEED DEFAULT TRAINING RECORD TYPES
@@ -634,7 +747,8 @@ INSERT INTO training_record_types (
     (NULL, 'Site-Specific Orientation', 'orientation', 'Project/site specific safety orientation', TRUE, TRUE),
     (NULL, 'Annual Safety Refresher', 'course', 'Annual safety training refresher', TRUE, TRUE),
     (NULL, 'Emergency Response Drill', 'other', 'Participation in emergency drill', FALSE, TRUE),
-    (NULL, 'Safety Meeting', 'other', 'Monthly or quarterly safety meeting', TRUE, TRUE);
+    (NULL, 'Safety Meeting', 'other', 'Monthly or quarterly safety meeting', TRUE, TRUE)
+ON CONFLICT (name) WHERE company_id IS NULL DO NOTHING;
 
 -- ============================================================================
 -- END OF MIGRATION

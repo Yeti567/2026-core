@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import {
   validateFileUpload,
   createSecureStoragePath,
@@ -16,11 +16,12 @@ import { handleApiError, handleFileError } from '@/lib/utils/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    // TODO: Implement user authentication without Supabase
+      const { data: { user: authUser }, error: authError } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };;
+    if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
       .select('company_id, role')
-      .eq('user_id', user.id)
+      .eq('user_id', authUser.id)
       .single();
     
     if (profileError || !profile) {
@@ -47,6 +48,8 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
+
+    const uploadedFile = file;
     
     // Validate file upload (type, size, content validation with magic bytes)
     const allowedTypes = ['application/pdf'];
@@ -68,50 +71,50 @@ export async function POST(request: NextRequest) {
     );
     
     // Store original filename for display (sanitized)
-    const originalFilename = sanitizeFilename(file.name);
+    const originalFilename = sanitizeFilename(uploadedFile.name);
     
     // Convert file to buffer
-    const arrayBuffer = await file.arrayBuffer();
+    const arrayBuffer = await uploadedFile.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
     // Upload to Supabase Storage
-    const { error: uploadError } = await supabase.storage
-      .from('documents')
-      .upload(storagePath, buffer, {
-        contentType: 'application/pdf',
-        upsert: false,
-      });
-    
-    if (uploadError) {
-      console.error('Storage upload error:', uploadError);
-      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
-    }
-    
-    // Get user profile ID
-    const { data: userProfile } = await supabase
-      .from('user_profiles')
-      .select('id')
-      .eq('user_id', user.id)
-      .single();
-    
-    // Create PDF upload record
-    const { data: pdfUpload, error: insertError } = await supabase
-      .from('pdf_form_uploads')
-      .insert({
-        company_id: profile.company_id,
-        uploaded_by: userProfile?.id || null,
-        file_name: originalFilename, // Store sanitized original name for display
-        file_size_bytes: file.size,
-        storage_path: storagePath,
-        status: 'pending',
-      })
-      .select()
-      .single();
+    // TODO: Implement storage without Supabase
+      // const { data: upload, error: uploadError } = await supabase.storage
+      //   .from('pdf-uploads')
+      //   .upload(sanitizedFilename, file, {
+      //     cacheControl: '3600',
+      throw new Error('Storage not implemented yet - please implement file storage');
+      
+      // Get user profile ID
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('user_id', authUser.id)
+        .single();
+      
+      // Create PDF upload record
+      const { data: pdfUpload, error: insertError } = await supabase
+        .from('pdf_form_uploads')
+        .insert({
+          company_id: profile.company_id,
+          uploaded_by: userProfile?.id || null,
+          file_name: originalFilename, // Store sanitized original name for display
+          file_size_bytes: uploadedFile.size,
+          storage_path: secureFilename,
+          mime_type: uploadedFile.type,
+          status: 'uploaded',
+          processing_status: 'pending',
+          processing_attempts: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        })
+        .select()
+        .single();
     
     if (insertError) {
       console.error('Database insert error:', insertError);
-      // Clean up uploaded file
-      await supabase.storage.from('documents').remove([storagePath]);
+      // TODO: Clean up uploaded file when storage is implemented
+      // await supabase.storage.from('documents').remove([storagePath]);
       return NextResponse.json({ error: 'Failed to create upload record' }, { status: 500 });
     }
     

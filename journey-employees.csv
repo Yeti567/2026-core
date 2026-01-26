@@ -1,0 +1,4 @@
+first_name,last_name,email,position,role,phone,hire_date
+Alice,Johnson,alice@journeytest.ca,Site Supervisor,supervisor,(416) 555-0101,2024-01-15
+Bob,Smith,bob@journeytest.ca,Carpenter,worker,(416) 555-0102,2024-02-01
+Carol,Williams,carol@journeytest.ca,Safety Officer,internal_auditor,(416) 555-0103,2023-11-10

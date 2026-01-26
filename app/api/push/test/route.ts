@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import { sendTestNotification } from '@/lib/push-notifications/triggers';
 import { testPushSchema } from '@/lib/validation/schemas';
 import { safeValidateRequestBody, isValidationErrorResponse } from '@/lib/validation/utils';
@@ -14,8 +14,10 @@ import { safeValidateRequestBody, isValidationErrorResponse } from '@/lib/valida
 export async function POST(req: NextRequest) {
   try {
     // Verify authentication
-    const supabase = createRouteHandlerClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = createNeonWrapper();
+    // TODO: Implement user authentication without Supabase
+      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
+      const { data: { user }, error: authError } = authResult;
     
     if (authError || !user) {
       return NextResponse.json(

@@ -219,7 +219,7 @@ async function handleStartInterview(
     const aiResponse = await callAI([
       { role: 'user', content: openingInstruction }
     ], {
-      model: 'claude-3-5-sonnet-20240620', // Defaulting to 3.5 Sonnet
+      model: 'deepseek/deepseek-chat',
       max_tokens: 1000,
       system: systemPrompt
     });
@@ -295,7 +295,7 @@ async function handleWorkerResponse(
     const aiResponse = await callAI([
       ...conversationHistory
     ], {
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'deepseek/deepseek-chat',
       max_tokens: 1000,
       system: systemPrompt
     });
@@ -370,7 +370,7 @@ async function handleEvaluateResponse(
         content: `Question: ${currentQuestion.question}\n\nExpected key points: ${currentQuestion.keyPoints.join(', ')}\n\nWorker's response: "${workerResponse}"\n\nEvaluate this response.`
       }
     ], {
-      model: 'claude-3-5-sonnet-20240620',
+      model: 'deepseek/deepseek-chat',
       max_tokens: 500,
       system: RESPONSE_EVALUATION_PROMPT
     });

@@ -86,9 +86,8 @@ export default function EquipmentStep({ companyId, onComplete }: Step3Props) {
                             placeholder="Equipment Name (e.g. Forklift)"
                             value={eq.name}
                             onChange={(e) => {
-                                const newEq = [...equipment];
-                                newEq[index].name = e.target.value;
-                                setEquipment(newEq);
+                                const val = e.target.value;
+                                setEquipment(prev => prev.map((item, i) => i === index ? { ...item, name: val } : item));
                             }}
                         />
                         <input
@@ -96,9 +95,8 @@ export default function EquipmentStep({ companyId, onComplete }: Step3Props) {
                             placeholder="Type (e.g. Heavy Machinery)"
                             value={eq.type}
                             onChange={(e) => {
-                                const newEq = [...equipment];
-                                newEq[index].type = e.target.value;
-                                setEquipment(newEq);
+                                const val = e.target.value;
+                                setEquipment(prev => prev.map((item, i) => i === index ? { ...item, type: val } : item));
                             }}
                         />
                         <input
@@ -106,9 +104,8 @@ export default function EquipmentStep({ companyId, onComplete }: Step3Props) {
                             placeholder="Unit # / Code"
                             value={eq.code}
                             onChange={(e) => {
-                                const newEq = [...equipment];
-                                newEq[index].code = e.target.value;
-                                setEquipment(newEq);
+                                const val = e.target.value;
+                                setEquipment(prev => prev.map((item, i) => i === index ? { ...item, code: val } : item));
                             }}
                         />
                     </div>

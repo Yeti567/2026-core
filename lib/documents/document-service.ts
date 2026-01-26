@@ -317,7 +317,14 @@ export async function listDocuments(
     query = query.lte('next_review_date', params.review_due_before);
   }
   if (params?.query) {
-    query = query.or(`title.ilike.%${params.query}%,control_number.ilike.%${params.query}%,description.ilike.%${params.query}%`);
+    query = query.or(
+      `title.ilike.%${params.query}%,` +
+      `control_number.ilike.%${params.query}%,` +
+      `description.ilike.%${params.query}%,` +
+      `extracted_text.ilike.%${params.query}%,` +
+      `tags.cs.{${params.query}},` +
+      `keywords.cs.{${params.query}}`
+    );
   }
 
   // Pagination

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth/helpers';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import { createSafeQuery } from '@/lib/db/safe-query';
 import { handleApiError } from '@/lib/utils/error-handling';
 
@@ -16,7 +16,7 @@ export async function GET() {
     const user = await requireAuth();
 
     // Create Supabase client and safe query builder
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     const safeQuery = createSafeQuery(supabase, user.companyId, user.role);
 
     // Query workers - automatically filtered by company_id
@@ -53,7 +53,7 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Create Supabase client and safe query builder
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     const safeQuery = createSafeQuery(supabase, user.companyId, user.role);
 
     // Create worker - company_id is auto-injected

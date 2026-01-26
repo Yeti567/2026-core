@@ -1,0 +1,3 @@
+equipment_number,equipment_type,name,make,model,serial_number,status,current_location,inspection_frequency_days
+JOURNEY001,Ladder,Extension Ladder 24ft,Werner,D7224-2,WERN724001,active,Main Storage,30
+JOURNEY002,Power Tool,Circular Saw,DeWalt,DWE575,DEW575002,active,Tool Cage,14

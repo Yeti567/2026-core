@@ -66,6 +66,7 @@ import {
   FileJson,
   Check,
   FileSpreadsheet,
+  Trash2,
 } from 'lucide-react';
 import * as LucideIcons from 'lucide-react';
 import { FormTemplate } from '@/components/form-builder/types';
@@ -166,7 +167,7 @@ interface QuickStats {
 export default function FormTemplatesPage() {
   const router = useRouter();
   const supabase = createClient();
-  
+
   // State
   const [templates, setTemplates] = useState<TemplateWithStats[]>([]);
   const [globalTemplates, setGlobalTemplates] = useState<TemplateWithStats[]>([]);
@@ -185,11 +186,11 @@ export default function FormTemplatesPage() {
   const [corCoverage, setCORCoverage] = useState<CORCoverageData[]>([]);
   const [activeTab, setActiveTab] = useState<'my-forms' | 'global-library'>('my-forms');
   const [isExportingCSV, setIsExportingCSV] = useState(false);
-  
+
   // =============================================================================
   // DATA LOADING
   // =============================================================================
-  
+
   const loadTemplates = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -202,17 +203,17 @@ export default function FormTemplatesPage() {
         `)
         .not('company_id', 'is', null)
         .order('name');
-      
+
       if (error) throw error;
-      
+
       const templatesWithStats = (data || []).map(t => ({
         ...t,
         submission_count: t.form_submissions?.length || 0,
         sections_count: t.form_sections?.length || 0,
-        fields_count: t.form_sections?.reduce((acc: number, s: any) => 
+        fields_count: t.form_sections?.reduce((acc: number, s: any) =>
           acc + (s.form_fields?.length || 0), 0) || 0,
       }));
-      
+
       setTemplates(templatesWithStats);
     } catch (err) {
       console.error('Failed to load templates:', err);
@@ -234,17 +235,17 @@ export default function FormTemplatesPage() {
         .eq('is_active', true)
         .order('cor_element', { ascending: true })
         .order('name');
-      
+
       if (error) throw error;
-      
+
       const templatesWithStats = (data || []).map(t => ({
         ...t,
         submission_count: t.form_submissions?.length || 0,
         sections_count: t.form_sections?.length || 0,
-        fields_count: t.form_sections?.reduce((acc: number, s: any) => 
+        fields_count: t.form_sections?.reduce((acc: number, s: any) =>
           acc + (s.form_fields?.length || 0), 0) || 0,
       }));
-      
+
       setGlobalTemplates(templatesWithStats);
     } catch (err) {
       console.error('Failed to load global templates:', err);
@@ -254,11 +255,11 @@ export default function FormTemplatesPage() {
   const calculateStats = useCallback(() => {
     const allTemplates = [...templates, ...globalTemplates];
     const totalSubmissions = templates.reduce((acc, t) => acc + (t.submission_count || 0), 0);
-    const mostUsed = templates.reduce((prev, curr) => 
-      (curr.submission_count || 0) > (prev?.submission_count || 0) ? curr : prev, 
+    const mostUsed = templates.reduce((prev, curr) =>
+      (curr.submission_count || 0) > (prev?.submission_count || 0) ? curr : prev,
       templates[0]
     );
-    
+
     setQuickStats({
       totalForms: allTemplates.length,
       companyForms: templates.length,
@@ -277,12 +278,12 @@ export default function FormTemplatesPage() {
       const globalForElement = globalTemplates.filter(t => t.cor_element === el.value);
       const totalForms = elementTemplates.length + globalForElement.length;
       const submissions = elementTemplates.reduce((acc, t) => acc + (t.submission_count || 0), 0);
-      
+
       // Calculate completion rate (mock for now)
-      const completionRate = totalForms > 0 
+      const completionRate = totalForms > 0
         ? Math.min(100, Math.round((elementTemplates.length / Math.max(1, globalForElement.length)) * 100))
         : 0;
-      
+
       return {
         element: el.value,
         label: el.shortLabel,
@@ -291,7 +292,7 @@ export default function FormTemplatesPage() {
         completionRate,
       };
     });
-    
+
     setCORCoverage(coverage);
   }, [templates, globalTemplates]);
 
@@ -299,43 +300,43 @@ export default function FormTemplatesPage() {
     loadTemplates();
     loadGlobalTemplates();
   }, [loadTemplates, loadGlobalTemplates]);
-  
+
   useEffect(() => {
     if (templates.length > 0 || globalTemplates.length > 0) {
       calculateStats();
       calculateCORCoverage();
     }
   }, [templates, globalTemplates, calculateStats, calculateCORCoverage]);
-  
+
   // =============================================================================
   // ACTIONS
   // =============================================================================
-  
+
   async function handleImportTemplate(templateId: string) {
     setImportingTemplates(prev => new Set([...Array.from(prev), templateId]));
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      
+
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
-      
+
       if (!profile?.company_id) throw new Error('No company found');
-      
+
       const { data: newTemplateId, error } = await supabase
         .rpc('clone_form_template', {
           p_template_id: templateId,
           p_new_company_id: profile.company_id,
         });
-      
+
       if (error) throw error;
-      
+
       await loadTemplates();
       setShowImportDialog(false);
-      
+
       // Navigate to edit the new template
       router.push(`/admin/form-templates/${newTemplateId}/edit`);
     } catch (err) {
@@ -348,61 +349,79 @@ export default function FormTemplatesPage() {
       });
     }
   }
-  
+
   async function handleBulkImport() {
     for (const templateId of Array.from(selectedTemplates)) {
       await handleImportTemplate(templateId);
     }
     setSelectedTemplates(new Set());
   }
-  
+
   async function handleDuplicateTemplate(templateId: string) {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
-      
+
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
-      
+
       if (!profile?.company_id) throw new Error('No company found');
-      
+
       const { data: newTemplateId, error } = await supabase
         .rpc('clone_form_template', {
           p_template_id: templateId,
           p_new_company_id: profile.company_id,
         });
-      
+
       if (error) throw error;
-      
+
       await loadTemplates();
       router.push(`/admin/form-templates/${newTemplateId}/edit`);
     } catch (err) {
       console.error('Failed to duplicate template:', err);
     }
   }
-  
+
   async function handleToggleActive(templateId: string, isActive: boolean) {
     try {
       const { error } = await supabase
         .from('form_templates')
         .update({ is_active: !isActive })
         .eq('id', templateId);
-      
+
       if (error) throw error;
       await loadTemplates();
     } catch (err) {
       console.error('Failed to toggle template status:', err);
     }
   }
-  
+
+  async function handleDeleteTemplate(templateId: string) {
+    if (!confirm('Are you sure you want to delete this template? This will also delete all associated sections and fields. This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('form_templates')
+        .delete()
+        .eq('id', templateId);
+
+      if (error) throw error;
+      await loadTemplates();
+    } catch (err) {
+      console.error('Failed to delete template:', err);
+    }
+  }
+
   function handlePreview(template: TemplateWithStats) {
     setPreviewTemplate(template);
     setShowPreviewDialog(true);
   }
-  
+
   function exportTemplateAsJSON(template: TemplateWithStats) {
     const blob = new Blob([JSON.stringify(template, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -412,16 +431,16 @@ export default function FormTemplatesPage() {
     a.click();
     URL.revokeObjectURL(url);
   }
-  
+
   async function handleExportCSV() {
     setIsExportingCSV(true);
     try {
       const response = await fetch('/api/admin/forms/export-csv');
-      
+
       if (!response.ok) {
         throw new Error('Failed to export CSV');
       }
-      
+
       const blob = await response.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -435,34 +454,34 @@ export default function FormTemplatesPage() {
       setIsExportingCSV(false);
     }
   }
-  
+
   // =============================================================================
   // FILTERING & SORTING
   // =============================================================================
-  
+
   const filteredAndSortedTemplates = useMemo(() => {
     let result = activeTab === 'my-forms' ? [...templates] : [...globalTemplates];
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      result = result.filter(t => 
+      result = result.filter(t =>
         t.name.toLowerCase().includes(query) ||
         t.description?.toLowerCase().includes(query) ||
         t.form_code?.toLowerCase().includes(query)
       );
     }
-    
+
     // Element filter
     if (filterElement !== null) {
       result = result.filter(t => t.cor_element === filterElement);
     }
-    
+
     // Frequency filter
     if (filterFrequency) {
       result = result.filter(t => t.frequency === filterFrequency);
     }
-    
+
     // Status filter
     if (filterStatus !== 'all') {
       switch (filterStatus) {
@@ -477,7 +496,7 @@ export default function FormTemplatesPage() {
           break;
       }
     }
-    
+
     // Sorting
     switch (sortBy) {
       case 'name_asc':
@@ -496,25 +515,25 @@ export default function FormTemplatesPage() {
         result.sort((a, b) => (b.submission_count || 0) - (a.submission_count || 0));
         break;
       case 'recent':
-        result.sort((a, b) => 
+        result.sort((a, b) =>
           new Date(b.updated_at || 0).getTime() - new Date(a.updated_at || 0).getTime()
         );
         break;
       case 'time_asc':
-        result.sort((a, b) => 
+        result.sort((a, b) =>
           (a.estimated_time_minutes || 999) - (b.estimated_time_minutes || 999)
         );
         break;
       case 'time_desc':
-        result.sort((a, b) => 
+        result.sort((a, b) =>
           (b.estimated_time_minutes || 0) - (a.estimated_time_minutes || 0)
         );
         break;
     }
-    
+
     return result;
   }, [templates, globalTemplates, activeTab, searchQuery, filterElement, filterFrequency, filterStatus, sortBy]);
-  
+
   // Grouped by element
   const groupedByElement = useMemo(() => {
     const grouped: Record<number, TemplateWithStats[]> = {};
@@ -528,7 +547,7 @@ export default function FormTemplatesPage() {
     });
     return grouped;
   }, [filteredAndSortedTemplates]);
-  
+
   // Element counts for filter
   const elementCounts = useMemo(() => {
     const sourceTemplates = activeTab === 'my-forms' ? templates : globalTemplates;
@@ -541,7 +560,7 @@ export default function FormTemplatesPage() {
     });
     return counts;
   }, [templates, globalTemplates, activeTab]);
-  
+
   // Get icon component
   const getIcon = useCallback((iconName: string) => {
     if (!iconName) return FileText;
@@ -555,7 +574,7 @@ export default function FormTemplatesPage() {
     // eslint-disable-next-line security/detect-object-injection
     return icons[name] || FileText;
   }, []);
-  
+
   const clearFilters = () => {
     setSearchQuery('');
     setFilterElement(null);
@@ -563,13 +582,13 @@ export default function FormTemplatesPage() {
     setFilterStatus('all');
     setSortBy('element_asc');
   };
-  
+
   const hasActiveFilters = searchQuery || filterElement !== null || filterFrequency || filterStatus !== 'all';
-  
+
   // =============================================================================
   // RENDER
   // =============================================================================
-  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
       <div className="container mx-auto py-8 px-4">
@@ -584,7 +603,7 @@ export default function FormTemplatesPage() {
             </p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <Button 
+            <Button
               variant="outline"
               onClick={handleExportCSV}
               disabled={isExportingCSV}
@@ -596,8 +615,8 @@ export default function FormTemplatesPage() {
               )}
               Download CSV
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => {
                 setActiveTab('global-library');
                 setShowImportDialog(true);
@@ -606,13 +625,13 @@ export default function FormTemplatesPage() {
               <Download className="h-4 w-4 mr-2" />
               Import from Library
             </Button>
-            <Button onClick={() => router.push('/admin/form-templates/new')}>
+            <Button onClick={() => router.push('/admin/form-templates/new/edit')}>
               <Plus className="h-4 w-4 mr-2" />
               Create New Form
             </Button>
           </div>
         </div>
-        
+
         {/* Quick Stats Dashboard */}
         {quickStats && (
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">
@@ -627,7 +646,7 @@ export default function FormTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -639,7 +658,7 @@ export default function FormTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -651,7 +670,7 @@ export default function FormTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-amber-500 to-amber-600 text-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -663,7 +682,7 @@ export default function FormTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-rose-500 to-rose-600 text-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -675,7 +694,7 @@ export default function FormTemplatesPage() {
                 </div>
               </CardContent>
             </Card>
-            
+
             <Card className="bg-gradient-to-br from-cyan-500 to-cyan-600 text-white">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
@@ -689,7 +708,7 @@ export default function FormTemplatesPage() {
             </Card>
           </div>
         )}
-        
+
         {/* COR Coverage Visualization */}
         <Card className="mb-8">
           <CardHeader className="pb-2">
@@ -717,8 +736,8 @@ export default function FormTemplatesPage() {
                     onClick={() => setFilterElement(isSelected ? null : cov.element)}
                     className={cn(
                       "relative p-3 rounded-lg border-2 transition-all hover:scale-105",
-                      isSelected 
-                        ? "ring-2 ring-offset-2" 
+                      isSelected
+                        ? "ring-2 ring-offset-2"
                         : "hover:border-gray-300 dark:hover:border-gray-600",
                     )}
                     style={{
@@ -727,7 +746,7 @@ export default function FormTemplatesPage() {
                       ['--tw-ring-color' as string]: color,
                     }}
                   >
-                    <div 
+                    <div
                       className="text-xs font-bold mb-1"
                       style={{ color: color }}
                     >
@@ -741,14 +760,14 @@ export default function FormTemplatesPage() {
                     </div>
                     {/* Coverage indicator */}
                     <div className="absolute bottom-1 left-1 right-1 h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                      <div 
+                      <div
                         className="h-full rounded-full transition-all"
-                        style={{ 
+                        style={{
                           width: `${cov.completionRate}%`,
-                          backgroundColor: cov.completionRate >= 80 
-                            ? '#10B981' 
-                            : cov.completionRate >= 50 
-                              ? '#F59E0B' 
+                          backgroundColor: cov.completionRate >= 80
+                            ? '#10B981'
+                            : cov.completionRate >= 50
+                              ? '#F59E0B'
                               : '#EF4444'
                         }}
                       />
@@ -759,7 +778,7 @@ export default function FormTemplatesPage() {
             </div>
           </CardContent>
         </Card>
-        
+
         {/* Tabs for My Forms vs Global Library */}
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="mb-6">
           <TabsList className="grid w-full max-w-md grid-cols-2">
@@ -775,7 +794,7 @@ export default function FormTemplatesPage() {
             </TabsTrigger>
           </TabsList>
         </Tabs>
-        
+
         {/* Filters */}
         <div className="flex flex-col lg:flex-row gap-4 mb-6">
           <div className="relative flex-1">
@@ -787,10 +806,10 @@ export default function FormTemplatesPage() {
               className="pl-9"
             />
           </div>
-          
+
           <div className="flex flex-wrap gap-2">
-            <Select 
-              value={filterFrequency || 'all'} 
+            <Select
+              value={filterFrequency || 'all'}
               onValueChange={(v) => setFilterFrequency(v === 'all' ? null : v)}
             >
               <SelectTrigger className="w-40">
@@ -805,7 +824,7 @@ export default function FormTemplatesPage() {
                 ))}
               </SelectContent>
             </Select>
-            
+
             <Select value={filterStatus} onValueChange={(v: any) => setFilterStatus(v)}>
               <SelectTrigger className="w-36">
                 <SelectValue placeholder="Status" />
@@ -820,7 +839,7 @@ export default function FormTemplatesPage() {
                 )}
               </SelectContent>
             </Select>
-            
+
             <Select value={sortBy} onValueChange={setSortBy}>
               <SelectTrigger className="w-44">
                 <SelectValue placeholder="Sort by" />
@@ -833,7 +852,7 @@ export default function FormTemplatesPage() {
                 ))}
               </SelectContent>
             </Select>
-            
+
             {hasActiveFilters && (
               <Button variant="ghost" size="icon" onClick={clearFilters}>
                 <X className="h-4 w-4" />
@@ -841,7 +860,7 @@ export default function FormTemplatesPage() {
             )}
           </div>
         </div>
-        
+
         {/* Bulk Actions */}
         {selectedTemplates.size > 0 && (
           <div className="flex items-center gap-4 p-4 bg-blue-50 dark:bg-blue-950 rounded-lg mb-6">
@@ -852,8 +871,8 @@ export default function FormTemplatesPage() {
               <Download className="h-4 w-4 mr-2" />
               Import Selected
             </Button>
-            <Button 
-              size="sm" 
+            <Button
+              size="sm"
               variant="outline"
               onClick={() => setSelectedTemplates(new Set())}
             >
@@ -861,7 +880,7 @@ export default function FormTemplatesPage() {
             </Button>
           </div>
         )}
-        
+
         {/* Results Count */}
         <div className="flex items-center justify-between mb-4">
           <p className="text-sm text-muted-foreground">
@@ -869,7 +888,7 @@ export default function FormTemplatesPage() {
             {filterElement !== null && ` in Element ${filterElement}`}
           </p>
         </div>
-        
+
         {/* Template Grid */}
         {isLoading ? (
           <div className="flex items-center justify-center py-12">
@@ -883,8 +902,8 @@ export default function FormTemplatesPage() {
               <p className="text-muted-foreground mt-2 mb-4">
                 {hasActiveFilters
                   ? 'Try adjusting your filters'
-                  : activeTab === 'my-forms' 
-                    ? 'Get started by importing from the global library' 
+                  : activeTab === 'my-forms'
+                    ? 'Get started by importing from the global library'
                     : 'No global templates available'}
               </p>
               {hasActiveFilters && (
@@ -901,7 +920,7 @@ export default function FormTemplatesPage() {
               const elementColor = ELEMENT_COLORS[template.cor_element || 0] || '#6B7280';
               const isSelected = selectedTemplates.has(template.id);
               const isImporting = importingTemplates.has(template.id);
-              
+
               return (
                 <Card
                   key={template.id}
@@ -911,11 +930,11 @@ export default function FormTemplatesPage() {
                   )}
                 >
                   {/* Top border accent */}
-                  <div 
+                  <div
                     className="absolute top-0 left-0 right-0 h-1"
                     style={{ backgroundColor: elementColor }}
                   />
-                  
+
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-start gap-3">
@@ -945,7 +964,7 @@ export default function FormTemplatesPage() {
                           />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle 
+                          <CardTitle
                             className="text-base truncate cursor-pointer hover:text-blue-600"
                             onClick={() => router.push(`/admin/form-templates/${template.id}`)}
                           >
@@ -959,7 +978,7 @@ export default function FormTemplatesPage() {
                           </CardDescription>
                         </div>
                       </div>
-                      
+
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                           <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
@@ -1012,25 +1031,34 @@ export default function FormTemplatesPage() {
                               {template.is_active ? 'Deactivate' : 'Activate'}
                             </DropdownMenuItem>
                           )}
+                          {activeTab === 'my-forms' && (
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onClick={() => handleDeleteTemplate(template.id)}
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </div>
                   </CardHeader>
-                  
-                  <CardContent 
+
+                  <CardContent
                     className="pt-0"
                     onClick={() => router.push(`/admin/form-templates/${template.id}`)}
                   >
                     <p className="text-sm text-muted-foreground line-clamp-2 mb-4 min-h-[2.5rem]">
                       {template.description || 'No description provided'}
                     </p>
-                    
+
                     {/* Badges */}
                     <div className="flex flex-wrap gap-1.5 mb-4">
-                      <Badge 
-                        variant="outline" 
+                      <Badge
+                        variant="outline"
                         className="text-xs"
-                        style={{ 
+                        style={{
                           borderColor: elementColor,
                           color: elementColor,
                         }}
@@ -1058,7 +1086,7 @@ export default function FormTemplatesPage() {
                         </Badge>
                       )}
                     </div>
-                    
+
                     {/* Stats */}
                     <div className="flex items-center justify-between text-xs text-muted-foreground border-t pt-3">
                       <span className="flex items-center gap-1">
@@ -1076,7 +1104,7 @@ export default function FormTemplatesPage() {
                         </span>
                       )}
                     </div>
-                    
+
                     {/* Import Button for Global Library */}
                     {activeTab === 'global-library' && (
                       <Button
@@ -1108,7 +1136,7 @@ export default function FormTemplatesPage() {
           </div>
         )}
       </div>
-      
+
       {/* Preview Dialog */}
       <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-auto">
@@ -1136,7 +1164,7 @@ export default function FormTemplatesPage() {
                   </div>
                 </div>
               </DialogHeader>
-              
+
               <div className="space-y-6 mt-4">
                 {/* Form Details */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -1157,7 +1185,7 @@ export default function FormTemplatesPage() {
                     <p className="font-medium">{previewTemplate.sections_count || 0}</p>
                   </div>
                 </div>
-                
+
                 {/* Badges */}
                 <div className="flex flex-wrap gap-2">
                   {previewTemplate.is_mandatory && (
@@ -1176,7 +1204,7 @@ export default function FormTemplatesPage() {
                     {previewTemplate.fields_count || 0} fields
                   </Badge>
                 </div>
-                
+
                 {/* Workflow Info */}
                 {previewTemplate.form_workflows && (
                   <div className="border rounded-lg p-4">
@@ -1192,13 +1220,13 @@ export default function FormTemplatesPage() {
                   </div>
                 )}
               </div>
-              
+
               <DialogFooter className="mt-6">
                 <Button variant="outline" onClick={() => setShowPreviewDialog(false)}>
                   Close
                 </Button>
                 {!previewTemplate.company_id ? (
-                  <Button 
+                  <Button
                     onClick={() => {
                       handleImportTemplate(previewTemplate.id);
                       setShowPreviewDialog(false);
@@ -1208,7 +1236,7 @@ export default function FormTemplatesPage() {
                     Import This Form
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     onClick={() => {
                       router.push(`/admin/form-templates/${previewTemplate.id}`);
                       setShowPreviewDialog(false);

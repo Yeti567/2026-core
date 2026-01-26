@@ -18,6 +18,8 @@ import {
 } from '@/lib/audit/mock-interview';
 import { MOCK_AUDITOR_CONCLUSION_PROMPT } from '@/lib/audit/mock-audit-prompts';
 
+import { callAI } from '@/lib/ai/ai-client';
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { sessionId: string } }
@@ -112,54 +114,41 @@ export async function POST(
       questionIndex: (session.questions_asked || []).length
     };
 
-    // Check for Anthropic API key
-    const anthropicKey = process.env.ANTHROPIC_API_KEY;
     let report = generateBasicReport(sessionObj);
 
-    if (anthropicKey && sessionObj.messages.length > 0) {
+    if (sessionObj.messages.length > 0) {
       // Use AI to generate detailed feedback
       try {
-        const conversationSummary = sessionObj.messages.map(m => 
+        const conversationSummary = sessionObj.messages.map(m =>
           `${m.role === 'auditor' ? 'Auditor' : 'Worker'}: ${m.content}`
         ).join('\n\n');
 
-        const response = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-api-key': anthropicKey,
-            'anthropic-version': '2023-06-01'
-          },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 2000,
-            system: MOCK_AUDITOR_CONCLUSION_PROMPT,
-            messages: [
-              {
-                role: 'user',
-                content: `Review this mock COR audit interview and provide detailed feedback:\n\n${conversationSummary}\n\nProvide your assessment in the specified JSON format.`
-              }
-            ]
-          })
+        const aiResponse = await callAI([
+          {
+            role: 'user',
+            content: `Review this mock COR audit interview and provide detailed feedback:\n\n${conversationSummary}\n\nProvide your assessment in the specified JSON format.`
+          }
+        ], {
+          model: 'deepseek/deepseek-chat',
+          max_tokens: 2000,
+          system: MOCK_AUDITOR_CONCLUSION_PROMPT
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          const aiReport = parseReportResponse(data.content?.[0]?.text || '');
-          
-          if (aiReport) {
-            // Merge AI insights with basic report
-            report = {
-              ...report,
-              overallScore: aiReport.overallScore || report.overallScore,
-              readyForAudit: aiReport.readyForAudit ?? report.readyForAudit,
-              strengths: aiReport.strengths || report.strengths,
-              weaknesses: aiReport.weaknesses || report.weaknesses,
-              recommendations: aiReport.recommendations || report.recommendations,
-              feedback: aiReport.feedback || report.feedback,
-              assessment: aiReport.assessment || report.assessment
-            };
-          }
+        const textContent = aiResponse.content || '';
+        const aiReport = parseReportResponse(textContent);
+
+        if (aiReport) {
+          // Merge AI insights with basic report
+          report = {
+            ...report,
+            overallScore: aiReport.overallScore || report.overallScore,
+            readyForAudit: aiReport.readyForAudit ?? report.readyForAudit,
+            strengths: aiReport.strengths || report.strengths,
+            weaknesses: aiReport.weaknesses || report.weaknesses,
+            recommendations: aiReport.recommendations || report.recommendations,
+            feedback: aiReport.feedback || report.feedback,
+            assessment: aiReport.assessment || report.assessment
+          };
         }
       } catch (aiError) {
         console.error('AI report generation failed, using basic report:', aiError);
@@ -200,14 +189,14 @@ export async function POST(
     if (session.status !== 'completed') {
       await supabase
         .from('mock_interview_sessions')
-        .update({ 
+        .update({
           status: 'completed',
           completed_at: new Date().toISOString()
         })
         .eq('id', params.sessionId);
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       report: {
         ...savedReport,
         assessment: report.assessment

@@ -6,13 +6,15 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 
 export async function POST(req: NextRequest) {
   try {
     // Verify authentication
-    const supabase = createRouteHandlerClient();
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const supabase = createNeonWrapper();
+    // TODO: Implement user authentication without Supabase
+      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };
+      const { data: { user: authUser }, error: authError } = authResult;
     
     if (authError || !authUser) {
       return NextResponse.json(
@@ -39,13 +41,16 @@ export async function POST(req: NextRequest) {
     }
     
     // Verify user exists and get company
-    const { data: user, error: userError } = await supabase
+    const userProfileResult = await supabase
       .from('user_profiles')
       .select('company_id')
       .eq('user_id', userId)
       .single();
     
-    if (userError || !user) {
+    const userProfile = userProfileResult.data;
+    const userError = userProfileResult.error;
+    
+    if (userError || !userProfile) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -58,11 +63,11 @@ export async function POST(req: NextRequest) {
     const browser = detectBrowser(userAgent);
     
     // Upsert subscription (update if exists, insert if new)
-    const { data, error } = await supabase
+    const subscriptionResult = await supabase
       .from('push_subscriptions')
       .upsert({
         user_id: userId,
-        company_id: user.company_id,
+        company_id: userProfile.company_id,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,
@@ -72,9 +77,10 @@ export async function POST(req: NextRequest) {
         last_used_at: new Date().toISOString()
       }, {
         onConflict: 'user_id,endpoint'
-      })
-      .select()
-      .single();
+      });
+    
+    const data = subscriptionResult.data;
+    const error = subscriptionResult.error;
     
     if (error) {
       console.error('[Push Subscribe] Database error:', error);

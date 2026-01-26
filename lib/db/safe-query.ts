@@ -31,6 +31,15 @@ import type {
 } from './types';
 
 // =============================================================================
+// MINIMAL CLIENT INTERFACE (Supabase-like)
+// =============================================================================
+
+export interface SupabaseLikeClient {
+  from(table: string): any;
+  rpc(fn: string, params?: any): Promise<{ data: any; error: any }>;
+}
+
+// =============================================================================
 // ZOD VALIDATION SCHEMAS
 // =============================================================================
 
@@ -211,7 +220,7 @@ export interface SuperAdminQueryBuilder extends Omit<SafeQueryBuilder, 'companie
  * ```
  */
 export function createSafeQuery(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseLikeClient,
   companyId: string,
   userRole: UserRole
 ): SafeQueryBuilder {
@@ -557,7 +566,7 @@ export function createSafeQuery(
  * ```
  */
 export function createSuperAdminQuery(
-  supabase: SupabaseClient<Database>,
+  supabase: SupabaseLikeClient,
   userRole: UserRole
 ): SuperAdminQueryBuilder {
   if (userRole !== 'super_admin') {

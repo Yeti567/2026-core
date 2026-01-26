@@ -7,15 +7,16 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // TODO: Implement user authentication without Supabase
+      const { data: { user: user }, error: authError } = { data: { user: null }, error: new Error('Auth not implemented') };;
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -55,8 +56,8 @@ export async function GET(request: NextRequest) {
       .from('pdf_detected_fields')
       .select('*')
       .eq('pdf_upload_id', session.pdf_upload_id)
-      .order('section_order', { ascending: true })
-      .order('field_order', { ascending: true });
+      .order('section_order', true)
+      .order('field_order', true);
     
     return NextResponse.json({
       session,
@@ -71,10 +72,11 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
     
     // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    // TODO: Implement user authentication without Supabase
+      const { data: { user: user }, error: authError } = { data: { user: null }, error: new Error('Auth not implemented') };;
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

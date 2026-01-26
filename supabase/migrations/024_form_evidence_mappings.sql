@@ -4,6 +4,21 @@
 -- Tables for linking converted forms to COR audit elements and tracking
 -- conversion analytics for reporting.
 
+-- NOTE:
+-- Earlier migrations create a different form_evidence_mappings table (submission-based).
+-- On a fresh reset+migrate, we prefer this migration's template-based table.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.columns
+    WHERE table_name = 'form_evidence_mappings'
+      AND column_name = 'form_submission_id'
+  ) THEN
+    DROP TABLE form_evidence_mappings CASCADE;
+  END IF;
+END $$;
+
 -- =============================================================================
 -- FORM EVIDENCE MAPPINGS TABLE
 -- =============================================================================

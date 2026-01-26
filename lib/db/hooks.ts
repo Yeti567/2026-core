@@ -8,14 +8,15 @@
 'use client';
 
 import { useMemo } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { createNeonWrapper } from './neon-wrapper';
 import {
   createSafeQuery,
   createSuperAdminQuery,
+  type SupabaseLikeClient,
   type SafeQueryBuilder,
   type SuperAdminQueryBuilder,
 } from './safe-query';
-import type { Database, UserRole } from './types';
+import type { UserRole } from './types';
 
 // =============================================================================
 // USER CONTEXT TYPE
@@ -28,32 +29,20 @@ export interface UserContext {
 }
 
 // =============================================================================
-// SUPABASE CLIENT SINGLETON
+// NEON CLIENT SINGLETON
 // =============================================================================
 
-let supabaseClient: ReturnType<typeof createClient<Database>> | null = null;
+let neonClient: ReturnType<typeof createNeonWrapper> | null = null;
 
 /**
- * Gets or creates the Supabase client singleton.
- * Uses environment variables for configuration.
+ * Gets or creates the Neon client singleton.
  */
-function getSupabaseClient() {
-  if (supabaseClient) {
-    return supabaseClient;
+function getNeonClient() {
+  if (neonClient) {
+    return neonClient;
   }
-
-  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error(
-      'Missing Supabase environment variables. ' +
-      'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
-    );
-  }
-
-  supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey);
-  return supabaseClient;
+  neonClient = createNeonWrapper();
+  return neonClient;
 }
 
 // =============================================================================
@@ -90,11 +79,11 @@ function getSupabaseClient() {
  * ```
  */
 export function useSafeQuery(userContext: UserContext): SafeQueryBuilder {
-  const supabase = getSupabaseClient();
+  const neon = getNeonClient();
 
   const safeQuery = useMemo(() => {
-    return createSafeQuery(supabase, userContext.companyId, userContext.role);
-  }, [supabase, userContext.companyId, userContext.role]);
+    return createSafeQuery(neon, userContext.companyId, userContext.role);
+  }, [neon, userContext.companyId, userContext.role]);
 
   return safeQuery;
 }
@@ -132,12 +121,12 @@ export function useSafeQuery(userContext: UserContext): SafeQueryBuilder {
  * ```
  */
 export function useSuperAdminQuery(userContext: UserContext): SuperAdminQueryBuilder {
-  const supabase = getSupabaseClient();
+  const neon = getNeonClient();
 
   const adminQuery = useMemo(() => {
     // This will throw if not super_admin
-    return createSuperAdminQuery(supabase, userContext.role);
-  }, [supabase, userContext.role]);
+    return createSuperAdminQuery(neon, userContext.role);
+  }, [neon, userContext.role]);
 
   return adminQuery;
 }
@@ -165,14 +154,14 @@ export function useSuperAdminQuery(userContext: UserContext): SuperAdminQueryBui
 export function useConditionalQuery(
   userContext: UserContext
 ): SafeQueryBuilder | SuperAdminQueryBuilder {
-  const supabase = getSupabaseClient();
+  const neon = getNeonClient();
 
   const query = useMemo(() => {
     if (userContext.role === 'super_admin') {
-      return createSuperAdminQuery(supabase, userContext.role);
+      return createSuperAdminQuery(neon, userContext.role);
     }
-    return createSafeQuery(supabase, userContext.companyId, userContext.role);
-  }, [supabase, userContext.companyId, userContext.role]);
+    return createSafeQuery(neon, userContext.companyId, userContext.role);
+  }, [neon, userContext.companyId, userContext.role]);
 
   return query;
 }
@@ -229,7 +218,7 @@ export function useUserContext() {
   // In a real app, you'd use React Query, SWR, or similar for caching
   // and would integrate with your auth provider.
   
-  const supabase = getSupabaseClient();
+  const neon = getNeonClient();
 
   // This is a placeholder - actual implementation would use useEffect
   // and state management to fetch the user context asynchronously.
@@ -245,27 +234,9 @@ export function useUserContext() {
      * Call this after authentication to populate userContext.
      */
     async fetchUserContext(): Promise<UserContext | null> {
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (!user) {
-        return null;
-      }
-
-      // Call database functions to get company_id and role
-      const [companyResult, roleResult] = await Promise.all([
-        supabase.rpc('get_user_company_id'),
-        supabase.rpc('get_user_role'),
-      ]);
-
-      if (companyResult.error || roleResult.error) {
-        throw companyResult.error || roleResult.error;
-      }
-
-      return {
-        userId: user.id,
-        companyId: companyResult.data,
-        role: roleResult.data as UserRole,
-      };
+      // TODO: Replace with actual auth logic for Neon
+      // For now, return null as placeholder
+      return null;
     },
   };
 }

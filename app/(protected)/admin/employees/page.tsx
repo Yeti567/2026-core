@@ -643,20 +643,20 @@ export default function EmployeesPage() {
                           </td>
                         )}
                         <td className="py-3 px-4">
-                          <div className="flex items-center gap-3">
+                          <Link href={`/admin/employees/${employee.id}`} className="flex items-center gap-3 hover:opacity-80 transition-opacity">
                             <div className="w-8 h-8 rounded-full bg-[var(--primary)]/10 flex items-center justify-center text-[var(--primary)] text-sm font-medium">
                               {(employee.first_name?.[0] || '').toUpperCase()}
                               {(employee.last_name?.[0] || '').toUpperCase()}
                             </div>
                             <div>
-                              <p className="font-medium">
+                              <p className="font-medium text-[var(--primary)] hover:underline">
                                 {employee.first_name} {employee.last_name}
                                 {employee.first_admin && (
                                   <span className="ml-2 text-xs text-amber-400" title="First Admin">👑</span>
                                 )}
                               </p>
                             </div>
-                          </div>
+                          </Link>
                         </td>
                         <td className="py-3 px-4 text-[var(--muted)]">{employee.email}</td>
                         <td className="py-3 px-4 text-[var(--muted)]">{employee.position || '-'}</td>
@@ -681,6 +681,16 @@ export default function EmployeesPage() {
                           {canEdit ? (
                             <div className="flex items-center justify-end gap-2">
                               <Link
+                                href={`/admin/employees/${employee.id}`}
+                                className="p-1.5 rounded hover:bg-blue-500/10 text-[var(--muted)] hover:text-blue-400 transition-colors"
+                                title="View Details"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                              </Link>
+                              <Link
                                 href={`/admin/employees/${employee.id}/certifications`}
                                 className="p-1.5 rounded hover:bg-purple-500/10 text-[var(--muted)] hover:text-purple-400 transition-colors"
                                 title="Certifications"
@@ -701,13 +711,12 @@ export default function EmployeesPage() {
                               <button
                                 onClick={() => handleDeactivate(employee)}
                                 disabled={employee.first_admin}
-                                className={`p-1.5 rounded transition-colors ${
-                                  employee.first_admin
-                                    ? 'opacity-30 cursor-not-allowed'
-                                    : employee.is_active
+                                className={`p-1.5 rounded transition-colors ${employee.first_admin
+                                  ? 'opacity-30 cursor-not-allowed'
+                                  : employee.is_active
                                     ? 'hover:bg-red-500/10 text-[var(--muted)] hover:text-red-400'
                                     : 'hover:bg-emerald-500/10 text-[var(--muted)] hover:text-emerald-400'
-                                }`}
+                                  }`}
                                 title={employee.first_admin ? 'Cannot deactivate first admin' : employee.is_active ? 'Deactivate' : 'Activate'}
                               >
                                 {employee.is_active ? (
@@ -723,11 +732,10 @@ export default function EmployeesPage() {
                               <button
                                 onClick={() => setDeleteModal(employee)}
                                 disabled={employee.first_admin}
-                                className={`p-1.5 rounded transition-colors ${
-                                  employee.first_admin
-                                    ? 'opacity-30 cursor-not-allowed'
-                                    : 'hover:bg-red-500/10 text-[var(--muted)] hover:text-red-400'
-                                }`}
+                                className={`p-1.5 rounded transition-colors ${employee.first_admin
+                                  ? 'opacity-30 cursor-not-allowed'
+                                  : 'hover:bg-red-500/10 text-[var(--muted)] hover:text-red-400'
+                                  }`}
                                 title={employee.first_admin ? 'Cannot delete first admin' : 'Delete'}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

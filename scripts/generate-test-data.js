@@ -27,33 +27,33 @@ const COMPANY_NAME = process.env.COMPANY_NAME || 'Automated Test Construction Co
 
 // Test data templates
 const COMPANY_DATA = {
-  legal_name: COMPANY_NAME,
-  business_number: `BN-TEST-${Date.now()}`,
-  office_address: '789 Test Drive',
+  name: COMPANY_NAME,
+  wsib_number: `BN-TEST-${Date.now()}`,
+  address: '789 Test Drive', // Mapped to address
   city: 'Test City',
-  province_state: 'ON',
+  province: 'ON', // Mapped to province
   postal_code: 'K1K 1K1',
-  country: 'Canada',
+  // country: 'Canada', // Not in schema
   phone: '613-555-9999',
-  email: 'test@testcompany.local',
-  website: 'https://testcompany.local',
+  company_email: 'test@testcompany.local',
+  // website: 'https://testcompany.local', // Not in schema
   industry: 'Construction - General',
   employee_count: 20,
   years_in_business: 5,
-  primary_services: 'Commercial Construction, Renovations, Project Management'
+  main_services: ['Commercial Construction', 'Renovations', 'Project Management']
 };
 
 const TEST_WORKERS = [
-  { name: 'Admin User', email: 'admin@test.local', position: 'General Manager', role: 'admin', phone: '613-555-0001' },
-  { name: 'Safety Coordinator', email: 'safety@test.local', position: 'Safety Manager', role: 'internal_auditor', phone: '613-555-0002' },
-  { name: 'Site Lead', email: 'site@test.local', position: 'Site Supervisor', role: 'supervisor', phone: '613-555-0003' },
-  { name: 'Crew Chief', email: 'crew@test.local', position: 'Foreman', role: 'supervisor', phone: '613-555-0004' },
-  { name: 'Skilled Tradesperson', email: 'trade1@test.local', position: 'Carpenter', role: 'worker', phone: '613-555-0005' },
-  { name: 'Apprentice Tradesperson', email: 'trade2@test.local', position: 'Apprentice', role: 'worker', phone: '613-555-0006' },
-  { name: 'Equipment Operator A', email: 'operator1@test.local', position: 'Equipment Operator', role: 'worker', phone: '613-555-0007' },
-  { name: 'Equipment Operator B', email: 'operator2@test.local', position: 'Equipment Operator', role: 'worker', phone: '613-555-0008' },
-  { name: 'General Labourer A', email: 'labour1@test.local', position: 'Labourer', role: 'worker', phone: '613-555-0009' },
-  { name: 'General Labourer B', email: 'labour2@test.local', position: 'Labourer', role: 'worker', phone: '613-555-0010' }
+  { first_name: 'Admin', last_name: 'User', email: 'admin@test.local', position: 'General Manager', role: 'admin', phone: '613-555-0001' },
+  { first_name: 'Safety', last_name: 'Coordinator', email: 'safety@test.local', position: 'Safety Manager', role: 'internal_auditor', phone: '613-555-0002' },
+  { first_name: 'Site', last_name: 'Lead', email: 'site@test.local', position: 'Site Supervisor', role: 'supervisor', phone: '613-555-0003' },
+  { first_name: 'Crew', last_name: 'Chief', email: 'crew@test.local', position: 'Foreman', role: 'supervisor', phone: '613-555-0004' },
+  { first_name: 'Skilled', last_name: 'Tradesperson', email: 'trade1@test.local', position: 'Carpenter', role: 'worker', phone: '613-555-0005' },
+  { first_name: 'Apprentice', last_name: 'Tradesperson', email: 'trade2@test.local', position: 'Apprentice', role: 'worker', phone: '613-555-0006' },
+  { first_name: 'Equipment', last_name: 'Operator A', email: 'operator1@test.local', position: 'Equipment Operator', role: 'worker', phone: '613-555-0007' },
+  { first_name: 'Equipment', last_name: 'Operator B', email: 'operator2@test.local', position: 'Equipment Operator', role: 'worker', phone: '613-555-0008' },
+  { first_name: 'General', last_name: 'Labourer A', email: 'labour1@test.local', position: 'Labourer', role: 'worker', phone: '613-555-0009' },
+  { first_name: 'General', last_name: 'Labourer B', email: 'labour2@test.local', position: 'Labourer', role: 'worker', phone: '613-555-0010' }
 ];
 
 const DEPARTMENTS = [
@@ -267,7 +267,7 @@ async function generateTestData() {
         password: 'TestPassword123!@#',
         email_confirm: true,
         user_metadata: {
-          full_name: worker.name
+          full_name: `${worker.first_name} ${worker.last_name}`
         }
       });
 
@@ -299,23 +299,24 @@ async function generateTestData() {
         .from('workers')
         .insert({
           company_id: companyId,
-          name: worker.name,
+          first_name: worker.first_name,
+          last_name: worker.last_name,
           email: worker.email,
           position: worker.position,
           phone: worker.phone,
-          status: 'active',
+          // status: 'active', // Not in schema often, or defaulted? 001/013/030 don't seem to have simple 'status' on worker except certification_status
           hire_date: randomDate(new Date(2021, 0, 1), new Date(2024, 11, 31)).toISOString().split('T')[0]
         })
         .select()
         .single();
 
       if (workerError) {
-        log(`Failed to create worker record for ${worker.name}: ${workerError.message}`, 'error');
+        log(`Failed to create worker record for ${worker.first_name} ${worker.last_name}: ${workerError.message}`, 'error');
         continue;
       }
 
       workerIds.push(workerData.id);
-      log(`Created: ${worker.name} (${worker.role})`, 'success');
+      log(`Created: ${worker.first_name} ${worker.last_name} (${worker.role})`, 'success');
     }
 
     // 3. Create Departments
@@ -344,7 +345,7 @@ async function generateTestData() {
     // 4. Assign Workers to Departments
     if (deptIds.length >= 4) {
       log('\nAssigning workers to departments...');
-      
+
       const assignments = [
         { workerIdx: 0, deptIdx: 0 }, // Admin → Management
         { workerIdx: 1, deptIdx: 1 }, // Safety → Safety & Compliance
@@ -443,7 +444,7 @@ async function generateTestData() {
 
     // 8. Create Sample Worker Certifications
     log('\nCreating sample worker certifications...');
-    
+
     const sampleCerts = [
       { workerIdx: 2, certIdx: 0, issueDate: new Date(2024, 5, 15) }, // Site Lead - WAH
       { workerIdx: 2, certIdx: 3, issueDate: new Date(2024, 3, 10) }, // Site Lead - First Aid

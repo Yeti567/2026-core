@@ -6,14 +6,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import { requireAuth, type AuthError } from '@/lib/auth/helpers';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
 export async function GET() {
   try {
     const user = await requireAuth();
-    const supabase = createRouteHandlerClient();
+    const supabase = createNeonWrapper();
 
     // Rate limiting: 30 requests per minute per user (prevent DoS on email lookup)
     const rateLimitResult = await rateLimitByUser(user.userId, 30, '1m');
@@ -58,8 +58,8 @@ export async function GET() {
     }
 
     // Combine and deduplicate emails
-    const workerEmails = workers?.map(w => w.email?.toLowerCase()).filter(Boolean) || [];
-    const invitationEmails = invitations?.map(i => i.email?.toLowerCase()).filter(Boolean) || [];
+    const workerEmails = workers?.map((w: { email: string | null }) => w.email?.toLowerCase()).filter(Boolean) || [];
+    const invitationEmails = invitations?.map((i: { email: string | null }) => i.email?.toLowerCase()).filter(Boolean) || [];
     const allEmails = [...new Set([...workerEmails, ...invitationEmails])];
 
     return NextResponse.json({ emails: allEmails });

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { DepartmentForm } from './department-form';
 import { OrgChart } from './org-chart';
 
@@ -69,12 +70,12 @@ export function DepartmentsManager() {
 
     setSettingUp(true);
     const departments = [
-      {name:'Foundations Division',code:'FND',description:'Specializes in foundation work including excavation, formwork, and concrete placement',department_type:'division',display_order:1,color_code:'#3b82f6'},
-      {name:'Flatwork Division',code:'FLT',description:'Handles flatwork projects including driveways, sidewalks, and patios',department_type:'division',display_order:2,color_code:'#10b981'},
-      {name:'Structural Division',code:'STR',description:'Focuses on structural concrete work including beams, columns, and slabs',department_type:'division',display_order:3,color_code:'#f59e0b'},
-      {name:'Decorative Finishes',code:'DEC',description:'Specialized decorative concrete finishes and architectural elements',department_type:'crew',display_order:4,color_code:'#8b5cf6'},
-      {name:'Equipment & Fleet Management',code:'EQP',description:'Manages all company equipment, vehicles, and maintenance',department_type:'department',display_order:5,color_code:'#ef4444'},
-      {name:'Administration',code:'ADM',description:'Administrative support, HR, training records, and document control',department_type:'department',display_order:6,color_code:'#6366f1'}
+      { name: 'Foundations Division', code: 'FND', description: 'Specializes in foundation work including excavation, formwork, and concrete placement', department_type: 'division', display_order: 1, color_code: '#3b82f6' },
+      { name: 'Flatwork Division', code: 'FLT', description: 'Handles flatwork projects including driveways, sidewalks, and patios', department_type: 'division', display_order: 2, color_code: '#10b981' },
+      { name: 'Structural Division', code: 'STR', description: 'Focuses on structural concrete work including beams, columns, and slabs', department_type: 'division', display_order: 3, color_code: '#f59e0b' },
+      { name: 'Decorative Finishes', code: 'DEC', description: 'Specialized decorative concrete finishes and architectural elements', department_type: 'crew', display_order: 4, color_code: '#8b5cf6' },
+      { name: 'Equipment & Fleet Management', code: 'EQP', description: 'Manages all company equipment, vehicles, and maintenance', department_type: 'department', display_order: 5, color_code: '#ef4444' },
+      { name: 'Administration', code: 'ADM', description: 'Administrative support, HR, training records, and document control', department_type: 'department', display_order: 6, color_code: '#6366f1' }
     ];
 
     let created = 0;
@@ -263,11 +264,10 @@ export function DepartmentsManager() {
           {departments.map((dept) => (
             <div
               key={dept.id}
-              className="card cursor-pointer hover:border-indigo-500/50 transition-colors"
-              onClick={() => setSelectedDept(selectedDept === dept.id ? null : dept.id)}
+              className="card relative group hover:border-[var(--primary)]/50 transition-colors"
             >
               <div className="flex items-start justify-between mb-3">
-                <div className="flex-1">
+                <Link href={`/admin/departments/${dept.id}`} className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <h3 className="font-semibold">{dept.name}</h3>
                     {dept.code && (
@@ -287,7 +287,7 @@ export function DepartmentsManager() {
                       Parent: {dept.parent_department.name}
                     </p>
                   )}
-                </div>
+                </Link>
                 <div className="flex gap-2">
                   <button
                     onClick={(e) => {
@@ -314,8 +314,7 @@ export function DepartmentsManager() {
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 mb-3">
+              <Link href={`/admin/departments/${dept.id}`} className="grid grid-cols-2 gap-4 mb-3">
                 <div>
                   <div className="text-2xl font-bold text-indigo-400">{dept.worker_count}</div>
                   <div className="text-xs text-[var(--muted)]">Workers</div>
@@ -324,58 +323,41 @@ export function DepartmentsManager() {
                   <div className="text-2xl font-bold text-emerald-400">{dept.equipment_count}</div>
                   <div className="text-xs text-[var(--muted)]">Equipment</div>
                 </div>
+              </Link>
+
+              {/* Actions Footer */}
+              <div className="mt-4 pt-4 border-t border-slate-700 flex items-center justify-between">
+                <Link href={`/admin/departments/${dept.id}`} className="text-sm text-[var(--primary)] hover:underline flex items-center gap-1">
+                  View Details
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+                <div className="flex gap-2">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleEdit(dept);
+                    }}
+                    className="p-1.5 rounded hover:bg-slate-700 text-indigo-400 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(dept.id);
+                    }}
+                    className="p-1.5 rounded hover:bg-red-500/10 text-red-400 transition-colors"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
               </div>
-
-              {/* Leadership */}
-              {(dept.superintendent || dept.manager) && (
-                <div className="pt-3 border-t border-slate-700 space-y-2">
-                  {dept.superintendent && (
-                    <div className="text-sm">
-                      <span className="text-[var(--muted)]">Superintendent: </span>
-                      <span className="font-medium">
-                        {dept.superintendent.first_name} {dept.superintendent.last_name}
-                      </span>
-                    </div>
-                  )}
-                  {dept.manager && (
-                    <div className="text-sm">
-                      <span className="text-[var(--muted)]">Manager: </span>
-                      <span className="font-medium">
-                        {dept.manager.first_name} {dept.manager.last_name}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Expanded Details */}
-              {selectedDept === dept.id && (
-                <div className="mt-4 pt-4 border-t border-slate-700">
-                  <DepartmentDetails departmentId={dept.id} />
-                  <div className="flex gap-2 mt-4">
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Open assign workers modal
-                        alert('Assign workers functionality - coming soon');
-                      }}
-                      className="btn btn-secondary text-sm flex-1"
-                    >
-                      Assign Workers
-                    </button>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Open assign equipment modal
-                        alert('Assign equipment functionality - coming soon');
-                      }}
-                      className="btn btn-secondary text-sm flex-1"
-                    >
-                      Assign Equipment
-                    </button>
-                  </div>
-                </div>
-              )}
             </div>
           ))}
         </div>

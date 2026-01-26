@@ -39,12 +39,13 @@ CREATE TABLE IF NOT EXISTS audit_questions (
 );
 
 -- Indexes
-CREATE INDEX idx_audit_questions_element ON audit_questions(element_number);
-CREATE INDEX idx_audit_questions_evidence ON audit_questions USING GIN (required_evidence_types);
+CREATE INDEX IF NOT EXISTS idx_audit_questions_element ON audit_questions(element_number);
+CREATE INDEX IF NOT EXISTS idx_audit_questions_evidence ON audit_questions USING GIN (required_evidence_types);
 
 -- Enable RLS (read-only for authenticated users)
 ALTER TABLE audit_questions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "audit_questions_select" ON audit_questions;
 CREATE POLICY "audit_questions_select" ON audit_questions
     FOR SELECT TO authenticated
     USING (true); -- All authenticated users can read audit questions
@@ -87,25 +88,28 @@ CREATE TABLE IF NOT EXISTS evidence_question_mappings (
 );
 
 -- Indexes
-CREATE INDEX idx_evidence_mappings_company ON evidence_question_mappings(company_id);
-CREATE INDEX idx_evidence_mappings_question ON evidence_question_mappings(audit_question_id);
-CREATE INDEX idx_evidence_mappings_evidence ON evidence_question_mappings(evidence_type, evidence_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_mappings_company ON evidence_question_mappings(company_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_mappings_question ON evidence_question_mappings(audit_question_id);
+CREATE INDEX IF NOT EXISTS idx_evidence_mappings_evidence ON evidence_question_mappings(evidence_type, evidence_id);
 
 -- Enable RLS
 ALTER TABLE evidence_question_mappings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "evidence_mappings_select" ON evidence_question_mappings;
 CREATE POLICY "evidence_mappings_select" ON evidence_question_mappings
     FOR SELECT USING (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "evidence_mappings_insert" ON evidence_question_mappings;
 CREATE POLICY "evidence_mappings_insert" ON evidence_question_mappings
     FOR INSERT WITH CHECK (
         company_id = get_user_company_id()
         OR is_super_admin()
     );
 
+DROP POLICY IF EXISTS "evidence_mappings_delete" ON evidence_question_mappings;
 CREATE POLICY "evidence_mappings_delete" ON evidence_question_mappings
     FOR DELETE USING (
         company_id = get_user_company_id()

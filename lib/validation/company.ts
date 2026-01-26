@@ -166,6 +166,53 @@ export function isValidEmail(email: string): boolean {
 }
 
 /**
+ * Validate password strength
+ */
+export function validatePassword(password: string): string | null {
+  if (password.length < 12) {
+    return 'Password must be at least 12 characters long';
+  }
+  if (!/[A-Z]/.test(password)) {
+    return 'Password must contain at least one uppercase letter';
+  }
+  if (!/[a-z]/.test(password)) {
+    return 'Password must contain at least one lowercase letter';
+  }
+  if (!/[0-9]/.test(password)) {
+    return 'Password must contain at least one number';
+  }
+  if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    return 'Password must contain at least one special character (!@#$%^&* etc.)';
+  }
+  
+  // Prevent common weak password patterns
+  if (/(.)\1{2,}/.test(password)) {
+    return 'Password cannot contain three or more repeating characters in a row';
+  }
+  
+  // Prevent sequential characters
+  const lowerPassword = password.toLowerCase();
+  for (let i = 0; i < lowerPassword.length - 2; i++) {
+    const charCode = lowerPassword.charCodeAt(i);
+    if (lowerPassword.charCodeAt(i + 1) === charCode + 1 && 
+        lowerPassword.charCodeAt(i + 2) === charCode + 2) {
+      return 'Password cannot contain sequential characters (like "abc" or "123")';
+    }
+  }
+  
+  // Check against common weak passwords
+  const commonPasswords = [
+    'password', '12345678', 'qwerty123', 'admin123', 'letmein',
+    'welcome123', 'password123', '123456789', 'abc123456'
+  ];
+  if (commonPasswords.includes(lowerPassword)) {
+    return 'Password is too common. Please choose a more secure password.';
+  }
+  
+  return null;
+}
+
+/**
  * Company registration interface
  */
 export interface CompanyRegistration {
@@ -180,6 +227,9 @@ export interface CompanyRegistration {
   registrant_name: string;
   registrant_position: RegistrantPosition;
   registrant_email: string;
+  // Account credentials
+  password: string;
+  confirm_password: string;
   // Optional industry fields (can be completed later)
   industry?: Industry;
   employee_count?: number;
@@ -271,6 +321,23 @@ export function validateCompanyRegistration(data: CompanyRegistration): Validati
   } else if (data.company_email && !doEmailDomainsMatch(data.registrant_email, data.company_email)) {
     const companyDomain = getEmailDomain(data.company_email);
     errors.registrant_email = `Email must be from @${companyDomain}`;
+  }
+
+  // Password
+  if (!data.password) {
+    errors.password = 'Password is required';
+  } else {
+    const passwordError = validatePassword(data.password);
+    if (passwordError) {
+      errors.password = passwordError;
+    }
+  }
+
+  // Confirm password
+  if (!data.confirm_password) {
+    errors.confirm_password = 'Please confirm your password';
+  } else if (data.password !== data.confirm_password) {
+    errors.confirm_password = 'Passwords do not match';
   }
 
   return {

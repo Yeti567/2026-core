@@ -6,15 +6,17 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 
 export async function POST(req: NextRequest) {
   try {
     // Verify authentication
-    const supabase = createRouteHandlerClient();
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const supabase = createNeonWrapper();
+    // TODO: Implement user authentication without Supabase
+      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
+      const { data: { user }, error: authError } = authResult;
     
-    if (authError || !authUser) {
+    if (authError || !user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -31,7 +33,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Users can only unsubscribe themselves - prevent unauthorized unsubscriptions
-    if (userId !== authUser.id) {
+    if (userId !== user.id) {
       return NextResponse.json(
         { error: 'You can only unsubscribe yourself' },
         { status: 403 }
