@@ -10,6 +10,9 @@ import { verifyToken } from '@/lib/auth/jwt';
 import { getPostgresClient } from '@/lib/db/postgres-client';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+// Force Node.js runtime for PostgreSQL compatibility
+export const runtime = 'nodejs';
+
 export async function GET(request: NextRequest) {
   try {
     // Get token from cookie

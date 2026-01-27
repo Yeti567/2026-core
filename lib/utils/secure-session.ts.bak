@@ -5,7 +5,7 @@
  * session invalidation, and security controls.
  */
 
-import { verifyToken, generateToken, JWTPayload } from './auth/jwt';
+import { verifyToken, generateToken, JWTPayload } from '../auth/jwt';
 import { getEnvVar } from './secure-env';
 
 /**

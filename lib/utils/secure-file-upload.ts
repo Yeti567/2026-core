@@ -195,7 +195,7 @@ export async function validateFileUpload(
   }
   
   // 6. Additional security checks
-  performAdditionalSecurityChecks(file, result);
+  await performAdditionalSecurityChecks(file, result);
   
   result.valid = result.errors.length === 0;
   
@@ -411,7 +411,7 @@ async function scanForMaliciousContent(file: File, result: FileValidationResult)
 /**
  * Perform additional security checks
  */
-function performAdditionalSecurityChecks(file: File, result: FileValidationResult): void {
+async function performAdditionalSecurityChecks(file: File, result: FileValidationResult): Promise<void> {
   // Check for double extensions
   const name = file.name.toLowerCase();
   const extensions = name.match(/\.[^.]+/g);

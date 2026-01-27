@@ -308,7 +308,7 @@ export function sanitizeNumber(input: string | number, options: {
  * @param schema - Optional validation schema
  * @returns Sanitized object
  */
-export function sanitizeJson(input: string | object, schema?: any): any {
+export function sanitizeJson(input: string | object, schema?: ValidationSchema): any {
   let parsed: any;
   
   if (typeof input === 'string') {
@@ -351,18 +351,33 @@ export function sanitizeJson(input: string | object, schema?: any): any {
 }
 
 /**
+ * Schema validation rules interface
+ */
+interface ValidationSchema {
+  [key: string]: {
+    required?: boolean;
+    type?: string;
+    minLength?: number;
+    maxLength?: number;
+    pattern?: RegExp;
+    enum?: string[];
+    custom?: (value: any) => boolean;
+  };
+}
+
+/**
  * Basic schema validation
  * @param data - Data to validate
  * @param schema - Schema object
  */
-function validateAgainstSchema(data: any, schema: any): void {
+function validateAgainstSchema(data: any, schema: ValidationSchema): void {
   if (typeof schema !== 'object' || schema === null) {
     return;
   }
   
   for (const [key, rules] of Object.entries(schema)) {
     if (!(key in data)) {
-      if (rules.required) {
+      if (rules?.required) {
         throw new Error(`Required field ${key} is missing`);
       }
       continue;
@@ -371,31 +386,32 @@ function validateAgainstSchema(data: any, schema: any): void {
     const value = data[key];
     
     // Type validation
-    if (rules.type && typeof value !== rules.type) {
+    if (rules?.type && typeof value !== rules.type) {
       throw new Error(`Field ${key} must be of type ${rules.type}`);
     }
     
     // Length validation for strings
-    if (rules.minLength && typeof value === 'string' && value.length < rules.minLength) {
-      throw new Error(`Field ${key} must be at least ${rules.minLength} characters`);
+    if (rules?.minLength && typeof value === 'string' && value.length < rules.minLength) {
+      throw new Error(`Field ${key} must be at least ${rules.minLength} characters long`);
     }
     
-    if (rules.maxLength && typeof value === 'string' && value.length > rules.maxLength) {
-      throw new Error(`Field ${key} must be at most ${rules.maxLength} characters`);
-    }
-    
-    // Range validation for numbers
-    if (rules.min !== undefined && typeof value === 'number' && value < rules.min) {
-      throw new Error(`Field ${key} must be at least ${rules.min}`);
-    }
-    
-    if (rules.max !== undefined && typeof value === 'number' && value > rules.max) {
-      throw new Error(`Field ${key} must be at most ${rules.max}`);
+    if (rules?.maxLength && typeof value === 'string' && value.length > rules.maxLength) {
+      throw new Error(`Field ${key} must be no more than ${rules.maxLength} characters long`);
     }
     
     // Pattern validation
-    if (rules.pattern && typeof value === 'string' && !rules.pattern.test(value)) {
+    if (rules?.pattern && typeof value === 'string' && !rules.pattern.test(value)) {
       throw new Error(`Field ${key} does not match required pattern`);
+    }
+    
+    // Enum validation
+    if (rules?.enum && !rules.enum.includes(value)) {
+      throw new Error(`Field ${key} must be one of: ${rules.enum.join(', ')}`);
+    }
+    
+    // Custom validation
+    if (rules?.custom && !rules.custom(value)) {
+      throw new Error(`Field ${key} failed custom validation`);
     }
   }
 }
