@@ -9,6 +9,11 @@ function loadDatabaseUrl(): string {
     return process.env.DATABASE_URL;
   }
   
+  // Try POSTGRES_URL as fallback
+  if (process.env.POSTGRES_URL) {
+    return process.env.POSTGRES_URL;
+  }
+  
   // Load from .env.local file
   const envPath = path.join(process.cwd(), '.env.local');
   if (fs.existsSync(envPath)) {
@@ -21,6 +26,10 @@ function loadDatabaseUrl(): string {
         return trimmed.substring('DATABASE_URL='.length).replace(/^["']|["']$/g, '');
       }
       
+      if (trimmed.startsWith('POSTGRES_URL=')) {
+        return trimmed.substring('POSTGRES_URL='.length).replace(/^["']|["']$/g, '');
+      }
+      
       // Also handle bare URLs (no DATABASE_URL= prefix)
       if (trimmed.startsWith('postgresql://') || trimmed.startsWith('postgres://')) {
         return trimmed.replace(/^["']|["']$/g, '');
@@ -28,25 +37,41 @@ function loadDatabaseUrl(): string {
     }
   }
   
-  throw new Error('DATABASE_URL not found in environment or .env.local');
+  throw new Error('DATABASE_URL or POSTGRES_URL not found in environment or .env.local');
 }
 
 // Simple PostgreSQL client wrapper for Neon
 export class PostgresClient {
-  private pool: Pool;
+  private pool: Pool | null = null;
+  private initialized = false;
 
-  constructor() {
-    const databaseUrl = loadDatabaseUrl();
+  private async initialize() {
+    if (this.initialized) return;
     
-    this.pool = new Pool({
-      connectionString: databaseUrl,
-      ssl: {
-        rejectUnauthorized: false
-      }
-    });
+    try {
+      const databaseUrl = loadDatabaseUrl();
+      
+      this.pool = new Pool({
+        connectionString: databaseUrl,
+        ssl: {
+          rejectUnauthorized: false
+        }
+      });
+      
+      this.initialized = true;
+    } catch (error) {
+      console.error('Failed to initialize database connection:', error);
+      throw error;
+    }
   }
 
   async query(text: string, params?: any[]) {
+    await this.initialize();
+    
+    if (!this.pool) {
+      throw new Error('Database connection not initialized');
+    }
+    
     const client = await this.pool.connect();
     try {
       const result = await client.query(text, params);
@@ -57,7 +82,11 @@ export class PostgresClient {
   }
 
   async close() {
-    await this.pool.end();
+    if (this.pool) {
+      await this.pool.end();
+      this.pool = null;
+      this.initialized = false;
+    }
   }
 }
 

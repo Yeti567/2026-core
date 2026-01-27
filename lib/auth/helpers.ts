@@ -75,22 +75,32 @@ export async function getServerUser(): Promise<ServerUserContext | null> {
 
   // If headers aren't present, query directly (fallback)
   if (!companyId || !role) {
-    const client = getPostgresClient();
-    const profileResult = await client.query(
-      'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
-      [payload.userId]
-    );
+    try {
+      const client = getPostgresClient();
+      const profileResult = await client.query(
+        'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
+        [payload.userId]
+      );
 
-    if (profileResult.rows.length === 0) {
-      return null;
+      if (profileResult.rows.length === 0) {
+        return null;
+      }
+
+      const profile = profileResult.rows[0];
+      return {
+        userId: payload.userId,
+        companyId: profile.company_id,
+        role: profile.role,
+      };
+    } catch (error) {
+      // Database not available (likely during build time)
+      console.warn('Database not available during auth check:', error);
+      const authError: AuthError = {
+        status: 500,
+        message: 'Authentication service unavailable',
+      };
+      throw authError;
     }
-
-    const profile = profileResult.rows[0];
-    return {
-      userId: payload.userId,
-      companyId: profile.company_id,
-      role: profile.role,
-    };
   }
 
   return {
