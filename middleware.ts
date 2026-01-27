@@ -11,7 +11,7 @@
  */
 
 import { NextResponse, type NextRequest } from 'next/server';
-import { verifyToken } from '@/lib/auth/jwt';
+import { verifyToken } from '@/lib/auth/jwt-edge';
 import type { UserRole } from '@/lib/db/types';
 
 // =============================================================================
