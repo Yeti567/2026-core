@@ -10,41 +10,43 @@ import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify authentication
-    const supabase = createNeonWrapper();
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };
-      const { data: { user: authUser }, error: authError } = authResult;
+    // Get user info from middleware headers
+    const userId = req.headers.get('x-user-id');
+    const companyId = req.headers.get('x-company-id');
     
-    if (authError || !authUser) {
+    if (!userId || !companyId) {
       return NextResponse.json(
-        { error: 'Unauthorized' },
+        { error: 'Unauthorized - Missing user context' },
         { status: 401 }
       );
     }
     
-    const { userId, subscription } = await req.json();
+    const { subscription, userId: requestUserId } = await req.json();
     
-    if (!userId || !subscription) {
+    if (!subscription) {
       return NextResponse.json(
-        { error: 'Missing userId or subscription' },
+        { error: 'Missing subscription' },
         { status: 400 }
       );
     }
     
+    // Initialize database connection
+    const supabase = createNeonWrapper();
+    
     // Users can only subscribe themselves - prevent unauthorized subscriptions
-    if (userId !== authUser.id) {
+    if (requestUserId && requestUserId !== userId) {
       return NextResponse.json(
         { error: 'You can only subscribe yourself' },
         { status: 403 }
       );
     }
     
-    // Verify user exists and get company
+    // Verify user exists
     const userProfileResult = await supabase
       .from('user_profiles')
-      .select('company_id')
+      .select('id')
       .eq('user_id', userId)
+      .eq('company_id', companyId)
       .single();
     
     const userProfile = userProfileResult.data;
@@ -67,7 +69,7 @@ export async function POST(req: NextRequest) {
       .from('push_subscriptions')
       .upsert({
         user_id: userId,
-        company_id: userProfile.company_id,
+        company_id: companyId,
         endpoint: subscription.endpoint,
         p256dh: subscription.keys.p256dh,
         auth: subscription.keys.auth,

@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 /**
@@ -11,25 +11,15 @@ export async function GET(
   { params }: { params: { phaseId: string } }
 ) {
   try {
+    const req = request as NextRequest;
     const supabase = await createClient();
     
-    // Get current user
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
-      const { data: { user }, error: authError } = authResult;
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user's company
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    // Get user info from middleware headers
+    const userId = req.headers.get('x-user-id');
+    const companyId = req.headers.get('x-company-id');
+    
+    if (!userId || !companyId) {
+      return NextResponse.json({ error: 'Unauthorized - Missing user context' }, { status: 401 });
     }
 
     // Get phase with prompts
@@ -60,7 +50,7 @@ export async function GET(
     const { data: phaseProgress } = await supabase
       .from('company_phase_progress')
       .select('*')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', companyId)
       .eq('phase_id', params.phaseId)
       .single();
 
@@ -68,12 +58,12 @@ export async function GET(
     const { data: promptProgress } = await supabase
       .from('company_prompt_progress')
       .select('*')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', companyId)
       .in('prompt_id', phase.cor_prompts?.map((p: any) => p.id) || []);
 
     // Get completion percentage
     const { data: completionPercentage } = await supabase.rpc('get_phase_completion_percentage', {
-      p_company_id: profile.company_id,
+      p_company_id: companyId,
       p_phase_id: params.phaseId
     });
 
@@ -131,25 +121,28 @@ export async function PATCH(
   { params }: { params: { phaseId: string } }
 ) {
   try {
+    const req = request as NextRequest;
     const supabase = await createClient();
     
-    // Get current user
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
-      const { data: { user }, error: authError } = authResult;
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get user info from middleware headers
+    const userId = req.headers.get('x-user-id');
+    const companyId = req.headers.get('x-company-id');
+    const userRole = req.headers.get('x-user-role');
+    
+    if (!userId || !companyId || !userRole) {
+      return NextResponse.json({ error: 'Unauthorized - Missing user context' }, { status: 401 });
     }
 
-    // Get user's company and profile
+    // Get user's profile
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('company_id, id, role')
-      .eq('user_id', user.id)
+      .select('id, role')
+      .eq('user_id', userId)
+      .eq('company_id', companyId)
       .single();
 
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    if (!profile?.id) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     // Only admins can update phase status
@@ -163,7 +156,7 @@ export async function PATCH(
     if (status === 'completed') {
       // Use the complete_phase function
       const { data, error } = await supabase.rpc('complete_phase', {
-        p_company_id: profile.company_id,
+        p_company_id: companyId,
         p_phase_id: params.phaseId,
         p_completed_by: profile.id,
         p_completion_notes: completion_notes || null
@@ -180,7 +173,7 @@ export async function PATCH(
       const { data, error } = await supabase
         .from('company_phase_progress')
         .upsert({
-          company_id: profile.company_id,
+          company_id: companyId,
           phase_id: params.phaseId,
           status,
           started_at: status === 'in_progress' ? new Date().toISOString() : null,

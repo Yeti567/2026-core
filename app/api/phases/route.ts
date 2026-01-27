@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 
 // Interfaces for COR phases data
 interface CorPrompt {
@@ -50,25 +50,15 @@ interface PhaseCompletion {
  */
 export async function GET(request: Request) {
   try {
+    const req = request as NextRequest;
     const supabase = await createClient();
 
-    // Get current user
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
-      const { data: { user }, error: authError } = authResult;
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    // Get user's company
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('company_id')
-      .eq('user_id', user.id)
-      .single();
-
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    // Get user info from middleware headers
+    const userId = req.headers.get('x-user-id');
+    const companyId = req.headers.get('x-company-id');
+    
+    if (!userId || !companyId) {
+      return NextResponse.json({ error: 'Unauthorized - Missing user context' }, { status: 401 });
     }
 
     // Get all phases with prompts
@@ -97,23 +87,23 @@ export async function GET(request: Request) {
     const { data: phaseProgress } = await supabase
       .from('company_phase_progress')
       .select('*')
-      .eq('company_id', profile.company_id);
+      .eq('company_id', companyId);
 
     // Get company's prompt progress
     const { data: promptProgress } = await supabase
       .from('company_prompt_progress')
       .select('*')
-      .eq('company_id', profile.company_id);
+      .eq('company_id', companyId);
 
     // Get overall progress percentage
     const { data: progressData } = await supabase.rpc('get_company_progress_percentage', {
-      p_company_id: profile.company_id
+      p_company_id: companyId
     });
 
     // Get completion percentages for all phases
     const phaseCompletionPromises = (phases as CorPhase[])?.map((phase: CorPhase) =>
       supabase.rpc('get_phase_completion_percentage', {
-        p_company_id: profile.company_id,
+        p_company_id: companyId,
         p_phase_id: phase.id
       }).then(({ data }: { data: number | null }) => ({ phaseId: phase.id, percentage: data || 0 }))
     ) || [];

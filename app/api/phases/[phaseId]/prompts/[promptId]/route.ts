@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 /**
@@ -11,25 +11,27 @@ export async function PATCH(
   { params }: { params: { phaseId: string; promptId: string } }
 ) {
   try {
+    const req = request as NextRequest;
     const supabase = await createClient();
     
-    // Get current user
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
-      const { data: { user }, error: authError } = authResult;
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // Get user info from middleware headers
+    const userId = req.headers.get('x-user-id');
+    const companyId = req.headers.get('x-company-id');
+    
+    if (!userId || !companyId) {
+      return NextResponse.json({ error: 'Unauthorized - Missing user context' }, { status: 401 });
     }
 
-    // Get user's company and profile
+    // Get user's profile
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('company_id, id')
-      .eq('user_id', user.id)
+      .select('id')
+      .eq('user_id', userId)
+      .eq('company_id', companyId)
       .single();
 
-    if (!profile?.company_id) {
-      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
+    if (!profile?.id) {
+      return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
     }
 
     const body = await request.json();
@@ -48,7 +50,7 @@ export async function PATCH(
 
     // Use the update_prompt_progress function
     const { data, error } = await supabase.rpc('update_prompt_progress', {
-      p_company_id: profile.company_id,
+      p_company_id: companyId,
       p_prompt_id: params.promptId,
       p_status: status,
       p_completed_by: status === 'completed' ? profile.id : null,
