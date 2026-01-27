@@ -67,155 +67,169 @@ const DOCUMENTS = [
   {
     control_number: 'TEST-POL-001',
     title: 'Corporate Health and Safety Policy',
-    document_type: 'policy',
+    document_type_code: 'POL',
+    sequence_number: 1,
     description: 'Overarching commitment to workplace safety',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-SWP-001',
     title: 'Working at Heights Procedure',
-    document_type: 'procedure',
+    document_type_code: 'SWP',
+    sequence_number: 1,
     description: 'Safe work procedure for elevated work',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-SWP-002',
     title: 'Excavation and Trenching Safety',
-    document_type: 'procedure',
+    document_type_code: 'SWP',
+    sequence_number: 2,
     description: 'Safe excavation practices',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-SWP-003',
     title: 'Power Tool Safety',
-    document_type: 'procedure',
+    document_type_code: 'SWP',
+    sequence_number: 3,
     description: 'Safe operation of power tools',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-FRM-001',
     title: 'Pre-Task Hazard Assessment',
-    document_type: 'form',
+    document_type_code: 'FRM',
+    sequence_number: 1,
     description: 'Daily hazard identification form',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-FRM-002',
     title: 'Workplace Inspection Checklist',
-    document_type: 'form',
+    document_type_code: 'FRM',
+    sequence_number: 2,
     description: 'Weekly site inspection form',
     status: 'active',
-    version: 1
+    version: '1.0'
   },
   {
     control_number: 'TEST-FRM-003',
     title: 'Incident Report Form',
-    document_type: 'form',
+    document_type_code: 'FRM',
+    sequence_number: 3,
     description: 'Incident and near-miss reporting',
     status: 'active',
-    version: 1
+    version: '1.0'
   }
 ];
 
 const EQUIPMENT = [
   {
-    asset_number: 'TEST-EQ-001',
+    equipment_code: 'TEST-EQ-001',
     name: 'Skid Steer Loader',
     equipment_type: 'vehicle',
     make: 'Bobcat',
     model: 'S650',
-    year: 2021,
+    year_manufactured: 2021,
     serial_number: 'BSL-S650-12345',
-    status: 'active',
-    requires_certification: true
+    status: 'available',
+    // requires_certification: true // Removed as not in schema directly? Or maybe it is? Schema has certifications_required TEXT[]
+    certifications_required: ['Forklift Operation']
   },
   {
-    asset_number: 'TEST-EQ-002',
+    equipment_code: 'TEST-EQ-002',
     name: 'Excavator',
     equipment_type: 'vehicle',
     make: 'Caterpillar',
     model: '320',
-    year: 2020,
+    year_manufactured: 2020,
     serial_number: 'CAT-320-67890',
-    status: 'active',
-    requires_certification: true
+    status: 'available',
+    certifications_required: []
   },
   {
-    asset_number: 'TEST-EQ-003',
+    equipment_code: 'TEST-EQ-003',
     name: 'Aerial Work Platform',
     equipment_type: 'aerial',
     make: 'Genie',
     model: 'Z-45/25J',
-    year: 2022,
+    year_manufactured: 2022,
     serial_number: 'GEN-Z45-11223',
-    status: 'active',
-    requires_certification: true
+    status: 'available',
+    certifications_required: ['Aerial Work Platform (AWP)']
   },
   {
-    asset_number: 'TEST-EQ-004',
+    equipment_code: 'TEST-EQ-004',
     name: 'Concrete Saw',
     equipment_type: 'tool',
     make: 'Husqvarna',
     model: 'K970',
-    year: 2021,
+    year_manufactured: 2021,
     serial_number: 'HUS-K970-33445',
-    status: 'active',
-    requires_certification: false
+    status: 'available',
+    certifications_required: []
   },
   {
-    asset_number: 'TEST-EQ-005',
+    equipment_code: 'TEST-EQ-005',
     name: 'Welding Machine',
     equipment_type: 'tool',
     make: 'Lincoln Electric',
     model: 'PowerMIG 260',
-    year: 2023,
+    year_manufactured: 2023,
     serial_number: 'LIN-PM260-55667',
     status: 'active',
-    requires_certification: true
+    certifications_required: []
   }
 ];
 
 const CERTIFICATION_TYPES = [
   {
     name: 'Working at Heights',
+    short_code: 'WAH',
     description: 'Ministry of Labour approved WAH training',
-    validity_period_months: 36,
-    is_mandatory: true
+    default_expiry_months: 36,
+    required_for_work: true
   },
   {
     name: 'Aerial Work Platform (AWP)',
+    short_code: 'AWP',
     description: 'Scissor lift and boom lift operation',
-    validity_period_months: 36,
-    is_mandatory: true
+    default_expiry_months: 36,
+    required_for_work: true
   },
   {
     name: 'Forklift Operation',
+    short_code: 'FORK',
     description: 'Powered industrial truck operation',
-    validity_period_months: 36,
-    is_mandatory: false
+    default_expiry_months: 36,
+    required_for_work: false
   },
   {
     name: 'First Aid/CPR',
+    short_code: 'FA',
     description: 'Standard First Aid and CPR Level C',
-    validity_period_months: 36,
-    is_mandatory: true
+    default_expiry_months: 36,
+    required_for_work: true
   },
   {
     name: 'WHMIS 2015',
+    short_code: 'WHMIS',
     description: 'Workplace Hazardous Materials Information System',
-    validity_period_months: 36,
-    is_mandatory: true
+    default_expiry_months: 36,
+    required_for_work: true
   },
   {
     name: 'Confined Space Entry',
+    short_code: 'CSE',
     description: 'Safe confined space entry procedures',
-    validity_period_months: 24,
-    is_mandatory: false
+    default_expiry_months: 24,
+    required_for_work: false
   }
 ];
 
@@ -259,10 +273,12 @@ async function generateTestData() {
     log('\nCreating workers and user accounts...');
     const workerIds = [];
     const userIds = [];
+    const profileIds = [];
 
     for (const worker of TEST_WORKERS) {
       // Create auth user
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      let authData = { user: null };
+      const { data: createdAuth, error: authError } = await supabase.auth.admin.createUser({
         email: worker.email,
         password: 'TestPassword123!@#',
         email_confirm: true,
@@ -272,25 +288,60 @@ async function generateTestData() {
       });
 
       if (authError) {
-        log(`Failed to create auth user for ${worker.email}: ${authError.message}`, 'error');
-        continue;
+        if (authError.message.includes('already been registered')) {
+          // Fetch existing user to proceed
+          const { data: { users }, error: listError } = await supabase.auth.admin.listUsers();
+          if (users) {
+            const existing = users.find(u => u.email === worker.email);
+            if (existing) {
+              authData = { user: existing };
+              log(`User ${worker.email} already exists, using existing ID`, 'info');
+            }
+          }
+        } else {
+          log(`Failed to create auth user for ${worker.email}: ${authError.message}`, 'error');
+          continue;
+        }
       }
 
-      const userId = authData.user.id;
+      else {
+        authData = createdAuth;
+      }
+
+      const userId = authData.user?.id;
+      if (!userId) {
+        log(`Could not get ID for ${worker.email}`, 'error');
+        continue;
+      }
       userIds.push(userId);
 
       // Create user profile
-      const { error: profileError } = await supabase
+      let profileId;
+      const { data: profileData, error: profileError } = await supabase
         .from('user_profiles')
-        .insert({
-          id: userId,
+        .upsert({
+          user_id: userId,
           company_id: companyId,
-          role: worker.role,
-          email: worker.email
-        });
+          role: worker.role
+        }, { onConflict: 'user_id' })
+        .select('id')
+        .single();
 
       if (profileError) {
-        log(`Failed to create profile for ${worker.email}: ${profileError.message}`, 'error');
+        log(`Failed to create/fetch profile for ${worker.email}: ${profileError.message}`, 'error');
+        // If conflict error persistence, try fetching directly
+        if (profileError.message.includes('conflicts') || profileError.message.includes('violates')) {
+          const { data: existingP } = await supabase.from('user_profiles').select('id').eq('user_id', userId).single();
+          if (existingP) profileId = existingP.id;
+        }
+      } else {
+        profileId = profileData.id;
+      }
+
+      if (profileId) {
+        profileIds.push(profileId);
+      } else {
+        log(`Could not get profile ID for ${worker.email}, skipping worker creation which depends on it`, 'error');
         continue;
       }
 
@@ -381,7 +432,8 @@ async function generateTestData() {
         .insert({
           ...doc,
           company_id: companyId,
-          created_by: userIds[0]
+          company_id: companyId,
+          created_by: profileIds[0] // Use profile ID, not auth ID
         })
         .select()
         .single();
@@ -416,7 +468,7 @@ async function generateTestData() {
       }
 
       equipmentIds.push(data.id);
-      log(`Created: ${equip.asset_number} - ${equip.name}`, 'success');
+      log(`Created: ${equip.equipment_code} - ${equip.name}`, 'success');
     }
 
     // 7. Create Certification Types
@@ -459,7 +511,7 @@ async function generateTestData() {
     for (const cert of sampleCerts) {
       if (workerIds[cert.workerIdx] && certTypeIds[cert.certIdx]) {
         const certType = CERTIFICATION_TYPES[cert.certIdx];
-        const expiryDate = addMonths(cert.issueDate, certType.validity_period_months);
+        const expiryDate = addMonths(cert.issueDate, certType.default_expiry_months);
 
         await supabase
           .from('worker_certifications')

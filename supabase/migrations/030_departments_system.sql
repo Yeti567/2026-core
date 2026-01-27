@@ -66,11 +66,11 @@ CREATE INDEX IF NOT EXISTS idx_equipment_department ON equipment_inventory(depar
 -- 4. CREATE INDEXES
 -- ============================================================================
 
-CREATE INDEX idx_departments_company ON departments(company_id);
-CREATE INDEX idx_departments_parent ON departments(parent_department_id) WHERE parent_department_id IS NOT NULL;
-CREATE INDEX idx_departments_active ON departments(company_id, is_active) WHERE is_active = TRUE;
-CREATE INDEX idx_departments_superintendent ON departments(superintendent_id) WHERE superintendent_id IS NOT NULL;
-CREATE INDEX idx_departments_manager ON departments(manager_id) WHERE manager_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_departments_company ON departments(company_id);
+CREATE INDEX IF NOT EXISTS idx_departments_parent ON departments(parent_department_id) WHERE parent_department_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_departments_active ON departments(company_id, is_active) WHERE is_active = TRUE;
+CREATE INDEX IF NOT EXISTS idx_departments_superintendent ON departments(superintendent_id) WHERE superintendent_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_departments_manager ON departments(manager_id) WHERE manager_id IS NOT NULL;
 
 -- ============================================================================
 -- 5. CREATE HELPER FUNCTIONS
@@ -156,6 +156,8 @@ $$;
 ALTER TABLE departments ENABLE ROW LEVEL SECURITY;
 
 -- Users can view their company's departments
+-- Users can view their company's departments
+DROP POLICY IF EXISTS "Users can view their company's departments" ON departments;
 CREATE POLICY "Users can view their company's departments"
     ON departments FOR SELECT
     TO authenticated
@@ -166,6 +168,8 @@ CREATE POLICY "Users can view their company's departments"
     );
 
 -- Admins can manage their company's departments
+-- Admins can manage their company's departments
+DROP POLICY IF EXISTS "Admins can manage their company's departments" ON departments;
 CREATE POLICY "Admins can manage their company's departments"
     ON departments FOR ALL
     TO authenticated
@@ -188,6 +192,7 @@ GRANT EXECUTE ON FUNCTION get_department_stats(UUID) TO authenticated;
 -- 8. CREATE UPDATED_AT TRIGGER
 -- ============================================================================
 
+DROP TRIGGER IF EXISTS update_departments_updated_at ON departments;
 CREATE TRIGGER update_departments_updated_at
     BEFORE UPDATE ON departments
     FOR EACH ROW

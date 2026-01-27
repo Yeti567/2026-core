@@ -6,6 +6,7 @@
  */
 
 import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { SupabaseClient } from '@supabase/supabase-js';
 
 // =============================================================================
 // TYPE DEFINITIONS
@@ -47,23 +48,23 @@ export interface FieldOption {
 export interface FieldConfig {
   code: string;
   label: string;
-  field_type: 
-    | 'text' 
-    | 'textarea' 
-    | 'number' 
-    | 'date' 
-    | 'time' 
-    | 'dropdown'
-    | 'radio' 
-    | 'checkbox' 
-    | 'multiselect' 
-    | 'signature' 
-    | 'photo'
-    | 'file' 
-    | 'gps' 
-    | 'worker_select' 
-    | 'jobsite_select' 
-    | 'equipment_select';
+  field_type:
+  | 'text'
+  | 'textarea'
+  | 'number'
+  | 'date'
+  | 'time'
+  | 'dropdown'
+  | 'radio'
+  | 'checkbox'
+  | 'multiselect'
+  | 'signature'
+  | 'photo'
+  | 'file'
+  | 'gps'
+  | 'worker_select'
+  | 'jobsite_select'
+  | 'equipment_select';
   placeholder?: string;
   help_text?: string;
   default_value?: string;
@@ -101,12 +102,12 @@ export interface WorkflowConfig {
 /**
  * Form frequency options
  */
-export type FormFrequency = 
-  | 'daily' 
-  | 'weekly' 
-  | 'monthly' 
-  | 'quarterly' 
-  | 'annual' 
+export type FormFrequency =
+  | 'daily'
+  | 'weekly'
+  | 'monthly'
+  | 'quarterly'
+  | 'annual'
   | 'as_needed';
 
 /**
@@ -252,9 +253,10 @@ function validateFormConfig(config: FormConfig): string[] {
  */
 export async function importFormFromJSON(
   config: FormConfig,
-  companyId: string | null = null
+  companyId: string | null = null,
+  supabaseClient?: SupabaseClient
 ): Promise<string> {
-  const supabase = createRouteHandlerClient();
+  const supabase = supabaseClient || createRouteHandlerClient();
 
   // Validate configuration
   const validationErrors = validateFormConfig(config);
@@ -390,7 +392,8 @@ export async function importFormFromJSON(
  */
 export async function bulkImportForms(
   configs: FormConfig[],
-  companyId: string | null = null
+  companyId: string | null = null,
+  supabaseClient?: SupabaseClient
 ): Promise<ImportResult> {
   const results: ImportResult = {
     total: configs.length,
@@ -402,7 +405,7 @@ export async function bulkImportForms(
 
   for (const config of configs) {
     try {
-      const templateId = await importFormFromJSON(config, companyId);
+      const templateId = await importFormFromJSON(config, companyId, supabaseClient);
       results.successful++;
       results.imported_ids.push(templateId);
       console.log(`✅ Imported: ${config.name} (${config.code})`);
@@ -429,9 +432,10 @@ export async function bulkImportForms(
  */
 export async function formExists(
   formCode: string,
-  companyId: string | null = null
+  companyId: string | null = null,
+  supabaseClient?: SupabaseClient
 ): Promise<boolean> {
-  const supabase = createRouteHandlerClient();
+  const supabase = supabaseClient || createRouteHandlerClient();
 
   let query = supabase
     .from('form_templates')
@@ -465,7 +469,8 @@ export async function formExists(
 export async function bulkImportFormsIfNotExists(
   configs: FormConfig[],
   companyId: string | null = null,
-  skipExisting: boolean = true
+  skipExisting: boolean = true,
+  supabaseClient?: SupabaseClient
 ): Promise<ImportResult> {
   const results: ImportResult = {
     total: configs.length,
@@ -479,14 +484,14 @@ export async function bulkImportFormsIfNotExists(
     try {
       // Check if form already exists
       if (skipExisting) {
-        const exists = await formExists(config.code, companyId);
+        const exists = await formExists(config.code, companyId, supabaseClient);
         if (exists) {
           console.log(`⏭️  Skipped (exists): ${config.name} (${config.code})`);
           continue;
         }
       }
 
-      const templateId = await importFormFromJSON(config, companyId);
+      const templateId = await importFormFromJSON(config, companyId, supabaseClient);
       results.successful++;
       results.imported_ids.push(templateId);
       console.log(`✅ Imported: ${config.name} (${config.code})`);

@@ -23,10 +23,14 @@
  * ```
  */
 
-import { 
-  bulkImportForms, 
+import dotenv from 'dotenv';
+dotenv.config({ path: '.env.local' });
+import { createClient } from '@supabase/supabase-js';
+
+import {
+  bulkImportForms,
   bulkImportFormsIfNotExists,
-  type FormConfig 
+  type FormConfig
 } from '../lib/form-builder/import-forms';
 
 // Import all COR form configurations
@@ -741,13 +745,13 @@ async function parseArgs(): Promise<{
   skipExisting: boolean;
 }> {
   const args = process.argv.slice(2);
-  
+
   let companyId: string | null = null;
   let skipExisting = true;
 
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    
+
     if (arg === '--company-id' && args[i + 1]) {
       companyId = args[i + 1];
       i++; // Skip next arg
@@ -794,21 +798,32 @@ async function seedAllForms() {
   console.log(`   Forms to import: ${formConfigs.length}`);
   console.log(`   Mandatory forms: ${formCountSummary.mandatory}`);
   console.log(`   Optional forms: ${formCountSummary.optional}`);
-  
+
   console.log(`\n📦 Forms by COR Element:`);
   Object.entries(formConfigsByElement).forEach(([element, forms]) => {
     const elementNum = Number(element);
     const desc = corElementDescriptions[elementNum] || 'Unknown';
     console.log(`   Element ${element}: ${forms.length} forms (${desc})`);
   });
-  
+
   console.log('\n' + '═'.repeat(50) + '\n');
 
   console.log('🚀 Starting import...\n');
 
+  // Create Supabase client for CLI usage
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.error('Missing Supabase credentials');
+    process.exit(1);
+  }
+
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
   const result = skipExisting
-    ? await bulkImportFormsIfNotExists(formConfigs, companyId, true)
-    : await bulkImportForms(formConfigs, companyId);
+    ? await bulkImportFormsIfNotExists(formConfigs, companyId, true, supabase)
+    : await bulkImportForms(formConfigs, companyId, supabase);
 
   console.log('\n' + '═'.repeat(50));
   console.log('\n📊 Import Results:');

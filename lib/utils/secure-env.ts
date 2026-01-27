@@ -38,8 +38,9 @@ const PUBLIC_VARS = [
  * @returns Environment variable value or throws error if required and missing
  */
 export function getEnvVar(key: string, required: boolean = false, defaultValue?: string): string {
+  // eslint-disable-next-line security/detect-object-injection
   const value = process.env[key];
-  
+
   if (!value) {
     if (required) {
       throw new Error(`Required environment variable ${key} is not set`);
@@ -49,7 +50,7 @@ export function getEnvVar(key: string, required: boolean = false, defaultValue?:
     }
     return '';
   }
-  
+
   return value;
 }
 
@@ -61,19 +62,20 @@ export function getEnvVar(key: string, required: boolean = false, defaultValue?:
  * @returns Validated environment variable value
  */
 export function getEnvVarWithValidation<T>(
-  key: string, 
-  validator: (value: string) => T, 
+  key: string,
+  validator: (value: string) => T,
   required: boolean = false
 ): T {
+  // eslint-disable-next-line security/detect-object-injection
   const value = process.env[key];
-  
+
   if (!value) {
     if (required) {
       throw new Error(`Required environment variable ${key} is not set`);
     }
     throw new Error(`Environment variable ${key} is required for validation`);
   }
-  
+
   try {
     return validator(value);
   } catch (error) {
@@ -87,11 +89,11 @@ export function getEnvVarWithValidation<T>(
  * @returns True if the variable contains sensitive data
  */
 export function isSensitiveVar(key: string): boolean {
-  return SENSITIVE_VARS.includes(key) || 
-         key.toLowerCase().includes('secret') ||
-         key.toLowerCase().includes('key') ||
-         key.toLowerCase().includes('password') ||
-         key.toLowerCase().includes('token');
+  return SENSITIVE_VARS.includes(key) ||
+    key.toLowerCase().includes('secret') ||
+    key.toLowerCase().includes('key') ||
+    key.toLowerCase().includes('password') ||
+    key.toLowerCase().includes('token');
 }
 
 /**
@@ -113,12 +115,12 @@ export function sanitizeForLogging(key: string, value: string): string {
   if (isSensitiveVar(key)) {
     return '[REDACTED]';
   }
-  
+
   // For other variables, show first few characters if it's not obviously sensitive
   if (value.length > 10 && !isPublicVar(key)) {
     return value.substring(0, 3) + '***';
   }
-  
+
   return value;
 }
 
@@ -128,13 +130,14 @@ export function sanitizeForLogging(key: string, value: string): string {
  */
 export function validateRequiredEnvVars(requiredVars: string[]): void {
   const missing: string[] = [];
-  
+
   for (const varName of requiredVars) {
+    // eslint-disable-next-line security/detect-object-injection
     if (!process.env[varName]) {
       missing.push(varName);
     }
   }
-  
+
   if (missing.length > 0) {
     throw new Error(`Missing required environment variables: ${missing.join(', ')}`);
   }
@@ -147,19 +150,20 @@ export function validateRequiredEnvVars(requiredVars: string[]): void {
 export function getDatabaseUrl(): string {
   const possibleUrls = [
     'DATABASE_URL',
-    'POSTGRES_URL', 
+    'POSTGRES_URL',
     'NEON_DATABASE_URL',
     'DATABASE_URL_UNPOOLED',
     'POSTGRES_URL_UNPOOLED'
   ];
-  
+
   for (const urlKey of possibleUrls) {
+    // eslint-disable-next-line security/detect-object-injection
     const url = process.env[urlKey];
     if (url) {
       return url;
     }
   }
-  
+
   throw new Error('No database URL found. Please set DATABASE_URL or POSTGRES_URL');
 }
 
@@ -175,14 +179,14 @@ export const validators = {
       throw new Error('Must be a valid URL');
     }
   },
-  
+
   email: (value: string): string => {
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
       throw new Error('Must be a valid email address');
     }
     return value;
   },
-  
+
   port: (value: string): number => {
     const port = parseInt(value, 10);
     if (isNaN(port) || port < 1 || port > 65535) {
@@ -190,7 +194,7 @@ export const validators = {
     }
     return port;
   },
-  
+
   boolean: (value: string): boolean => {
     const lower = value.toLowerCase();
     if (['true', '1', 'yes', 'on'].includes(lower)) return true;
@@ -205,35 +209,35 @@ export const validators = {
 export const env = {
   // Database
   databaseUrl: getDatabaseUrl(),
-  
+
   // Supabase
   supabaseUrl: getEnvVar('NEXT_PUBLIC_SUPABASE_URL', true),
   supabaseAnonKey: getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', true),
   supabaseServiceKey: getEnvVar('SUPABASE_SERVICE_ROLE_KEY', true),
-  
+
   // JWT
   jwtSecret: getEnvVar('JWT_SECRET', true),
   jwtExpiresIn: getEnvVar('JWT_EXPIRES_IN', false, '7d'),
-  
+
   // Application
   appUrl: getEnvVar('NEXT_PUBLIC_APP_URL', false, 'http://localhost:3000'),
   nodeEnv: getEnvVar('NODE_ENV', false, 'development'),
-  
+
   // Rate limiting
   upstashRedisUrl: getEnvVar('UPSTASH_REDIS_REST_URL', false),
   upstashRedisToken: getEnvVar('UPSTASH_REDIS_REST_TOKEN', false),
-  
+
   // Email
   resendApiKey: getEnvVar('RESEND_API_KEY', false),
   resendFromEmail: getEnvVar('RESEND_FROM_EMAIL', false),
-  
+
   // AI Services
   anthropicApiKey: getEnvVar('ANTHROPIC_API_KEY', false),
   openrouterApiKey: getEnvVar('OPENROUTER_API_KEY', false),
-  
+
   // Webhooks
   auditsoftWebhookSecret: getEnvVar('AUDITSOFT_WEBHOOK_SECRET', false),
-  
+
   // Monitoring
   sentryDsn: getEnvVar('SENTRY_DSN', false)
 };

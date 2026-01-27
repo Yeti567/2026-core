@@ -49,12 +49,15 @@ async function checkDatabase() {
 
     let knownTables = [
         'companies',
-        'profiles',
-        'users',
-        'certifications',
-        'audit_questions',
-        'actions_plans',
-        'document_control'
+        'user_profiles',
+        'workers',
+        'departments',
+        'documents',
+        'equipment_inventory',
+        'certification_types',
+        'form_templates',
+        'form_sections',
+        'form_fields'
     ];
 
     console.log('\n--- Checking Known Tables ---');

@@ -83,46 +83,46 @@ const defaultConfig: LoggerConfig = {
  */
 export class SecureLogger {
   private config: LoggerConfig;
-  
+
   constructor(config: Partial<LoggerConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
   }
-  
+
   /**
    * Log an error message
    */
   error(message: string, context?: Record<string, any>, error?: Error): void {
     this.log(LogLevel.ERROR, message, context, error);
   }
-  
+
   /**
    * Log a warning message
    */
   warn(message: string, context?: Record<string, any>): void {
     this.log(LogLevel.WARN, message, context);
   }
-  
+
   /**
    * Log an info message
    */
   info(message: string, context?: Record<string, any>): void {
     this.log(LogLevel.INFO, message, context);
   }
-  
+
   /**
    * Log a debug message
    */
   debug(message: string, context?: Record<string, any>): void {
     this.log(LogLevel.DEBUG, message, context);
   }
-  
+
   /**
    * Log a trace message
    */
   trace(message: string, context?: Record<string, any>): void {
     this.log(LogLevel.TRACE, message, context);
   }
-  
+
   /**
    * Core logging method
    */
@@ -131,7 +131,7 @@ export class SecureLogger {
     if (level > this.config.level) {
       return;
     }
-    
+
     const logEntry: LogEntry = {
       timestamp: new Date().toISOString(),
       level,
@@ -139,14 +139,14 @@ export class SecureLogger {
       context: context ? this.sanitizeContext(context) : undefined,
       error: error ? this.sanitizeError(error) : undefined
     };
-    
+
     // Add request context if available
     this.addRequestContext(logEntry);
-    
+
     // Output the log entry
     this.outputLogEntry(logEntry);
   }
-  
+
   /**
    * Sanitize log message
    */
@@ -154,35 +154,36 @@ export class SecureLogger {
     if (!this.config.sanitizeSensitiveData) {
       return message;
     }
-    
+
     // Remove potential sensitive patterns
     let sanitized = message;
-    
+
     // Remove API keys and tokens
     sanitized = sanitized.replace(/sk_[A-Za-z0-9]{24,}/g, '[API_KEY]');
     sanitized = sanitized.replace(/ghp_[A-Za-z0-9]{36}/g, '[GITHUB_TOKEN]');
     sanitized = sanitized.replace(/xoxb-[0-9]{13}-[0-9]{13}-[A-Za-z0-9]{24}/g, '[SLACK_TOKEN]');
     sanitized = sanitized.replace(/Bearer\s+[A-Za-z0-9\-._~+\/]+=*/g, '[BEARER_TOKEN]');
-    
+
     // Remove credit card numbers
     sanitized = sanitized.replace(/\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}/g, '[CREDIT_CARD]');
-    
+
     // Remove SSN patterns
     sanitized = sanitized.replace(/\b\d{3}-\d{2}-\d{4}\b/g, '[SSN]');
-    
+
     // Remove email addresses (unless in development)
     if (process.env.NODE_ENV === 'production') {
       sanitized = sanitized.replace(/\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b/g, '[EMAIL]');
     }
-    
+
     // Remove IP addresses (unless in development)
     if (process.env.NODE_ENV === 'production') {
+      // eslint-disable-next-line security/detect-unsafe-regex
       sanitized = sanitized.replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '[IP_ADDRESS]');
     }
-    
+
     return sanitized;
   }
-  
+
   /**
    * Sanitize context object
    */
@@ -190,61 +191,67 @@ export class SecureLogger {
     if (!this.config.sanitizeSensitiveData) {
       return context;
     }
-    
+
     const sanitized: Record<string, any> = {};
-    
+
     for (const [key, value] of Object.entries(context)) {
       // Check if key is sensitive
       if (this.isSensitiveKey(key)) {
+        // eslint-disable-next-line security/detect-object-injection
         sanitized[key] = '[REDACTED]';
         continue;
       }
-      
+
       // Apply custom sanitizers
+      // eslint-disable-next-line security/detect-object-injection
       if (this.config.customSanitizers && this.config.customSanitizers[key]) {
+        // eslint-disable-next-line security/detect-object-injection
         sanitized[key] = this.config.customSanitizers[key](value);
         continue;
       }
-      
+
       // Recursively sanitize nested objects
       if (typeof value === 'object' && value !== null) {
         if (Array.isArray(value)) {
-          sanitized[key] = value.map(item => 
+          // eslint-disable-next-line security/detect-object-injection
+          sanitized[key] = value.map(item =>
             typeof item === 'object' ? this.sanitizeContext(item) : this.sanitizeValue(key, item)
           );
         } else {
+          // eslint-disable-next-line security/detect-object-injection
           sanitized[key] = this.sanitizeContext(value);
         }
       } else {
+        // eslint-disable-next-line security/detect-object-injection
         sanitized[key] = this.sanitizeValue(key, value);
       }
     }
-    
+
     // Limit context size
     return this.limitObjectSize(sanitized, this.config.maxContextSize);
   }
-  
+
   /**
    * Check if a key is sensitive
    */
   private isSensitiveKey(key: string): boolean {
     const lowerKey = key.toLowerCase();
-    
+
     // Check against redacted fields
     for (const field of this.config.redactedFields) {
       if (lowerKey.includes(field.toLowerCase())) {
         return true;
       }
     }
-    
+
     // Check against environment variables
     if (isSensitiveVar(key)) {
       return true;
     }
-    
+
     return false;
   }
-  
+
   /**
    * Sanitize a value
    */
@@ -252,11 +259,11 @@ export class SecureLogger {
     if (typeof value !== 'string') {
       return value;
     }
-    
+
     // Apply message sanitization to string values
     return this.sanitizeMessage(value);
   }
-  
+
   /**
    * Sanitize error object
    */
@@ -265,15 +272,15 @@ export class SecureLogger {
       name: error.name,
       message: this.sanitizeMessage(error.message)
     };
-    
+
     // Include stack trace in development or if configured
     if (this.config.includeStackTrace && error.stack) {
       sanitized.stack = this.sanitizeMessage(error.stack);
     }
-    
+
     return sanitized;
   }
-  
+
   /**
    * Add request context to log entry
    */
@@ -282,37 +289,37 @@ export class SecureLogger {
     // This would need to be implemented based on your request context handling
     // For now, we'll leave these as optional
   }
-  
+
   /**
    * Limit object size to prevent memory issues
    */
   private limitObjectSize(obj: any, maxSize: number): any {
     const jsonString = JSON.stringify(obj);
-    
+
     if (jsonString.length <= maxSize) {
       return obj;
     }
-    
+
     // Truncate the object
     const truncated = jsonString.substring(0, maxSize - 20) + '...[TRUNCATED]';
-    
+
     try {
       return JSON.parse(truncated);
     } catch {
       return { _truncated: true, _originalSize: jsonString.length };
     }
   }
-  
+
   /**
    * Output log entry to console
    */
   private outputLogEntry(entry: LogEntry): void {
     const logMethod = this.getLogMethod(entry.level);
     const logString = this.formatLogEntry(entry);
-    
+
     logMethod(logString);
   }
-  
+
   /**
    * Get appropriate console method for log level
    */
@@ -332,7 +339,7 @@ export class SecureLogger {
         return console.log;
     }
   }
-  
+
   /**
    * Format log entry for output
    */
@@ -342,22 +349,22 @@ export class SecureLogger {
       `[${LogLevel[entry.level]}]`,
       entry.message
     ];
-    
+
     if (entry.requestId) {
       parts.push(`[req:${entry.requestId}]`);
     }
-    
+
     if (entry.userId) {
       parts.push(`[user:${entry.userId}]`);
     }
-    
+
     let logString = parts.join(' ');
-    
+
     // Add context
     if (entry.context && Object.keys(entry.context).length > 0) {
       logString += '\nContext: ' + JSON.stringify(entry.context, null, 2);
     }
-    
+
     // Add error details
     if (entry.error) {
       logString += '\nError: ' + entry.error.name + ': ' + entry.error.message;
@@ -365,7 +372,7 @@ export class SecureLogger {
         logString += '\nStack: ' + entry.error.stack;
       }
     }
-    
+
     return logString;
   }
 }
@@ -411,9 +418,9 @@ export function logApiRequest(context: ApiLogContext, level: LogLevel = LogLevel
     userId: context.userId,
     companyId: context.companyId
   };
-  
+
   const message = `${context.method} ${context.url}${context.statusCode ? ` - ${context.statusCode}` : ''}`;
-  
+
   logger.log(level, message, logContext);
 }
 
@@ -431,7 +438,7 @@ export interface SecurityLogContext {
 
 export function logSecurityEvent(context: SecurityLogContext): void {
   const level = mapSecuritySeverityToLogLevel(context.severity);
-  
+
   const logContext = {
     securityEvent: context.event,
     severity: context.severity,
@@ -440,7 +447,7 @@ export function logSecurityEvent(context: SecurityLogContext): void {
     userAgent: context.userAgent,
     ...context.details
   };
-  
+
   logger.log(level, `Security Event: ${context.event}`, logContext);
 }
 
@@ -474,16 +481,16 @@ export interface PerformanceLogContext {
 
 export function logPerformance(context: PerformanceLogContext): void {
   const level = context.success ? LogLevel.DEBUG : LogLevel.WARN;
-  
+
   const logContext = {
     operation: context.operation,
     duration: context.duration,
     success: context.success,
     ...context.details
   };
-  
+
   const message = `Performance: ${context.operation} - ${context.duration}ms`;
-  
+
   logger.log(level, message, logContext);
 }
 
@@ -501,7 +508,7 @@ export interface DatabaseLogContext {
 
 export function logDatabaseOperation(context: DatabaseLogContext): void {
   const level = context.success ? LogLevel.DEBUG : LogLevel.ERROR;
-  
+
   const logContext = {
     dbOperation: context.operation,
     table: context.table,
@@ -510,9 +517,9 @@ export function logDatabaseOperation(context: DatabaseLogContext): void {
     rowCount: context.rowCount,
     error: context.error
   };
-  
+
   const message = `DB: ${context.operation} ${context.table}${context.rowCount ? ` (${context.rowCount} rows)` : ''}`;
-  
+
   logger.log(level, message, logContext);
 }
 
