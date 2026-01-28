@@ -101,26 +101,43 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Create user using JWT auth system
-    const { createUser } = await import('@/lib/auth/jwt');
+    // 2. Create user using Supabase auth
+    const { createClient } = await import('@supabase/supabase-js');
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     
     try {
-      const newUser = await createUser({
+      // Create user with Supabase auth
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: data.registrant_email,
         password: data.password,
-        name: data.registrant_name,
-        position: data.registrant_position,
-        companyId: 'mock-company-id-' + Date.now(), // TODO: Create actual company
-        role: 'admin'
+        options: {
+          data: {
+            name: data.registrant_name,
+            position: data.registrant_position,
+            company_id: 'company-' + Date.now(), // Temporary company ID
+            role: 'admin'
+          }
+        }
       });
 
-      console.log('✅ User created successfully:', newUser.user.email);
+      if (authError) {
+        console.error('Supabase auth error:', authError);
+        return NextResponse.json(
+          { error: 'Failed to create user account: ' + authError.message },
+          { status: 400 }
+        );
+      }
+
+      console.log('✅ User created successfully with Supabase:', authData.user?.email);
       
       return NextResponse.json({
         success: true,
         message: 'Account created successfully. You can now sign in.',
         email: data.registrant_email,
-        companyId: newUser.user.companyId,
+        companyId: 'company-' + Date.now(),
       });
     } catch (createError) {
       console.error('Failed to create user:', createError);

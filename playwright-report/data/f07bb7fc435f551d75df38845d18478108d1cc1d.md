@@ -1,0 +1,55 @@
+# Page snapshot
+
+```yaml
+- generic [active] [ref=e1]:
+  - link "Skip to content":
+    - /url: "#geist-skip-nav"
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - link "Vercel logo":
+        - /url: /home
+        - button "Vercel Logo":
+          - img "Vercel Logo"
+      - navigation [ref=e5]:
+        - navigation [ref=e6]:
+          - link "Sign Up" [ref=e7] [cursor=pointer]:
+            - /url: /signup?next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252F2026-core-l3tw-rhvqsm24y-blake-cowans-projects.vercel.app%252Flogin%26nonce%3D33a1433b33ed1fad739af05fdee7e73d2d42c0bc859491071bbf407e0653a7ba
+            - paragraph [ref=e9]: Sign Up
+    - main [ref=e10]:
+      - generic [ref=e11]:
+        - heading "Log in to Vercel" [level=1] [ref=e14]
+        - generic [ref=e15]:
+          - generic [ref=e16]:
+            - textbox "Email Address" [disabled] [ref=e18]: test-1769574219732@testcompany.com
+            - button "Continue with Email" [disabled] [ref=e20]:
+              - generic [ref=e21]: Continue with Email
+          - generic [ref=e22]:
+            - button "Continue with Google" [disabled] [ref=e23]:
+              - img [ref=e25]
+              - generic [ref=e31]: Continue with Google
+            - button "Continue with GitHub" [disabled] [ref=e32]:
+              - generic [ref=e49]: Continue with GitHub
+            - button "Continue with SAML SSO" [disabled] [ref=e51]:
+              - img [ref=e53]
+              - generic [ref=e55]: Continue with SAML SSO
+            - button "Continue with Passkey" [ref=e56] [cursor=pointer]:
+              - img [ref=e58]
+              - generic [ref=e60]: Continue with Passkey
+            - button "Show other options" [ref=e61] [cursor=pointer]:
+              - generic [ref=e62]: Show other options
+        - paragraph [ref=e63]:
+          - text: Don't have an account?
+          - link "Sign Up" [ref=e64] [cursor=pointer]:
+            - /url: /signup?email=test-1769574219732%40testcompany.com&next=%2Fsso-api%3Furl%3Dhttps%253A%252F%252F2026-core-l3tw-rhvqsm24y-blake-cowans-projects.vercel.app%252Flogin%26nonce%3D33a1433b33ed1fad739af05fdee7e73d2d42c0bc859491071bbf407e0653a7ba
+      - generic [ref=e67]:
+        - link "Terms" [ref=e68] [cursor=pointer]:
+          - /url: /legal/terms
+        - link "Privacy Policy" [ref=e69] [cursor=pointer]:
+          - /url: /legal/privacy-policy
+  - alert [ref=e70]
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - img
+```

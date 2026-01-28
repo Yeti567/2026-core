@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { authenticateUser, generateToken } from '@/lib/auth/jwt';
+import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
 const loginSchema = z.object({
@@ -21,34 +21,50 @@ export async function POST(request: Request) {
     
     const { email, password } = validation.data;
     
-    // Authenticate user
-    const user = await authenticateUser(email, password);
+    // Create Supabase client
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
     
-    if (!user) {
+    // Authenticate with Supabase
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (authError || !authData.user) {
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
       );
     }
     
-    // Generate JWT token
-    const token = generateToken({
-      userId: user.userId,
-      email: user.email,
-      companyId: user.companyId,
-      role: user.role
-    });
+    // Create a simple JWT token for middleware compatibility
+    const jwt = await import('jsonwebtoken');
+    const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
+    
+    const token = jwt.sign(
+      {
+        userId: authData.user.id,
+        email: authData.user.email!,
+        companyId: authData.user.user_metadata?.company_id || 'default-company',
+        role: authData.user.user_metadata?.role || 'member'
+      },
+      JWT_SECRET,
+      { expiresIn: '7d' }
+    );
     
     // Set HTTP-only cookie
     const response = NextResponse.json({
       success: true,
       user: {
-        id: user.userId,
-        email: user.email,
-        companyId: user.companyId,
-        role: user.role,
-        name: user.name,
-        position: user.position
+        id: authData.user.id,
+        email: authData.user.email,
+        companyId: authData.user.user_metadata?.company_id || 'default-company',
+        role: authData.user.user_metadata?.role || 'member',
+        name: authData.user.user_metadata?.name || '',
+        position: authData.user.user_metadata?.position || ''
       }
     });
     
