@@ -205,39 +205,40 @@ export const validators = {
 
 /**
  * Environment configuration object with type safety
+ * Uses getters for lazy evaluation to avoid build-time errors
  */
 export const env = {
   // Database
-  databaseUrl: getDatabaseUrl(),
+  get databaseUrl() { return getDatabaseUrl(); },
 
   // Supabase
-  supabaseUrl: getEnvVar('NEXT_PUBLIC_SUPABASE_URL', true),
-  supabaseAnonKey: getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', true),
-  supabaseServiceKey: getEnvVar('SUPABASE_SERVICE_ROLE_KEY', true),
+  get supabaseUrl() { return getEnvVar('NEXT_PUBLIC_SUPABASE_URL', true); },
+  get supabaseAnonKey() { return getEnvVar('NEXT_PUBLIC_SUPABASE_ANON_KEY', true); },
+  get supabaseServiceKey() { return getEnvVar('SUPABASE_SERVICE_ROLE_KEY', true); },
 
   // JWT
-  jwtSecret: getEnvVar('JWT_SECRET', true),
-  jwtExpiresIn: getEnvVar('JWT_EXPIRES_IN', false, '7d'),
+  get jwtSecret() { return getEnvVar('JWT_SECRET', true); },
+  get jwtExpiresIn() { return getEnvVar('JWT_EXPIRES_IN', false, '7d'); },
 
   // Application
-  appUrl: getEnvVar('NEXT_PUBLIC_APP_URL', false, 'http://localhost:3000'),
-  nodeEnv: getEnvVar('NODE_ENV', false, 'development'),
+  get appUrl() { return getEnvVar('NEXT_PUBLIC_APP_URL', false, 'http://localhost:3000'); },
+  get nodeEnv() { return getEnvVar('NODE_ENV', false, 'development'); },
 
   // Rate limiting
-  upstashRedisUrl: getEnvVar('UPSTASH_REDIS_REST_URL', false),
-  upstashRedisToken: getEnvVar('UPSTASH_REDIS_REST_TOKEN', false),
+  get upstashRedisUrl() { return getEnvVar('UPSTASH_REDIS_REST_URL', false); },
+  get upstashRedisToken() { return getEnvVar('UPSTASH_REDIS_REST_TOKEN', false); },
 
   // Email
-  resendApiKey: getEnvVar('RESEND_API_KEY', false),
-  resendFromEmail: getEnvVar('RESEND_FROM_EMAIL', false),
+  get resendApiKey() { return getEnvVar('RESEND_API_KEY', false); },
+  get resendFromEmail() { return getEnvVar('RESEND_FROM_EMAIL', false); },
 
   // AI Services
-  anthropicApiKey: getEnvVar('ANTHROPIC_API_KEY', false),
-  openrouterApiKey: getEnvVar('OPENROUTER_API_KEY', false),
+  get anthropicApiKey() { return getEnvVar('ANTHROPIC_API_KEY', false); },
+  get openrouterApiKey() { return getEnvVar('OPENROUTER_API_KEY', false); },
 
   // Webhooks
-  auditsoftWebhookSecret: getEnvVar('AUDITSOFT_WEBHOOK_SECRET', false),
+  get auditsoftWebhookSecret() { return getEnvVar('AUDITSOFT_WEBHOOK_SECRET', false); },
 
   // Monitoring
-  sentryDsn: getEnvVar('SENTRY_DSN', false)
+  get sentryDsn() { return getEnvVar('SENTRY_DSN', false); }
 };
