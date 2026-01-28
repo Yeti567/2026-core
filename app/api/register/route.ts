@@ -93,7 +93,37 @@ export async function POST(request: Request) {
     );
     
     try {
-      // Create user with Supabase admin (bypasses email confirmation)
+      // 1. Create company record first
+      const { data: companyData, error: companyError } = await supabaseAdmin
+        .from('companies')
+        .insert({
+          name: data.company_name,
+          wsib_number: data.wsib_number,
+          email: data.company_email,
+          address: data.address,
+          city: data.city,
+          province: data.province,
+          postal_code: data.postal_code,
+          phone: data.phone,
+          industry: data.industry || null,
+          employee_count: data.employee_count || null,
+          years_in_business: data.years_in_business || null,
+          main_services: data.main_services || []
+        })
+        .select()
+        .single();
+
+      if (companyError || !companyData) {
+        console.error('Failed to create company:', companyError);
+        return NextResponse.json(
+          { error: 'Failed to create company record: ' + (companyError?.message || 'Unknown error') },
+          { status: 500 }
+        );
+      }
+
+      console.log('✅ Company created:', companyData.id);
+
+      // 2. Create user with Supabase admin (bypasses email confirmation)
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: data.registrant_email,
         password: data.password,
@@ -101,26 +131,47 @@ export async function POST(request: Request) {
         user_metadata: {
           name: data.registrant_name,
           position: data.registrant_position,
-          company_id: 'company-' + Date.now(),
+          company_id: companyData.id,
           role: 'admin'
         }
       });
 
       if (authError) {
         console.error('Supabase auth error:', authError);
+        // Rollback: delete the company we just created
+        await supabaseAdmin.from('companies').delete().eq('id', companyData.id);
         return NextResponse.json(
           { error: 'Failed to create user account: ' + authError.message },
           { status: 400 }
         );
       }
 
-      console.log('✅ User created successfully with Supabase:', authData.user?.email);
+      console.log('✅ User created successfully:', authData.user?.email);
+
+      // 3. Create company_users link
+      const { error: linkError } = await supabaseAdmin
+        .from('company_users')
+        .insert({
+          company_id: companyData.id,
+          user_id: authData.user.id,
+          role: 'admin',
+          name: data.registrant_name,
+          email: data.registrant_email,
+          position: data.registrant_position
+        });
+
+      if (linkError) {
+        console.error('Failed to link user to company:', linkError);
+        // Continue anyway - user can be linked later
+      } else {
+        console.log('✅ User linked to company');
+      }
       
       return NextResponse.json({
         success: true,
         message: 'Account created successfully. You can now sign in.',
         email: data.registrant_email,
-        companyId: 'company-' + Date.now(),
+        companyId: companyData.id,
       });
     } catch (createError) {
       console.error('Failed to create user:', createError);
