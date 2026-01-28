@@ -4,7 +4,7 @@ import OfflineIndicator from '@/components/offline-indicator';
 import { InstallPrompt } from '@/components/pwa/install-prompt';
 import { IOSInstallPrompt } from '@/components/pwa/ios-install-prompt';
 import { UpdateNotification } from '@/components/pwa/update-notification';
-import { FloatingHomeButton } from '@/components/navigation/floating-home-button';
+import { FloatingMenu } from '@/components/navigation/floating-menu';
 import { headers } from 'next/headers';
 
 // PWA Metadata
@@ -253,7 +253,7 @@ export default async function RootLayout({
         <InstallPrompt />
         <IOSInstallPrompt />
         <UpdateNotification />
-        <FloatingHomeButton />
+        <FloatingMenu />
         {children}
       </body>
     </html>

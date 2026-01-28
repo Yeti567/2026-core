@@ -162,6 +162,13 @@ const sections = [
         color: 'from-gray-500/20 to-slate-500/20',
         borderColor: 'border-gray-500/30',
       },
+      {
+        name: 'About',
+        description: 'App version, updates, and information',
+        href: '/about',
+        color: 'from-cyan-500/20 to-blue-500/20',
+        borderColor: 'border-cyan-500/30',
+      },
     ],
   },
 ];
