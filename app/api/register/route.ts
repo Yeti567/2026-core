@@ -146,24 +146,27 @@ export async function POST(request: Request) {
 
       console.log('✅ User created successfully:', authData.user?.email);
 
-      // 3. Create company_users link
-      const { error: linkError } = await supabaseAdmin
-        .from('company_users')
+      // 3. Create user_profiles link (links auth user to company)
+      const { error: profileError } = await supabaseAdmin
+        .from('user_profiles')
         .insert({
-          company_id: companyData.id,
           user_id: authData.user.id,
-          role: 'admin',
-          name: data.registrant_name,
-          email: data.registrant_email,
-          position: data.registrant_position
+          company_id: companyData.id,
+          role: 'admin'
         });
 
-      if (linkError) {
-        console.error('Failed to link user to company:', linkError);
-        // Continue anyway - user can be linked later
-      } else {
-        console.log('✅ User linked to company');
+      if (profileError) {
+        console.error('Failed to create user profile:', profileError);
+        // Rollback: delete user and company
+        await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
+        await supabaseAdmin.from('companies').delete().eq('id', companyData.id);
+        return NextResponse.json(
+          { error: 'Failed to link user to company: ' + profileError.message },
+          { status: 500 }
+        );
       }
+
+      console.log('✅ User profile created and linked to company');
       
       return NextResponse.json({
         success: true,
