@@ -167,6 +167,75 @@ export async function POST(request: Request) {
       }
 
       console.log('✅ User profile created and linked to company');
+
+      // 4. Send welcome email with account confirmation
+      try {
+        const apiKey = process.env.RESEND_API_KEY;
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://corpathways.com';
+        const loginUrl = `${baseUrl}/login`;
+
+        if (apiKey) {
+          const emailResponse = await fetch('https://api.resend.com/emails', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              from: process.env.RESEND_FROM_EMAIL || 'COR Pathways <noreply@corpathways.com>',
+              to: data.registrant_email,
+              subject: `Welcome to COR Pathways - ${data.company_name}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+                  <h2 style="color: #6366f1;">Welcome to COR Pathways!</h2>
+                  <p>Hi ${data.registrant_name},</p>
+                  <p>Your company account for <strong>${data.company_name}</strong> has been successfully created on COR Pathways.</p>
+                  
+                  <div style="background: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
+                    <p style="margin: 5px 0;"><strong>Company:</strong> ${data.company_name}</p>
+                    <p style="margin: 5px 0;"><strong>Your Email:</strong> ${data.registrant_email}</p>
+                    <p style="margin: 5px 0;"><strong>Your Role:</strong> Administrator</p>
+                    <p style="margin: 5px 0;"><strong>WSIB Number:</strong> ${data.wsib_number}</p>
+                  </div>
+
+                  <p>You can now sign in to your account and start managing your health & safety compliance:</p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${loginUrl}" style="background: #6366f1; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Sign In to Your Account</a>
+                  </div>
+
+                  <h3 style="color: #374151; margin-top: 30px;">Getting Started</h3>
+                  <ul style="color: #4b5563; line-height: 1.8;">
+                    <li>Complete your company profile</li>
+                    <li>Add your employees and team members</li>
+                    <li>Start tracking your COR certification progress</li>
+                    <li>Upload safety documents and forms</li>
+                    <li>Set up your audit compliance tracking</li>
+                  </ul>
+
+                  <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">If you have any questions or need assistance, please don't hesitate to reach out to our support team.</p>
+                  
+                  <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+                  <p style="color: #9ca3af; font-size: 12px;">- COR Pathways Team</p>
+                </div>
+              `,
+            }),
+          });
+
+          if (!emailResponse.ok) {
+            const errorData = await emailResponse.json();
+            console.error('Failed to send welcome email:', errorData);
+            // Don't fail registration if email fails
+          } else {
+            console.log(`✅ Welcome email sent to ${data.registrant_email}`);
+          }
+        } else {
+          console.log('⚠️ RESEND_API_KEY not configured - welcome email not sent');
+        }
+      } catch (emailError) {
+        console.error('Error sending welcome email:', emailError);
+        // Don't fail registration if email fails
+      }
       
       return NextResponse.json({
         success: true,
