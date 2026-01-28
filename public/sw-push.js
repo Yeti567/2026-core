@@ -5,6 +5,32 @@
  * This file handles push notifications and is loaded alongside the PWA service worker.
  */
 
+// Handle update lifecycle messages
+self.addEventListener('message', function(event) {
+  if (!event.data || !event.data.type) return;
+
+  if (event.data.type === 'SKIP_WAITING') {
+    console.log('[SW Update] Skip waiting requested');
+
+    if (event.data.clearCaches) {
+      event.waitUntil(clearAllCaches());
+    }
+
+    self.skipWaiting();
+  }
+});
+
+// Notify clients when the new service worker activates
+self.addEventListener('activate', function(event) {
+  event.waitUntil((async function() {
+    await self.clients.claim();
+    const clientList = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+    clientList.forEach(client => {
+      client.postMessage({ type: 'SW_ACTIVATED', timestamp: Date.now() });
+    });
+  })());
+});
+
 // Push notification received
 self.addEventListener('push', function(event) {
   console.log('[SW Push] Push received:', event);
@@ -270,6 +296,17 @@ function getAllFromStore(store) {
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error);
   });
+}
+
+// Clear old caches when updating
+async function clearAllCaches() {
+  try {
+    const cacheNames = await caches.keys();
+    await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
+    console.log('[SW Update] Cleared caches:', cacheNames);
+  } catch (error) {
+    console.error('[SW Update] Cache cleanup failed:', error);
+  }
 }
 
 // Periodic background sync (if supported)

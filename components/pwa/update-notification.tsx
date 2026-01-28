@@ -1,73 +1,69 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Download, X } from 'lucide-react';
+import { usePwaUpdate } from '@/hooks/usePwaUpdate';
+import { Download, Loader2 } from 'lucide-react';
 
 export function UpdateNotification() {
-  const [showUpdate, setShowUpdate] = useState(false);
-  const [registration, setRegistration] = useState<ServiceWorkerRegistration | null>(null);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined' && process.env.NODE_ENV !== 'development' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.ready.then((reg) => {
-        reg.addEventListener('updatefound', () => {
-          const newWorker = reg.installing;
-
-          newWorker?.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              setShowUpdate(true);
-              setRegistration(reg);
-            }
-          });
-        });
-      });
-    }
-  }, []);
-
-  const handleUpdate = () => {
-    if (registration?.waiting) {
-      registration.waiting.postMessage({ type: 'SKIP_WAITING' });
-      window.location.reload();
-    }
-  };
-
-  if (!showUpdate) return null;
+  const {
+    shouldShowUpdate,
+    isUpdating,
+    showUpdatedToast,
+    versionLabel,
+    updateNow,
+    dismissUpdate
+  } = usePwaUpdate();
 
   return (
-    <Card className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-96 p-4 shadow-lg z-50 bg-blue-50 border-2 border-blue-500">
-      <div className="flex items-start gap-3">
-        <Download className="w-6 h-6 text-blue-600 flex-shrink-0 mt-1" />
-        <div className="flex-1">
-          <h3 className="font-semibold text-sm mb-1">Update Available</h3>
-          <p className="text-xs text-gray-600 mb-3">
-            A new version of COR Pathways is ready. Update now for the latest features and fixes.
-          </p>
-          <div className="flex gap-2">
-            <Button
-              onClick={handleUpdate}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              Update Now
-            </Button>
-            <Button
-              onClick={() => setShowUpdate(false)}
-              size="sm"
-              variant="outline"
-            >
-              Later
-            </Button>
+    <>
+      {showUpdatedToast && (
+        <Card className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-80 p-3 shadow-lg z-50 bg-emerald-50 border border-emerald-200">
+          <div className="text-xs font-medium text-emerald-700">✅ Updated to the latest version.</div>
+        </Card>
+      )}
+
+      {shouldShowUpdate && (
+        <Card className="fixed top-4 left-4 right-4 md:left-auto md:right-4 md:w-96 p-4 shadow-lg z-50 bg-blue-50 border border-blue-200">
+          <div className="flex items-start gap-3">
+            <div className="mt-1 rounded-full bg-blue-100 p-2">
+              <Download className="w-5 h-5 text-blue-700" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-sm text-blue-900 mb-1">🔄 New version available! Tap to update.</h3>
+              <p className="text-xs text-blue-700 mb-3">
+                {versionLabel ? `Version ${versionLabel} is ready.` : 'A fresh build of COR Pathways is ready.'}
+                {isUpdating ? ' Updating now…' : ' Update for the latest fixes and improvements.'}
+              </p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  onClick={() => updateNow()}
+                  size="sm"
+                  className="bg-blue-600 hover:bg-blue-700"
+                  disabled={isUpdating}
+                >
+                  {isUpdating ? (
+                    <span className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Updating…
+                    </span>
+                  ) : (
+                    'Update Now'
+                  )}
+                </Button>
+                <Button
+                  onClick={dismissUpdate}
+                  size="sm"
+                  variant="outline"
+                  disabled={isUpdating}
+                >
+                  Later
+                </Button>
+              </div>
+            </div>
           </div>
-        </div>
-        <button
-          onClick={() => setShowUpdate(false)}
-          className="text-gray-400 hover:text-gray-600"
-        >
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </Card>
+        </Card>
+      )}
+    </>
   );
 }

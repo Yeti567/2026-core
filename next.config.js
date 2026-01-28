@@ -2,7 +2,7 @@ const { withSentryConfig } = require('@sentry/nextjs');
 
 const withPWA = require('@ducanh2912/next-pwa').default({
   dest: 'public',
-  disable: true,
+  disable: process.env.NODE_ENV === 'development',
   register: false,
   skipWaiting: false,
   sw: 'sw.js',
