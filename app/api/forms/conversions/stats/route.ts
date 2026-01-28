@@ -4,22 +4,25 @@
  * GET: Get conversion statistics for the dashboard widget
  */
 
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
+import { authenticateApiRoute } from '@/lib/auth/jwt-middleware';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
     const { user, error } = await authenticateApiRoute(request);
     if (error || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    const supabase = createRouteHandlerClient();
+    
     // Get user's company
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('company_id')
-      .eq('user_id', user.id)
+      .eq('user_id', user.userId)
       .single();
     
     if (!profile?.company_id) {

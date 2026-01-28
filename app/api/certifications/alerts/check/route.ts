@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { cookies } from 'next/headers';
+import { createClient } from '@supabase/supabase-js';
 import {
   checkExpiringCertifications,
   getAlertsSummary,

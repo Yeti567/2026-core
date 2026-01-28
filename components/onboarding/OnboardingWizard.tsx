@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { useRouter } from 'next/navigation';
 import CompanyStep from './steps/CompanyStep';
 import EmployeeStep from './steps/EmployeeStep';
 import EquipmentStep from './steps/EquipmentStep';
 import DocumentStep from './steps/DocumentStep';
 import FormStep from './steps/FormStep';
+import { createClient } from '@supabase/supabase-js';
 
 const STEPS = [
     { id: 1, title: 'Company', description: 'Business details' },
@@ -33,7 +33,10 @@ export default function OnboardingWizard() {
 
     useEffect(() => {
         async function loadProgress() {
-            const { user, error } = await authenticateServerComponent();
+            // Since authentication is handled by the server component,
+            // we can proceed directly to load progress
+            const { data: { user } } = await supabase.auth.getUser();
+            
             if (!user) {
                 router.push('/login');
                 return;
