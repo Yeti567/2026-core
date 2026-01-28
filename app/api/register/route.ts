@@ -94,21 +94,16 @@ export async function POST(request: Request) {
     
     try {
       // 1. Create company record first
+      // Note: companies table only has: id, name, wsib_number, address, created_at
+      // Store full address as a single field for now
+      const fullAddress = `${data.address}, ${data.city}, ${data.province} ${data.postal_code}`;
+      
       const { data: companyData, error: companyError } = await supabaseAdmin
         .from('companies')
         .insert({
           name: data.company_name,
           wsib_number: data.wsib_number,
-          email: data.company_email,
-          address: data.address,
-          city: data.city,
-          province: data.province,
-          postal_code: data.postal_code,
-          phone: data.phone,
-          industry: data.industry || null,
-          employee_count: data.employee_count || null,
-          years_in_business: data.years_in_business || null,
-          main_services: data.main_services || []
+          address: fullAddress
         })
         .select()
         .single();
