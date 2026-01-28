@@ -595,8 +595,8 @@ export default function RegisterPage() {
                         className="input w-full p-3 rounded-md bg-[#0d1117] border border-[#30363d] text-white"
                         value={formData.password}
                         onChange={(e) => updateField('password', e.target.value)}
-                        placeholder="••••••••"
-                        minLength={8}
+                        placeholder="••••••••••••"
+                        minLength={12}
                       />
                     </FormField>
 
@@ -606,8 +606,8 @@ export default function RegisterPage() {
                         className="input w-full p-3 rounded-md bg-[#0d1117] border border-[#30363d] text-white"
                         value={formData.confirm_password}
                         onChange={(e) => updateField('confirm_password', e.target.value)}
-                        placeholder="••••••••"
-                        minLength={8}
+                        placeholder="••••••••••••"
+                        minLength={12}
                       />
                     </FormField>
                   </div>
@@ -616,8 +616,8 @@ export default function RegisterPage() {
                   <div className="p-4 rounded-lg bg-[#161b22] border border-[#30363d]">
                     <p className="text-xs text-[#8b949e] mb-3 font-semibold">Password must contain:</p>
                     <ul className="text-xs space-y-2">
-                      <li className={`flex items-center gap-2 ${formData.password.length >= 8 ? 'text-emerald-400' : 'text-[#8b949e]'}`}>
-                        {formData.password.length >= 8 ? (
+                      <li className={`flex items-center gap-2 ${formData.password.length >= 12 ? 'text-emerald-400' : 'text-[#8b949e]'}`}>
+                        {formData.password.length >= 12 ? (
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                             <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                           </svg>
@@ -626,7 +626,7 @@ export default function RegisterPage() {
                             <circle cx="10" cy="10" r="3" />
                           </svg>
                         )}
-                        At least 8 characters
+                        At least 12 characters
                       </li>
                       <li className={`flex items-center gap-2 ${/[A-Z]/.test(formData.password) ? 'text-emerald-400' : 'text-[#8b949e]'}`}>
                         {/[A-Z]/.test(formData.password) ? (
@@ -663,6 +663,18 @@ export default function RegisterPage() {
                           </svg>
                         )}
                         One number
+                      </li>
+                      <li className={`flex items-center gap-2 ${/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 'text-emerald-400' : 'text-[#8b949e]'}`}>
+                        {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? (
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
+                            <circle cx="10" cy="10" r="3" />
+                          </svg>
+                        )}
+                        One special character (!@#$%^&* etc.)
                       </li>
                     </ul>
                   </div>
