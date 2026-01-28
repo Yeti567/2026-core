@@ -158,8 +158,17 @@ export async function POST(request: Request) {
         console.error('Supabase auth error:', authError);
         // Rollback: delete the company we just created
         await supabaseAdmin.from('companies').delete().eq('id', companyData.id);
+        
+        // Handle specific error cases
+        const errorCode = (authError as any).code;
+        let errorMessage = 'Failed to create user account: ' + authError.message;
+        
+        if (errorCode === 'email_exists' || authError.message.includes('already registered')) {
+          errorMessage = 'An account with this email already exists. Please sign in or use a different email.';
+        }
+        
         return NextResponse.json(
-          { error: 'Failed to create user account: ' + authError.message },
+          { error: errorMessage },
           { status: 400 }
         );
       }
