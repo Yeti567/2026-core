@@ -117,8 +117,8 @@ export async function POST(request: Request) {
     
     try {
       // 1. Create company record first
-      // Note: companies table only has: id, name, wsib_number, address, created_at
-      // Store full address as a single field for now
+      // Companies table schema: id, name, wsib_number, address, created_at
+      // DO NOT add email or other columns - they don't exist in the database
       const fullAddress = `${data.address}, ${data.city}, ${data.province} ${data.postal_code}`;
       
       const { data: companyData, error: companyError } = await supabaseAdmin
