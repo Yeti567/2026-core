@@ -28,6 +28,7 @@ const PUBLIC_ROUTES = [
   '/auth/callback',
   '/auth/confirm',
   '/auth/register-callback',  // Company registration magic link callback
+  '/api/debug/auth',   // Debug endpoint for testing
   '/invite/accept',    // Employee magic link acceptance page (legacy)
   '/accept-invite',    // Employee invitation acceptance page (new)
   '/forgot-password',  // Password reset request

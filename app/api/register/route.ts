@@ -103,23 +103,30 @@ export async function POST(request: Request) {
 
     // 2. Create user using Supabase auth
     const { createClient } = await import('@supabase/supabase-js');
-    const supabase = createClient(
+    
+    // Use service role key for admin operations (bypasses email confirmation)
+    const supabaseAdmin = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false
+        }
+      }
     );
     
     try {
-      // Create user with Supabase auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      // Create user with Supabase admin (bypasses email confirmation)
+      const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: data.registrant_email,
         password: data.password,
-        options: {
-          data: {
-            name: data.registrant_name,
-            position: data.registrant_position,
-            company_id: 'company-' + Date.now(), // Temporary company ID
-            role: 'admin'
-          }
+        email_confirm: true, // Auto-confirm email
+        user_metadata: {
+          name: data.registrant_name,
+          position: data.registrant_position,
+          company_id: 'company-' + Date.now(),
+          role: 'admin'
         }
       });
 
