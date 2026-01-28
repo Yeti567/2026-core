@@ -19,8 +19,8 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
 // Get client IP from headers
-function getClientIP(): string {
-  const headersList = headers();
+async function getClientIP(): Promise<string> {
+  const headersList = await headers();
   return (
     headersList.get('x-forwarded-for')?.split(',')[0]?.trim() ||
     headersList.get('x-real-ip') ||
@@ -29,15 +29,15 @@ function getClientIP(): string {
 }
 
 // Get user agent from headers
-function getUserAgent(): string {
-  const headersList = headers();
+async function getUserAgent(): Promise<string> {
+  const headersList = await headers();
   return headersList.get('user-agent') || 'unknown';
 }
 
 export async function POST(request: Request) {
   console.log('🔄 Registration request received');
-  const ip = getClientIP();
-  const userAgent = getUserAgent();
+  const ip = await getClientIP();
+  const userAgent = await getUserAgent();
 
   try {
     // TODO: Fix rate limiting - temporarily disabled for testing
