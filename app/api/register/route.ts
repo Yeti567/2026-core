@@ -12,6 +12,9 @@ import { headers } from 'next/headers';
 import { CompanyRegistration } from '@/lib/validation/company';
 import { validateCompanyRegistration } from '@/lib/validation/company';
 
+export const dynamic = 'force-dynamic';
+
+
 // Force Node.js runtime for PostgreSQL compatibility
 export const runtime = 'nodejs';
 

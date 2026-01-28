@@ -10,6 +10,9 @@ import { createClient } from '@supabase/supabase-js';
 import { verifyToken } from '@/lib/auth/jwt';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // Force Node.js runtime for PostgreSQL compatibility
 export const runtime = 'nodejs';
 

@@ -1,6 +1,9 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextResponse } from 'next/server';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * PATCH /api/admin/company/profile
  * Update company profile information (industry, employee count, etc.)

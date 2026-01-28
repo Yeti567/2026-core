@@ -16,6 +16,9 @@ import {
 import { calculateOverallScore } from '@/lib/audit/compliance-scoring';
 import { COR_ELEMENTS } from '@/lib/audit/types';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const user = await requireAuthWithRole(['admin', 'internal_auditor', 'super_admin']);

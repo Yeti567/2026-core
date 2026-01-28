@@ -14,6 +14,9 @@ import { processUploadedDocument } from '@/lib/documents/pdf-extractor';
 import { checkRateLimit, getClientIP } from '@/lib/utils/rate-limit';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

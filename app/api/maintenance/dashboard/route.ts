@@ -7,6 +7,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // Type for equipment relation from Supabase join
 interface EquipmentRelation {
   equipment_code: string;

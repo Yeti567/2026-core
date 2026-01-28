@@ -20,6 +20,9 @@ import {
 } from '@/lib/utils/file-upload-validation';
 import { handleFileError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }

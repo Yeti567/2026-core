@@ -9,6 +9,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

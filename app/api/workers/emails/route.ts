@@ -10,6 +10,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuth, type AuthError } from '@/lib/auth/helpers';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const user = await requireAuth();

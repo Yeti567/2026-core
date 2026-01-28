@@ -10,6 +10,9 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }

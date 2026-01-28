@@ -9,6 +9,9 @@ import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { saveAuditSoftConnection, isEncryptionConfigured } from '@/lib/integrations/auditsoft';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: Request) {
   try {
     const user = await requireAuthWithRole(['admin', 'super_admin']);

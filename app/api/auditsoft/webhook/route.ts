@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
+export const dynamic = 'force-dynamic';
+
+
 // Create a service-level client for webhook processing
 function getServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

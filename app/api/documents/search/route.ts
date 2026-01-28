@@ -17,6 +17,9 @@ import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit'
 import { isDocumentStatus, parseDocumentTypeCode } from '@/lib/utils/type-guards';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();

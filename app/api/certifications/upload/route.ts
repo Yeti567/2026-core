@@ -11,6 +11,9 @@ import { createClient } from '@supabase/supabase-js';
 import { checkRateLimit } from '@/lib/utils/rate-limit';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
+
 // =============================================================================
 // SUPABASE CLIENT HELPERS
 // =============================================================================

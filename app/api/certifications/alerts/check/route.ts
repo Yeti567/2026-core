@@ -3,6 +3,9 @@ import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import {
+
+export const dynamic = 'force-dynamic';
+
   checkExpiringCertifications,
   getAlertsSummary,
   createAlertRecord,

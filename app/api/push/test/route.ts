@@ -11,6 +11,9 @@ import { sendTestNotification } from '@/lib/push-notifications/triggers';
 import { testPushSchema } from '@/lib/validation/schemas';
 import { safeValidateRequestBody, isValidationErrorResponse } from '@/lib/validation/utils';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireAuth();

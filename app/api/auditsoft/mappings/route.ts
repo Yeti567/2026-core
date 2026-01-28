@@ -9,6 +9,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import type { EvidenceMappingInsert } from '@/lib/auditsoft';
 
+export const dynamic = 'force-dynamic';
+
+
 // =============================================================================
 // GET - Retrieve all mappings for the company
 // =============================================================================

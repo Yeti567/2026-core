@@ -9,6 +9,9 @@ import { createClient } from '@/lib/supabase/server';
 import { getWorkerAcknowledgments } from '@/lib/documents';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/documents/acknowledgments/me
  * Get current worker's acknowledgments

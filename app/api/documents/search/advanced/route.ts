@@ -10,6 +10,9 @@ import { createSafeOrFilter } from '@/lib/utils/search-sanitizer';
 import { handleDatabaseError, handleApiError } from '@/lib/utils/error-handling';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
+
 interface SearchParams {
   query?: string;
   folder_id?: string;

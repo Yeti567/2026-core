@@ -9,6 +9,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import type { UserProfile } from '@/lib/db/types';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const user = await requireAuthWithRole(['admin', 'super_admin']);

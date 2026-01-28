@@ -4,6 +4,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { createSafeQuery } from '@/lib/db/safe-query';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/workers
  * 

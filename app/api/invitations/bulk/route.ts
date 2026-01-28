@@ -12,6 +12,9 @@ import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import type { UserRole } from '@/lib/db/types';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
+
 interface EmployeeInput {
   firstName: string;
   lastName: string;

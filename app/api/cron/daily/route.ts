@@ -17,6 +17,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { runDailyNotifications, cleanupOldSubscriptions } from '@/lib/cron/daily-notifications';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // Verify cron secret for security
 const CRON_SECRET = process.env.CRON_SECRET;
 

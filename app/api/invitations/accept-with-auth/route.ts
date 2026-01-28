@@ -17,6 +17,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 
+export const dynamic = 'force-dynamic';
+
+
 // =============================================================================
 // RATE LIMITING (Simple in-memory store - use Redis in production)
 // =============================================================================

@@ -10,6 +10,9 @@ import { processUploadedDocument } from '@/lib/documents/pdf-extractor';
 import { checkRateLimit } from '@/lib/utils/rate-limit';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 interface FileMetadata {
   title?: string;
   description?: string;

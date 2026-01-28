@@ -11,6 +11,9 @@ import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import type { UserRole } from '@/lib/db/types';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET() {
   try {
     const user = await requireAuthWithRole(['admin', 'internal_auditor', 'super_admin']);

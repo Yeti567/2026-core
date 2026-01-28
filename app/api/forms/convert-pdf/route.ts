@@ -10,6 +10,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { processPDFForm, getConversionStatus } from '@/lib/forms/pdf-ocr-processor';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * POST - Upload and start PDF conversion
  */

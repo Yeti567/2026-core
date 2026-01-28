@@ -9,6 +9,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
+
 // Create a service role client for operations that need to bypass RLS
 function getServiceClient() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

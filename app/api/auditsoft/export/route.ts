@@ -10,6 +10,9 @@ import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import type { ExportJobInsert } from '@/lib/auditsoft';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // =============================================================================
 // GET - List export jobs
 // =============================================================================

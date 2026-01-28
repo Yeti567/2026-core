@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 
+export const dynamic = 'force-dynamic';
+
+
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1)

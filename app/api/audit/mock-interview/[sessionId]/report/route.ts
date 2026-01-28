@@ -20,6 +20,9 @@ import { MOCK_AUDITOR_CONCLUSION_PROMPT } from '@/lib/audit/mock-audit-prompts';
 
 import { callAI } from '@/lib/ai/ai-client';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { sessionId: string } }

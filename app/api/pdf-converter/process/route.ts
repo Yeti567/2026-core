@@ -13,6 +13,9 @@ import type { DetectedField } from '@/lib/pdf-converter/types';
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { handleFileError, handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();

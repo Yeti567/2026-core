@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server';
 import { NextResponse, NextRequest } from 'next/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * PATCH /api/phases/[phaseId]/prompts/[promptId]
  * Update prompt progress

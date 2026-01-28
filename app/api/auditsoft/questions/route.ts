@@ -9,6 +9,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { createAuditSoftClient, decryptApiKey } from '@/lib/auditsoft';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: Request) {
   try {
     const user = await requireAuthWithRole(['admin', 'internal_auditor', 'super_admin']);

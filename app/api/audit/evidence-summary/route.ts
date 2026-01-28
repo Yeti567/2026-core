@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // COR Element names
 const COR_ELEMENT_NAMES: Record<number, string> = {
   1: 'Health & Safety Policy',

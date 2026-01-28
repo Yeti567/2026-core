@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 
+export const dynamic = 'force-dynamic';
+
+
 interface DateRange {
   start: string;
   end: string;

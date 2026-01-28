@@ -11,6 +11,9 @@ import type { UserRole, UserProfile } from '@/lib/db/types';
 import { createSafeOrFilter } from '@/lib/utils/search-sanitizer';
 import { handleAuthError, handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: Request) {
   try {
     const user = await requireAuthWithRole(['admin', 'internal_auditor', 'super_admin']);

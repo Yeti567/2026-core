@@ -8,6 +8,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // Type for folder relation from Supabase join
 interface FolderRelation {
   name?: string;

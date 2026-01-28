@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getAllAuditQuestions, getElementAuditQuestions } from '@/lib/audit/evidence-mapper';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/audit/questions
  * 

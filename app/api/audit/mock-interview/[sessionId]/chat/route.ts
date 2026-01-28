@@ -29,6 +29,9 @@ import {
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { callAI } from '@/lib/ai/ai-client';
 
+export const dynamic = 'force-dynamic';
+
+
 interface ChatRequestBody {
   message?: string;
   action: 'start' | 'respond' | 'evaluate';

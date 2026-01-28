@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 
+export const dynamic = 'force-dynamic';
+
+
 // ============================================================================
 // GET /api/certifications/dashboard - Get certification dashboard stats
 // ============================================================================

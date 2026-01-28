@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { disconnectAuditSoft } from '@/lib/integrations/auditsoft';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function DELETE() {
   try {
     const user = await requireAuthWithRole(['admin', 'super_admin']);

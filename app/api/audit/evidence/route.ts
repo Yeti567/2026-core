@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCalculateScore, getElementRequirements } from '@/lib/audit/compliance-scoring';
 
+export const dynamic = 'force-dynamic';
+
+
 type EvidenceType =
   | 'form'
   | 'training'

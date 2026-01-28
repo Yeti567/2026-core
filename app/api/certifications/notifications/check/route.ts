@@ -13,6 +13,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { checkExpiringCertificationsDaily } from '@/lib/certifications/expiry-notifications';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 // =============================================================================
 // SUPABASE CLIENT
 // =============================================================================

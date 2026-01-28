@@ -10,6 +10,9 @@
 import { NextResponse } from 'next/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { 
+
+export const dynamic = 'force-dynamic';
+
   bulkImportForms, 
   bulkImportFormsIfNotExists,
   type FormConfig, 

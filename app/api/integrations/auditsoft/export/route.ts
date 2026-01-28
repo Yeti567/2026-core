@@ -14,6 +14,9 @@ import {
 } from '@/lib/integrations/auditsoft/export-engine';
 import { getAuditSoftConnection } from '@/lib/integrations/auditsoft';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * Start a new export to AuditSoft
  */

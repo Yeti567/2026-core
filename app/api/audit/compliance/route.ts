@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
+
+export const dynamic = 'force-dynamic';
+
   getOrCalculateScore, 
   calculateOverallScore,
   type OverallScore 

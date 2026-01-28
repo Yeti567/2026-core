@@ -9,6 +9,9 @@ import { createClient } from '@/lib/supabase/server';
 import { suggestMetadata } from '@/lib/documents/metadata-suggester';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();

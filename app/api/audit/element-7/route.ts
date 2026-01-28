@@ -10,6 +10,9 @@ import { getMaintenanceEvidenceSummary, exportMaintenanceEvidenceForAudit } from
 import { generateMaintenanceEvidenceHTML } from '@/lib/audit/maintenance-evidence-pdf';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();

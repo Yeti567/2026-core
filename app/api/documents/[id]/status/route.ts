@@ -10,6 +10,9 @@ import { transitionStatus, getVersion } from '@/lib/documents';
 import type { DocumentStatus } from '@/lib/documents';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 interface RouteParams {
   params: Promise<{ id: string }>;
 }

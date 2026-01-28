@@ -14,6 +14,9 @@ import { isDocumentStatus, parseDocumentTypeCode } from '@/lib/utils/type-guards
 import type { DocumentTypeCode } from '@/lib/documents/types';
 import { handleApiError, handleDatabaseError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();

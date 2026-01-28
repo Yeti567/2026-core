@@ -13,6 +13,9 @@ import {
 } from '@/lib/audit/document-audit-integration';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 /**
  * GET /api/audit/document-compliance
  * Get document compliance scores

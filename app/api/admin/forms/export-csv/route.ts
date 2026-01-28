@@ -12,6 +12,9 @@ import { getServerUser } from '@/lib/auth';
 import { allFormConfigs, formConfigsByElement } from '@/lib/form-builder/form-configs';
 import { FormConfig } from '@/lib/form-builder/import-forms';
 
+export const dynamic = 'force-dynamic';
+
+
 // COR Element names
 const COR_ELEMENT_NAMES: Record<number, string> = {
   2: 'Hazard Identification & Assessment',

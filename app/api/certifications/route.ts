@@ -3,6 +3,9 @@ import { createClient } from '@supabase/supabase-js';
 import { cookies } from 'next/headers';
 import { createSafeOrFilter } from '@/lib/utils/search-sanitizer';
 
+export const dynamic = 'force-dynamic';
+
+
 // ============================================================================
 // GET /api/certifications - List certifications with filters
 // ============================================================================

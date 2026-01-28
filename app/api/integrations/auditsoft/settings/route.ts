@@ -8,6 +8,9 @@ import { NextResponse } from 'next/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { updateSyncSettings, getSafeConnectionInfo } from '@/lib/integrations/auditsoft';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function PATCH(req: Request) {
   try {
     const user = await requireAuthWithRole(['admin', 'super_admin']);

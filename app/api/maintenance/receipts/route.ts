@@ -14,6 +14,9 @@ import {
 } from '@/lib/maintenance';
 import { handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient();

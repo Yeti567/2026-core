@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOrCalculateScore } from '@/lib/audit/compliance-scoring';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const companyId = request.headers.get('x-company-id');

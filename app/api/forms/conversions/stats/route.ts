@@ -9,6 +9,9 @@ import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 import { authenticateApiRoute } from '@/lib/auth/jwt-middleware';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function GET(request: NextRequest) {
   try {
     const { user, error } = await authenticateApiRoute(request);

@@ -14,6 +14,9 @@ import {
 } from '@/lib/utils/file-upload-validation';
 import { handleApiError, handleFileError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();

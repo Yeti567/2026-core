@@ -16,6 +16,9 @@ import {
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { handleDatabaseError, handleApiError } from '@/lib/utils/error-handling';
 
+export const dynamic = 'force-dynamic';
+
+
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient();
