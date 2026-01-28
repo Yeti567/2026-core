@@ -150,25 +150,34 @@ export default function RegisterPage() {
     e.preventDefault();
     setServerError(null);
 
+    console.log('🔄 Starting registration submission...');
+
     const validation = validateCompanyRegistration(formData);
     if (!validation.valid) {
+      console.log('❌ Validation failed:', validation.errors);
       setFieldErrors(validation.errors);
       return;
     }
 
+    console.log('✅ Validation passed');
     setLoading(true);
     setStep('submitting');
 
     try {
+      console.log('📤 Sending registration request to API...');
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
 
+      console.log('📥 Response received:', response.status, response.statusText);
+
       const result = await response.json();
+      console.log('📦 Response data:', result);
 
       if (!response.ok) {
+        console.log('❌ Registration failed with status:', response.status);
         if (response.status === 429) {
           setServerError('Too many registration attempts. Please wait an hour or contact support.');
         } else {
@@ -180,14 +189,17 @@ export default function RegisterPage() {
         }
 
         setStep('form');
+        setLoading(false);
         return;
       }
 
+      console.log('✅ Registration successful! Showing success screen...');
+      setLoading(false);
       setStep('success');
     } catch (err) {
+      console.error('❌ Registration error:', err);
       setServerError('Network error. Please check your connection and try again.');
       setStep('form');
-    } finally {
       setLoading(false);
     }
   };
