@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { createClient } from '@supabase/supabase-js';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -32,11 +31,6 @@ function LoginContent() {
     }
   }, [message, prefillEmail]);
 
-  const supabase = createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -44,24 +38,28 @@ function LoginContent() {
     setSuccess(null);
 
     try {
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
       });
 
-      if (authError) {
-        if (authError.message.includes('Invalid login credentials')) {
+      const result = await response.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
           setError('Invalid email or password. Please try again.');
         } else {
-          setError(authError.message);
+          setError(result.error || 'Sign in failed. Please try again.');
         }
         return;
       }
 
+      // Successful login - redirect to dashboard
       router.push(redirect);
       router.refresh();
     } catch (err) {
-      setError('An unexpected error occurred');
+      setError('Failed to connect to server. Please check your connection.');
     } finally {
       setLoading(false);
     }

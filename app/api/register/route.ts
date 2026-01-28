@@ -101,143 +101,38 @@ export async function POST(request: Request) {
       );
     }
 
-    // TEMPORARY: Mock successful registration without database
-    console.log('🎉 Mock registration successful for:', data.company_name);
+    // 2. Create user using JWT auth system
+    const { createUser } = await import('@/lib/auth/jwt');
     
-    return NextResponse.json({
-      success: true,
-      message: 'Account created successfully. You can now sign in.',
-      email: data.registrant_email,
-      companyId: 'mock-company-id-' + Date.now(),
-    });
-
-    // 2. Check if WSIB number already exists
-    const { data: existingCompany } = await neon
-      .from('companies')
-      .select('id, name')
-      .eq('wsib_number', data.wsib_number)
-      .single();
-
-    if (existingCompany) {
-      await logAttempt(neon, {
-        ip_address: ip,
-        user_agent: userAgent,
-        company_name: data.company_name,
-        wsib_number: data.wsib_number,
-        registrant_email: data.registrant_email,
-        success: false,
-        error_code: 'WSIB_EXISTS',
-        error_message: 'Company already registered with this WSIB number',
-      });
-
-      return NextResponse.json(
-        {
-          error: 'A company is already registered with this WSIB number. If this is your company, please contact support.',
-        },
-        { status: 409 }
-      );
-    }
-
-    // 3. Create company record
-    const { data: newCompany, error: companyError } = await neon
-      .from('companies')
-      .insert({
-        name: data.company_name,
-        wsib_number: data.wsib_number,
-        email: data.company_email,
-        address: data.address,
-        city: data.city,
-        province: data.province,
-        postal_code: data.postal_code,
-        phone: data.phone,
-        industry: data.industry || null,
-        employee_count: data.employee_count || null,
-        years_in_business: data.years_in_business || null,
-        main_services: data.main_services || [],
-        status: 'active',
-      })
-      .select('id')
-      .single();
-
-    if (companyError || !newCompany) {
-      console.error('Failed to create company:', companyError);
-      await logAttempt(neon, {
-        ip_address: ip,
-        user_agent: userAgent,
-        company_name: data.company_name,
-        wsib_number: data.wsib_number,
-        registrant_email: data.registrant_email,
-        success: false,
-        error_code: 'COMPANY_CREATION_FAILED',
-        error_message: companyError?.message || 'Unknown error creating company',
-      });
-
-      return NextResponse.json(
-        { error: 'Failed to create company. Please try again.' },
-        { status: 500 }
-      );
-    }
-
-    // 4. Create user (mock for now)
-    const newUser = {
-      user: {
-        id: 'mock-user-' + Date.now(),
+    try {
+      const newUser = await createUser({
         email: data.registrant_email,
+        password: data.password,
         name: data.registrant_name,
         position: data.registrant_position,
+        companyId: 'mock-company-id-' + Date.now(), // TODO: Create actual company
         role: 'admin'
-      }
-    };
-
-    if (!newUser.user) {
-      console.error('Failed to create user');
-      // Rollback: delete the company we just created
-      await neon.from('companies').delete().eq('id', newCompany.id);
-
-      await logAttempt(neon, {
-        ip_address: ip,
-        user_agent: userAgent,
-        company_name: data.company_name,
-        wsib_number: data.wsib_number,
-        registrant_email: data.registrant_email,
-        success: false,
-        error_code: 'USER_CREATION_FAILED',
-        error_message: 'Unknown error creating user',
       });
 
+      console.log('✅ User created successfully:', newUser.user.email);
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Account created successfully. You can now sign in.',
+        email: data.registrant_email,
+        companyId: newUser.user.companyId,
+      });
+    } catch (createError) {
+      console.error('Failed to create user:', createError);
       return NextResponse.json(
         { error: 'Failed to create user account. Please try again.' },
         { status: 500 }
       );
     }
-
-    // 5. Log successful registration
-    await logAttempt(neon, {
-      ip_address: ip,
-      user_agent: userAgent,
-      company_name: data.company_name,
-      wsib_number: data.wsib_number,
-      registrant_email: data.registrant_email,
-      success: true,
-    });
-
-    return NextResponse.json({
-      success: true,
-      message: 'Account created successfully. You can now sign in.',
-      email: data.registrant_email,
-      companyId: newCompany.id,
-    });
   } catch (error) {
     console.error('Registration error:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    await logAttempt(neon, {
-      ip_address: ip,
-      user_agent: userAgent,
-      success: false,
-      error_code: 'UNKNOWN_ERROR',
-      error_message: errorMessage,
-    });
 
     console.error('Company registration error:', error);
     return NextResponse.json(
