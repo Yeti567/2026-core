@@ -1,0 +1,41 @@
+[
+  {
+    "equipment_id": "a80a52b3-c769-4c4e-b876-f662e02b8783",
+    "company_id": "345c138b-59dc-45bf-b73a-4e89adb1232d",
+    "equipment_code": "EXC-1769469707583",
+    "equipment_name": "Excavator 1769469707583",
+    "current_status": "available",
+    "availability_30_days": "100",
+    "availability_90_days": "100",
+    "availability_ytd": "100",
+    "current_downtime_id": null,
+    "downtime_incidents_30_days": "0",
+    "mtbf_days": null
+  },
+  {
+    "equipment_id": "36b3326b-afbb-46bf-896d-0940c84ad8ee",
+    "company_id": "345c138b-59dc-45bf-b73a-4e89adb1232d",
+    "equipment_code": "SH-1769469707583",
+    "equipment_name": "Safety Harness 1769469707583",
+    "current_status": "available",
+    "availability_30_days": "100",
+    "availability_90_days": "100",
+    "availability_ytd": "100",
+    "current_downtime_id": null,
+    "downtime_incidents_30_days": "0",
+    "mtbf_days": null
+  },
+  {
+    "equipment_id": "b4e80374-d770-406e-ad33-01dca5bbbb2e",
+    "company_id": "345c138b-59dc-45bf-b73a-4e89adb1232d",
+    "equipment_code": "CM-1769469707583",
+    "equipment_name": "Concrete Mixer 1769469707583",
+    "current_status": "available",
+    "availability_30_days": "100",
+    "availability_90_days": "100",
+    "availability_ytd": "100",
+    "current_downtime_id": null,
+    "downtime_incidents_30_days": "0",
+    "mtbf_days": null
+  }
+]

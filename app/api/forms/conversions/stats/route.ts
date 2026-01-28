@@ -10,11 +10,8 @@ import { handleApiError } from '@/lib/utils/error-handling';
 
 export async function GET() {
   try {
-    const supabase = createRouteHandlerClient();
-    
-    // Check authentication
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
+    const { user, error } = await authenticateApiRoute(request);
+    if (error || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     

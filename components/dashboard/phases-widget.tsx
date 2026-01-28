@@ -1,18 +1,19 @@
 import { createClient } from '@/lib/supabase/server';
+import { authenticateServerComponentSimple } from '@/lib/auth/jwt-simple';
 import Link from 'next/link';
 
 export async function PhasesWidget() {
   const supabase = await createClient();
   
   // Get current user
-  const { data: { user } } = await supabase.auth.getUser();
+  const { user, error } = await authenticateServerComponentSimple();
   if (!user) return null;
 
   // Get user's company
   const { data: profile } = await supabase
     .from('user_profiles')
     .select('company_id')
-    .eq('user_id', user.id)
+    .eq('user_id', user.userId)
     .single();
 
   if (!profile?.company_id) return null;

@@ -1,0 +1,12 @@
+[
+  {
+    "company_id": "345c138b-59dc-45bf-b73a-4e89adb1232d",
+    "user_id": "173c8efc-1606-448c-bcf6-515965f95a05",
+    "role": "admin",
+    "name": "Test User",
+    "email": "testuser1769469371970@testconstruction.com",
+    "position": "Administrator",
+    "status": "active",
+    "created_at": "2026-01-26T23:16:11.661Z"
+  }
+]

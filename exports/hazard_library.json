@@ -1,0 +1,442 @@
+[
+  {
+    "id": "4368b2d0-deb4-4d1b-8689-70a7f68ad048",
+    "company_id": null,
+    "hazard_code": "FALL-001",
+    "name": "Working at Heights - Unprotected Edges",
+    "description": "Working near unprotected edges without fall protection",
+    "category": "fall",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 4,
+    "default_likelihood": 3,
+    "default_risk_score": 12,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Guardrails",
+      "Fall arrest system",
+      "Safety monitoring"
+    ],
+    "required_ppe": [
+      "Hard Hat - Type 1",
+      "Safety Harness - Full Body"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "8a439164-b921-4d98-aec9-dd22110558db",
+    "company_id": null,
+    "hazard_code": "FALL-002",
+    "name": "Scaffolding - Improper Assembly",
+    "description": "Scaffolding not properly constructed or inspected",
+    "category": "fall",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 2,
+    "default_risk_score": 10,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Competent person inspection",
+      "Proper assembly procedures",
+      "Regular inspections"
+    ],
+    "required_ppe": [
+      "Hard Hat - Type 1",
+      "Safety Harness - Full Body"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "ead5e421-b830-411f-9d3f-b96fe7e11cc9",
+    "company_id": null,
+    "hazard_code": "FALL-003",
+    "name": "Ladders - Improper Use",
+    "description": "Using ladders improperly or on unstable surfaces",
+    "category": "fall",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 3,
+    "default_risk_score": 9,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Proper ladder selection",
+      "3-point contact",
+      "Secure base"
+    ],
+    "required_ppe": [
+      "Hard Hat - Type 1"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "6f0c28dc-df87-4746-be44-9b00e9ec0d74",
+    "company_id": null,
+    "hazard_code": "STRK-001",
+    "name": "Falling Tools - Overhead Work",
+    "description": "Tools falling from overhead work areas",
+    "category": "struck_by",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 3,
+    "default_risk_score": 9,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Tool tethering",
+      "Toe boards",
+      "Hard hat zone"
+    ],
+    "required_ppe": [
+      "Hard Hat - Type 1"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "c766f989-6139-45bd-ab7f-c529082a0ce2",
+    "company_id": null,
+    "hazard_code": "STRK-002",
+    "name": "Equipment - Moving Machinery",
+    "description": "Being struck by moving construction equipment",
+    "category": "struck_by",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 2,
+    "default_risk_score": 10,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Spotter",
+      "Backup alarms",
+      "Restricted access zones"
+    ],
+    "required_ppe": [
+      "High-Visibility Vest - Class 3",
+      "Steel Toe Boots - 6 Inch"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "74652f47-0948-46be-bbbc-6883d1bd6bf2",
+    "company_id": null,
+    "hazard_code": "ELEC-001",
+    "name": "Live Electrical Work - No LOTO",
+    "description": "Working on live circuits without proper lockout/tagout",
+    "category": "electrical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 2,
+    "default_risk_score": 10,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Lockout/tagout procedures",
+      "Voltage testing",
+      "Qualified personnel only"
+    ],
+    "required_ppe": [
+      "Insulated Gloves - Electrical",
+      "Face Shield"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "8174c04b-f476-43b0-a40a-3cdbfe4e7603",
+    "company_id": null,
+    "hazard_code": "ELEC-002",
+    "name": "Power Tools - Damaged Cords",
+    "description": "Using power tools with damaged electrical cords",
+    "category": "electrical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 4,
+    "default_likelihood": 3,
+    "default_risk_score": 12,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Regular inspection",
+      "Cord protection",
+      "Ground fault protection"
+    ],
+    "required_ppe": [
+      "Leather Work Gloves"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "6b414e8e-8d99-4459-aa3b-f7c1ce83ee5b",
+    "company_id": null,
+    "hazard_code": "CHEM-001",
+    "name": "Concrete - Skin Contact",
+    "description": "Direct skin contact with wet concrete causing burns",
+    "category": "chemical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 3,
+    "default_risk_score": 9,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Protective clothing",
+      "Washing facilities",
+      "Glove use"
+    ],
+    "required_ppe": [
+      "Chemical-Resistant Gloves - Nitrile"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "29f89f18-e7c4-4716-8136-b5a8274b6ce8",
+    "company_id": null,
+    "hazard_code": "CHEM-002",
+    "name": "Solvents - Inhalation",
+    "description": "Inhalation of solvent vapors during cleaning or painting",
+    "category": "chemical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 2,
+    "default_risk_score": 6,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Ventilation",
+      "Respiratory protection",
+      "Substitution"
+    ],
+    "required_ppe": [
+      "N95 Respirator"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "eafa7ddf-9fa8-4a06-a21e-23de1159b422",
+    "company_id": null,
+    "hazard_code": "PHYS-001",
+    "name": "Noise - Heavy Equipment",
+    "description": "Exposure to high noise levels from heavy equipment operation",
+    "category": "physical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 3,
+    "default_risk_score": 9,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Hearing protection",
+      "Equipment maintenance",
+      "Noise barriers"
+    ],
+    "required_ppe": [
+      "Ear Muffs - Standard"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "0c8b94b5-52b9-411b-a2bc-7c93cc75795e",
+    "company_id": null,
+    "hazard_code": "PHYS-002",
+    "name": "Lighting - Poor Visibility",
+    "description": "Inadequate lighting leading to reduced visibility",
+    "category": "physical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 1,
+    "default_likelihood": 2,
+    "default_risk_score": 2,
+    "default_risk_level": "negligible",
+    "recommended_controls": [
+      "Additional lighting",
+      "Task lighting",
+      "Regular maintenance"
+    ],
+    "required_ppe": [
+      "High-Visibility Vest - Class 2"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "40bd2c10-fa97-46aa-80a7-0f318cbc8bce",
+    "company_id": null,
+    "hazard_code": "MECH-001",
+    "name": "Moving Parts - Unguarded Machinery",
+    "description": "Uguarded moving parts on equipment and machinery",
+    "category": "mechanical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 3,
+    "default_risk_score": 15,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Machine guards",
+      "Lockout/tagout",
+      "Regular inspection"
+    ],
+    "required_ppe": [
+      "Leather Work Gloves",
+      "Safety Glasses - Clear"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "dc6249c2-9719-4c3d-8ff5-13e0eb6b9a48",
+    "company_id": null,
+    "hazard_code": "MECH-002",
+    "name": "Pinch Points - Material Handling",
+    "description": "Pinch points during material handling and equipment operation",
+    "category": "mechanical",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 3,
+    "default_likelihood": 3,
+    "default_risk_score": 9,
+    "default_risk_level": "low",
+    "recommended_controls": [
+      "Guarding",
+      "Proper procedures",
+      "Training"
+    ],
+    "required_ppe": [
+      "Leather Work Gloves"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "77cbbaac-d046-4b58-b65d-4afa42df36db",
+    "company_id": null,
+    "hazard_code": "CONF-001",
+    "name": "Confined Space - Oxygen Deficiency",
+    "description": "Low oxygen levels in confined spaces",
+    "category": "confined_space",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 2,
+    "default_risk_score": 10,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Air monitoring",
+      "Ventilation",
+      "Permit system"
+    ],
+    "required_ppe": [
+      "SCBA"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  },
+  {
+    "id": "e13a44dd-9e8f-4235-b447-4a742848c419",
+    "company_id": null,
+    "hazard_code": "CONF-002",
+    "name": "Confined Space - Toxic Atmosphere",
+    "description": "Toxic gases or vapors in confined spaces",
+    "category": "confined_space",
+    "subcategory": null,
+    "applicable_trades": [],
+    "applicable_activities": [],
+    "default_severity": 5,
+    "default_likelihood": 2,
+    "default_risk_score": 10,
+    "default_risk_level": "medium",
+    "recommended_controls": [
+      "Air monitoring",
+      "Ventilation",
+      "Respiratory protection"
+    ],
+    "required_ppe": [
+      "Full-Face Respirator"
+    ],
+    "regulatory_references": [],
+    "is_active": true,
+    "is_global": true,
+    "created_at": "2026-01-27T09:08:14.381Z",
+    "updated_at": "2026-01-27T09:08:14.381Z",
+    "created_by": null
+  }
+]

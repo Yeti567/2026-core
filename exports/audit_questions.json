@@ -1,0 +1,414 @@
+[
+  {
+    "id": "e797402f-b6df-4288-ae91-e5c671ecb379",
+    "element_number": 1,
+    "question_number": "1.1",
+    "question_text": "Does the organization have a written health and safety policy?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "safety_policy",
+      "health_safety_policy",
+      "policy_acknowledgment"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review the policy document",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "d49f7f8d-4446-4269-8807-d194e7206a80",
+    "element_number": 1,
+    "question_number": "1.2",
+    "question_text": "Is the policy signed by the most senior person in the organization?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "safety_policy",
+      "health_safety_policy"
+    ],
+    "point_value": 5,
+    "sampling_requirements": "Check signature and date on policy",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "85d35a23-e9fc-491e-85b6-cb70eabf8715",
+    "element_number": 1,
+    "question_number": "1.3",
+    "question_text": "Does the policy include a commitment to comply with legislation?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "safety_policy",
+      "health_safety_policy"
+    ],
+    "point_value": 5,
+    "sampling_requirements": "Review policy content for legislative commitment",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "b6f039cc-0ba6-4434-9d87-f740eb721104",
+    "element_number": 1,
+    "question_number": "1.4",
+    "question_text": "Are health and safety responsibilities clearly defined?",
+    "verification_methods": [
+      "document",
+      "interview"
+    ],
+    "required_evidence_types": [
+      "job_descriptions",
+      "responsibility_matrix",
+      "org_chart"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review job descriptions and interview staff",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "8820a719-7cd6-49a5-bf0f-1daa064c62c9",
+    "element_number": 1,
+    "question_number": "1.5",
+    "question_text": "Are there written objectives and targets for health and safety?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "safety_objectives",
+      "performance_targets",
+      "kpi_reports"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review objectives and targets documentation",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "ce172a93-2217-4306-9dfa-2ed296a8c8d4",
+    "element_number": 1,
+    "question_number": "1.6",
+    "question_text": "Is there a process for regular management review of the OHS system?",
+    "verification_methods": [
+      "document",
+      "interview"
+    ],
+    "required_evidence_types": [
+      "meeting_minutes",
+      "review_reports",
+      "action_items"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review meeting minutes and interview management",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "2a18a929-35d6-40c3-812a-a425f07997d6",
+    "element_number": 1,
+    "question_number": "1.7",
+    "question_text": "Are resources allocated for health and safety program implementation?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "budget_documents",
+      "resource_allocation",
+      "training_records"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review budget and resource allocation",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "6fe65f6d-642c-4928-a97e-7ffd9d139d96",
+    "element_number": 2,
+    "question_number": "2.1",
+    "question_text": "Is there a formal process for hazard identification?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "hazard_assessment_forms",
+      "inspection_reports",
+      "hazard_logs"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review hazard identification process and records",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "10fc0e89-b2e8-479d-b96b-986a70ddd592",
+    "element_number": 2,
+    "question_number": "2.2",
+    "question_text": "Are hazards assessed for risk and prioritized for control?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "risk_assessments",
+      "hazard_ratings",
+      "priority_lists"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review risk assessment methodology and results",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "3cd996e5-4948-4b9d-a415-9e7789545567",
+    "element_number": 2,
+    "question_number": "2.3",
+    "question_text": "Are workers involved in hazard identification?",
+    "verification_methods": [
+      "document",
+      "interview"
+    ],
+    "required_evidence_types": [
+      "hazard_reports",
+      "safety_meeting_minutes",
+      "worker_input"
+    ],
+    "point_value": 7,
+    "sampling_requirements": "Interview workers and review participation records",
+    "category": "interview",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "8d6f3425-a6d5-4b03-9c10-5722b8d2945b",
+    "element_number": 2,
+    "question_number": "2.4",
+    "question_text": "Are regular workplace inspections conducted?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "inspection_reports",
+      "checklists",
+      "corrective_actions"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review inspection schedule and reports",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "e63248fc-7d4f-4524-b23d-4d0b112b11ad",
+    "element_number": 2,
+    "question_number": "2.5",
+    "question_text": "Is there a process for reporting near misses?",
+    "verification_methods": [
+      "document",
+      "interview"
+    ],
+    "required_evidence_types": [
+      "near_miss_reports",
+      "investigation_reports",
+      "trend_analysis"
+    ],
+    "point_value": 7,
+    "sampling_requirements": "Review near miss reporting system and records",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "d18d889d-021a-426a-967d-5ac406282075",
+    "element_number": 2,
+    "question_number": "2.6",
+    "question_text": "Are hazard assessments documented and communicated?",
+    "verification_methods": [
+      "document"
+    ],
+    "required_evidence_types": [
+      "hazard_assessments",
+      "communication_records",
+      "sign_off_sheets"
+    ],
+    "point_value": 6,
+    "sampling_requirements": "Review assessment documentation and communication",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "47f5e1bd-02da-4ad7-b320-9458d781cc5e",
+    "element_number": 2,
+    "question_number": "2.7",
+    "question_text": "Are high-risk hazards addressed promptly?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "corrective_actions",
+      "follow_up_reports",
+      "closure_records"
+    ],
+    "point_value": 6,
+    "sampling_requirements": "Review high-risk hazard response times",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "ec80470a-4f74-4b59-9512-87e49f6fe5f2",
+    "element_number": 3,
+    "question_number": "3.1",
+    "question_text": "Is the hierarchy of controls applied for hazard control?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "control_measures",
+      "engineering_controls",
+      "procedure_reviews"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Review control measure selection and application",
+    "category": "observation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "a076b9ff-7d65-42b4-8847-dcff24fff451",
+    "element_number": 3,
+    "question_number": "3.2",
+    "question_text": "Are engineering controls implemented where feasible?",
+    "verification_methods": [
+      "observation",
+      "document"
+    ],
+    "required_evidence_types": [
+      "equipment_modifications",
+      "guard_installations",
+      "ventilation_systems"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Observe engineering controls and review documentation",
+    "category": "observation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "9a8f76cd-54be-4651-99f7-3bd4886b31e1",
+    "element_number": 3,
+    "question_number": "3.3",
+    "question_text": "Are administrative controls properly implemented?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "safe_work_procedures",
+      "training_records",
+      "signage"
+    ],
+    "point_value": 7,
+    "sampling_requirements": "Review procedures and observe implementation",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "fa276fe8-f4c9-4108-8db7-85c76222ac4c",
+    "element_number": 3,
+    "question_number": "3.4",
+    "question_text": "Is appropriate PPE provided and used?",
+    "verification_methods": [
+      "observation",
+      "document"
+    ],
+    "required_evidence_types": [
+      "ppe_assessments",
+      "ppe_issuance_records",
+      "inspection_reports"
+    ],
+    "point_value": 8,
+    "sampling_requirements": "Observe PPE use and review issuance records",
+    "category": "observation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "73e73440-064c-4f33-9a91-25a1d73e20de",
+    "element_number": 3,
+    "question_number": "3.5",
+    "question_text": "Are control measures regularly inspected and maintained?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "maintenance_records",
+      "inspection_reports",
+      "equipment_logs"
+    ],
+    "point_value": 7,
+    "sampling_requirements": "Review maintenance and inspection records",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "63290618-f7f4-41a2-970f-c8bdd93eadb4",
+    "element_number": 3,
+    "question_number": "3.6",
+    "question_text": "Are workers trained on control measures?",
+    "verification_methods": [
+      "document",
+      "interview"
+    ],
+    "required_evidence_types": [
+      "training_records",
+      "competency_assessments",
+      "worker_interviews"
+    ],
+    "point_value": 6,
+    "sampling_requirements": "Review training and interview workers",
+    "category": "interview",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  },
+  {
+    "id": "41b5f9ee-ef8a-4c47-bd57-b761758eff4a",
+    "element_number": 3,
+    "question_number": "3.7",
+    "question_text": "Is the effectiveness of control measures evaluated?",
+    "verification_methods": [
+      "document",
+      "observation"
+    ],
+    "required_evidence_types": [
+      "effectiveness_reviews",
+      "incident_trends",
+      "evaluation_reports"
+    ],
+    "point_value": 6,
+    "sampling_requirements": "Review control measure effectiveness evaluations",
+    "category": "documentation",
+    "guidance_notes": null,
+    "created_at": "2026-01-27T09:10:09.166Z"
+  }
+]

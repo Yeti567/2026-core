@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { useRouter } from 'next/navigation';
 import CompanyStep from './steps/CompanyStep';
 import EmployeeStep from './steps/EmployeeStep';
@@ -33,7 +33,7 @@ export default function OnboardingWizard() {
 
     useEffect(() => {
         async function loadProgress() {
-            const { data: { user } } = await supabase.auth.getUser();
+            const { user, error } = await authenticateServerComponent();
             if (!user) {
                 router.push('/login');
                 return;

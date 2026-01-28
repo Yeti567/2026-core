@@ -1,0 +1,26 @@
+[
+  {
+    "company_id": "345c138b-59dc-45bf-b73a-4e89adb1232d",
+    "company_name": "Test Company 1769469371970",
+    "total_workers": "6",
+    "total_certifications": "0",
+    "active_certifications": "0",
+    "expired_certifications": "0",
+    "expiring_certifications": "0",
+    "total_training_records": "0",
+    "total_training_hours": "0",
+    "compliance_rate": null
+  },
+  {
+    "company_id": "40ed2963-4503-44a3-822b-2a942a3fb410",
+    "company_name": "Test Construction Corp 1769469213674",
+    "total_workers": "0",
+    "total_certifications": "0",
+    "active_certifications": "0",
+    "expired_certifications": "0",
+    "expiring_certifications": "0",
+    "total_training_records": "0",
+    "total_training_hours": "0",
+    "compliance_rate": null
+  }
+]

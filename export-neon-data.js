@@ -7,19 +7,27 @@ const neonClient = new Client({
   ssl: { rejectUnauthorized: false }
 });
 
-// Tables to export (in dependency order)
+// Tables to export (in dependency order) - only tables with actual data
 const tables = [
   'companies',
-  'company_locations', 
-  'departments',
-  'users',
-  'user_profiles',
+  'departments', 
+  'company_users',
+  'user_passwords',
   'workers',
+  'worker_certification_matrix',
   'certification_types',
-  'certifications',
-  'documents',
-  'document_folders',
-  // Add more tables as needed
+  'document_types',
+  'equipment_inventory',
+  'equipment_availability',
+  'equipment_maintenance_costs',
+  'equipment_maintenance_summary',
+  'form_templates',
+  'hazard_library',
+  'ppe_types',
+  'training_record_types',
+  'audit_questions',
+  'registration_attempts',
+  'company_compliance_summary'
 ];
 
 async function exportTable(tableName) {

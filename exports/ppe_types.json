@@ -1,0 +1,250 @@
+[
+  {
+    "id": "268b8b88-1ed6-47c1-a18f-327ffe23c483",
+    "company_id": null,
+    "name": "Hard Hat - Type 1",
+    "category": "Head Protection",
+    "description": "Protects top of head from impact and penetration",
+    "standards": [
+      "CSA Z94.1-15"
+    ],
+    "typical_hazards": "{struck_by,fall}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "8ceff77c-be4b-4e4f-87d1-b593a3a68105",
+    "company_id": null,
+    "name": "Hard Hat - Type 2",
+    "category": "Head Protection",
+    "description": "Protects top and sides of head from impact",
+    "standards": [
+      "CSA Z94.1-15"
+    ],
+    "typical_hazards": "{struck_by,fall,electrical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "8cd117f2-ad2b-467e-95da-1b6e14f7a8b9",
+    "company_id": null,
+    "name": "Bump Cap",
+    "category": "Head Protection",
+    "description": "Light protection for minor bumps in confined areas",
+    "standards": [
+      "CSA Z94.1-15"
+    ],
+    "typical_hazards": "{struck_by}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "17f1efcd-1e42-4ec2-9bbc-19720374bd1d",
+    "company_id": null,
+    "name": "Safety Glasses - Clear",
+    "category": "Eye Protection",
+    "description": "Basic impact protection for eyes",
+    "standards": [
+      "CSA Z94.3-15"
+    ],
+    "typical_hazards": "{struck_by,chemical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "252c6bd8-497d-4df3-9ba9-83f7b9aee731",
+    "company_id": null,
+    "name": "Safety Glasses - Tinted",
+    "category": "Eye Protection",
+    "description": "Impact protection with sun/glare reduction",
+    "standards": [
+      "CSA Z94.3-15"
+    ],
+    "typical_hazards": "{struck_by,radiation}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "c9e8f032-7b8b-48e8-98c0-50df19a3380a",
+    "company_id": null,
+    "name": "Safety Goggles - Splash",
+    "category": "Eye Protection",
+    "description": "Chemical splash and dust protection",
+    "standards": [
+      "CSA Z94.3-15"
+    ],
+    "typical_hazards": "{chemical,environmental}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "5e6a1db5-4e24-443a-8ca6-7b2b49c3d9e2",
+    "company_id": null,
+    "name": "Face Shield",
+    "category": "Face Protection",
+    "description": "Full face protection from flying debris/splash",
+    "standards": [
+      "CSA Z94.3-15"
+    ],
+    "typical_hazards": "{struck_by,chemical,radiation}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "1d682036-f538-45f0-ac24-8206b105976e",
+    "company_id": null,
+    "name": "Ear Plugs - Disposable Foam",
+    "category": "Hearing Protection",
+    "description": "Single-use foam ear plugs, NRR 29-33",
+    "standards": [
+      "CSA Z94.2-14"
+    ],
+    "typical_hazards": "{physical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "6e8828f2-2db5-4cea-abc3-730084a4ef61",
+    "company_id": null,
+    "name": "Ear Muffs - Standard",
+    "category": "Hearing Protection",
+    "description": "Over-ear hearing protection, NRR 22-31",
+    "standards": [
+      "CSA Z94.2-14"
+    ],
+    "typical_hazards": "{physical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "fdb4c60d-675b-4c75-a1ec-d54ce05004f4",
+    "company_id": null,
+    "name": "N95 Respirator",
+    "category": "Respiratory Protection",
+    "description": "Particulate filtering facepiece, 95% efficiency",
+    "standards": [
+      "NIOSH 42 CFR 84"
+    ],
+    "typical_hazards": "{chemical,biological}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "45ed98bd-d4c5-4adf-970c-3eb51d789d9e",
+    "company_id": null,
+    "name": "Half-Face Respirator",
+    "category": "Respiratory Protection",
+    "description": "Reusable half-face air-purifying respirator",
+    "standards": [
+      "NIOSH 42 CFR 84",
+      "CSA Z94.4-18"
+    ],
+    "typical_hazards": "{chemical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "cae7707d-4d6c-4fde-87e1-f16e8d3b5804",
+    "company_id": null,
+    "name": "Leather Work Gloves",
+    "category": "Hand Protection",
+    "description": "General purpose leather gloves",
+    "standards": [
+      "CSA Z96-15"
+    ],
+    "typical_hazards": "{mechanical,physical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "d2c104e4-f778-4f38-aee9-e7502d1d91d8",
+    "company_id": null,
+    "name": "Cut-Resistant Gloves - Level A2",
+    "category": "Hand Protection",
+    "description": "ANSI Level A2 cut resistance",
+    "standards": [
+      "ANSI/ISEA 105-2016"
+    ],
+    "typical_hazards": "{mechanical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "a10dae4f-e3ad-4004-8ec2-126de1d1a2a4",
+    "company_id": null,
+    "name": "Chemical-Resistant Gloves - Nitrile",
+    "category": "Hand Protection",
+    "description": "Protection from chemical exposure",
+    "standards": [
+      "ANSI/ISEA 105-2016"
+    ],
+    "typical_hazards": "{chemical}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "1665db29-ca64-4cea-989a-c00ab43b8517",
+    "company_id": null,
+    "name": "Steel Toe Boots - 6 Inch",
+    "category": "Foot Protection",
+    "description": "Standard steel toe protection",
+    "standards": [
+      "CSA Z195-14"
+    ],
+    "typical_hazards": "{mechanical,struck_by}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "d704ddf0-302a-4f57-ba73-d85bbbe2de17",
+    "company_id": null,
+    "name": "Steel Toe Boots - 8 Inch",
+    "category": "Foot Protection",
+    "description": "Extended ankle protection with steel toe",
+    "standards": [
+      "CSA Z195-14"
+    ],
+    "typical_hazards": "{mechanical,struck_by}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "956d8eaa-42a0-4181-a97a-eedfda76c908",
+    "company_id": null,
+    "name": "High-Visibility Vest - Class 2",
+    "category": "Body Protection",
+    "description": "Enhanced visibility for daytime work",
+    "standards": [
+      "CSA Z96-15"
+    ],
+    "typical_hazards": "{struck_by}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "5a9b7a8e-9623-4f92-b09e-765ac7470d67",
+    "company_id": null,
+    "name": "High-Visibility Vest - Class 3",
+    "category": "Body Protection",
+    "description": "Maximum visibility for high-risk areas",
+    "standards": [
+      "CSA Z96-15"
+    ],
+    "typical_hazards": "{struck_by}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  },
+  {
+    "id": "5a2b07f2-96b3-4cb2-8110-8327d11ab79d",
+    "company_id": null,
+    "name": "Safety Harness - Full Body",
+    "category": "Fall Protection",
+    "description": "Full body fall arrest harness",
+    "standards": [
+      "CSA Z259.10"
+    ],
+    "typical_hazards": "{fall}",
+    "is_active": true,
+    "created_at": "2026-01-27T09:08:14.381Z"
+  }
+]

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { cookies } from 'next/headers';
 
 // ============================================================================
