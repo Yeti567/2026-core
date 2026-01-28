@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-
-export const dynamic = 'force-dynamic';
-
   generateEvidenceReport, 
   getEvidenceCoverageStats,
   getElementEvidenceSummary,
   type CompanyEvidenceReport 
 } from '@/lib/audit/evidence-mapper';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * GET /api/audit/evidence-map

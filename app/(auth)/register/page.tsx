@@ -154,7 +154,10 @@ export default function RegisterPage() {
 
     const validation = validateCompanyRegistration(formData);
     if (!validation.valid) {
-      console.log('❌ Validation failed:', validation.errors);
+      console.log('❌ Validation failed. Errors:');
+      Object.entries(validation.errors).forEach(([field, error]) => {
+        console.log(`   - ${field}: ${error}`);
+      });
       setFieldErrors(validation.errors);
       return;
     }

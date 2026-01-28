@@ -1,11 +1,14 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import OfflineIndicator from '@/components/offline-indicator';
-import { InstallPrompt } from '@/components/pwa/install-prompt';
-import { IOSInstallPrompt } from '@/components/pwa/ios-install-prompt';
-import { UpdateNotification } from '@/components/pwa/update-notification';
-import { FloatingMenu } from '@/components/navigation/floating-menu';
+import dynamic from 'next/dynamic';
 import { headers } from 'next/headers';
+
+// Dynamic imports with SSR disabled for browser-only components
+const OfflineIndicator = dynamic(() => import('@/components/offline-indicator'), { ssr: false });
+const InstallPrompt = dynamic(() => import('@/components/pwa/install-prompt').then(mod => ({ default: mod.InstallPrompt })), { ssr: false });
+const IOSInstallPrompt = dynamic(() => import('@/components/pwa/ios-install-prompt').then(mod => ({ default: mod.IOSInstallPrompt })), { ssr: false });
+const UpdateNotification = dynamic(() => import('@/components/pwa/update-notification').then(mod => ({ default: mod.UpdateNotification })), { ssr: false });
+const FloatingMenu = dynamic(() => import('@/components/navigation/floating-menu').then(mod => ({ default: mod.FloatingMenu })), { ssr: false });
 
 // PWA Metadata
 export const metadata: Metadata = {

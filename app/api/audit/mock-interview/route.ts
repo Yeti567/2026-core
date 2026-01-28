@@ -9,15 +9,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuth, type AuthError } from '@/lib/auth/helpers';
 import {
-
-export const dynamic = 'force-dynamic';
-
   createInterviewSession,
   buildSystemPrompt,
   buildOpeningInstruction,
   type AuditType,
   type WorkerProfile
 } from '@/lib/audit/mock-interview';
+
+export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
   try {

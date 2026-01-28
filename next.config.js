@@ -187,6 +187,14 @@ const nextConfig = {
     config.resolve.alias = config.resolve.alias || {};
     config.resolve.alias['pg-native'] = false;
 
+    if (isServer) {
+      // Externalize browser-only modules for server builds to prevent SSR errors
+      config.externals = config.externals || [];
+      config.externals.push({
+        dexie: 'commonjs dexie',
+      });
+    }
+
     if (!isServer) {
       config.resolve.alias.pg = false;
       config.resolve.fallback = {

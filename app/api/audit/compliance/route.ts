@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
-
-export const dynamic = 'force-dynamic';
-
   getOrCalculateScore, 
   calculateOverallScore,
   type OverallScore 
 } from '@/lib/audit/compliance-scoring';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {

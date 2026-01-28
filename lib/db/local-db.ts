@@ -964,6 +964,9 @@ class CORLocalDatabase extends Dexie {
  * Singleton instance of the local database.
  * Use this throughout the application for offline data storage.
  * 
+ * The database is lazily instantiated to prevent SSR errors since
+ * IndexedDB is only available in browser environments.
+ * 
  * @example
  * ```typescript
  * import { localDB } from '@/lib/db/local-db';
@@ -983,7 +986,28 @@ class CORLocalDatabase extends Dexie {
  * const { total } = await localDB.getPendingSyncCount();
  * ```
  */
-export const localDB = new CORLocalDatabase();
+let _localDB: CORLocalDatabase | null = null;
+
+function getLocalDB(): CORLocalDatabase {
+  if (typeof window === 'undefined') {
+    throw new Error('localDB can only be accessed in browser environment');
+  }
+  if (!_localDB) {
+    _localDB = new CORLocalDatabase();
+  }
+  return _localDB;
+}
+
+export const localDB = new Proxy({} as CORLocalDatabase, {
+  get(_target, prop) {
+    const db = getLocalDB();
+    const value = (db as any)[prop];
+    if (typeof value === 'function') {
+      return value.bind(db);
+    }
+    return value;
+  },
+});
 
 // =============================================================================
 // RE-EXPORT TYPES

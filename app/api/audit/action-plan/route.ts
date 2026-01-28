@@ -8,14 +8,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { 
-
-export const dynamic = 'force-dynamic';
-
   generateActionPlanFromGaps, 
   ActionPlan, 
   Gap, 
   User 
 } from '@/lib/audit/action-plan-generator';
+
+export const dynamic = 'force-dynamic';
 
 export async function GET(request: NextRequest) {
   try {

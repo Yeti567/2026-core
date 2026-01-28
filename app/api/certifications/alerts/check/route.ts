@@ -3,15 +3,14 @@ import { authenticateServerComponent } from '@/lib/auth/jwt-middleware';
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
 import {
-
-export const dynamic = 'force-dynamic';
-
   checkExpiringCertifications,
   getAlertsSummary,
   createAlertRecord,
   markAlertSent,
   type ExpiryAlert,
 } from '@/lib/certifications/expiry-alerts';
+
+export const dynamic = 'force-dynamic';
 
 // ============================================================================
 // GET /api/certifications/alerts/check - Check for expiring certifications

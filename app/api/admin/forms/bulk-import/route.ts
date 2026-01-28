@@ -10,14 +10,13 @@
 import { NextResponse } from 'next/server';
 import { requireAuthWithRole, type AuthError } from '@/lib/auth/helpers';
 import { 
-
-export const dynamic = 'force-dynamic';
-
   bulkImportForms, 
   bulkImportFormsIfNotExists,
   type FormConfig, 
   type ImportResult 
 } from '@/lib/form-builder/import-forms';
+
+export const dynamic = 'force-dynamic';
 
 interface BulkImportRequest {
   /** Array of form configurations to import */
