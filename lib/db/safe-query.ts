@@ -36,7 +36,7 @@ import type {
 
 export interface SupabaseLikeClient {
   from(table: string): any;
-  rpc(fn: string, params?: any): Promise<{ data: any; error: any }>;
+  rpc(fn: string, params?: any): any;
 }
 
 // =============================================================================

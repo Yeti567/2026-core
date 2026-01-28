@@ -12,7 +12,6 @@
  * - auth_failed: Authentication/authorization error, no retry
  */
 
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import {
   localDB,
   type SyncQueueItem,

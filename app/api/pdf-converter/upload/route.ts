@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 import {
   validateFileUpload,
   createSecureStoragePath,
@@ -16,7 +16,7 @@ import { handleApiError, handleFileError } from '@/lib/utils/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Check authentication
     // TODO: Implement user authentication without Supabase
@@ -34,6 +34,11 @@ export async function POST(request: NextRequest) {
     
     if (profileError || !profile) {
       return NextResponse.json({ error: 'User profile not found' }, { status: 404 });
+    }
+
+    const companyId = profile.company_id;
+    if (!companyId) {
+      return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
     
     // Check permissions
@@ -65,7 +70,7 @@ export async function POST(request: NextRequest) {
     // Generate secure storage path using UUID-based filename
     const secureFilename = validation.filename!;
     const storagePath = createSecureStoragePath(
-      profile.company_id,
+      companyId,
       'pdf-forms',
       secureFilename
     );
@@ -96,7 +101,7 @@ export async function POST(request: NextRequest) {
       const { data: pdfUpload, error: insertError } = await supabase
         .from('pdf_form_uploads')
         .insert({
-          company_id: profile.company_id,
+          company_id: companyId,
           uploaded_by: userProfile?.id || null,
           file_name: originalFilename, // Store sanitized original name for display
           file_size_bytes: uploadedFile.size,

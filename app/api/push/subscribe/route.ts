@@ -6,20 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
+import { requireAuth } from '@/lib/auth/helpers';
 
 export async function POST(req: NextRequest) {
   try {
-    // Get user info from middleware headers
-    const userId = req.headers.get('x-user-id');
-    const companyId = req.headers.get('x-company-id');
-    
-    if (!userId || !companyId) {
-      return NextResponse.json(
-        { error: 'Unauthorized - Missing user context' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
+    const userId = user.userId;
+    const companyId = user.companyId;
     
     const { subscription, userId: requestUserId } = await req.json();
     
@@ -31,7 +25,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Initialize database connection
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Users can only subscribe themselves - prevent unauthorized subscriptions
     if (requestUserId && requestUserId !== userId) {
@@ -79,12 +73,14 @@ export async function POST(req: NextRequest) {
         last_used_at: new Date().toISOString()
       }, {
         onConflict: 'user_id,endpoint'
-      });
+      })
+      .select('id, device_type, browser')
+      .single();
     
     const data = subscriptionResult.data;
     const error = subscriptionResult.error;
     
-    if (error) {
+    if (error || !data) {
       console.error('[Push Subscribe] Database error:', error);
       return NextResponse.json(
         { error: 'Failed to save subscription' },

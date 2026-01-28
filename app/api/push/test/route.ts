@@ -6,25 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { requireAuth } from '@/lib/auth/helpers';
 import { sendTestNotification } from '@/lib/push-notifications/triggers';
 import { testPushSchema } from '@/lib/validation/schemas';
 import { safeValidateRequestBody, isValidationErrorResponse } from '@/lib/validation/utils';
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify authentication
-    const supabase = createNeonWrapper();
-    // TODO: Implement user authentication without Supabase
-      const authResult: { data: { user: { id: string } | null }; error: Error | null } = { data: { user: null }, error: new Error('Auth not implemented') };
-      const { data: { user }, error: authError } = authResult;
-    
-    if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
+    const user = await requireAuth();
     
     // Validate request body with Zod schema
     const validation = await safeValidateRequestBody(req, testPushSchema);
@@ -36,7 +25,7 @@ export async function POST(req: NextRequest) {
     
     // Users can only send test notifications to themselves
     // Prevent unauthorized users from sending notifications to other users
-    if (userId !== user.id) {
+    if (userId !== user.userId) {
       return NextResponse.json(
         { error: 'You can only send test notifications to yourself' },
         { status: 403 }

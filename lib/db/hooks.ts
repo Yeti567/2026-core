@@ -8,7 +8,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { createNeonWrapper } from './neon-wrapper';
+import { getSupabaseClient } from '@/lib/supabase/client';
 import {
   createSafeQuery,
   createSuperAdminQuery,
@@ -26,23 +26,6 @@ export interface UserContext {
   userId: string;
   companyId: string;
   role: UserRole;
-}
-
-// =============================================================================
-// NEON CLIENT SINGLETON
-// =============================================================================
-
-let neonClient: ReturnType<typeof createNeonWrapper> | null = null;
-
-/**
- * Gets or creates the Neon client singleton.
- */
-function getNeonClient() {
-  if (neonClient) {
-    return neonClient;
-  }
-  neonClient = createNeonWrapper();
-  return neonClient;
 }
 
 // =============================================================================
@@ -79,11 +62,11 @@ function getNeonClient() {
  * ```
  */
 export function useSafeQuery(userContext: UserContext): SafeQueryBuilder {
-  const neon = getNeonClient();
+  const supabase = getSupabaseClient();
 
   const safeQuery = useMemo(() => {
-    return createSafeQuery(neon, userContext.companyId, userContext.role);
-  }, [neon, userContext.companyId, userContext.role]);
+    return createSafeQuery(supabase, userContext.companyId, userContext.role);
+  }, [supabase, userContext.companyId, userContext.role]);
 
   return safeQuery;
 }
@@ -121,12 +104,12 @@ export function useSafeQuery(userContext: UserContext): SafeQueryBuilder {
  * ```
  */
 export function useSuperAdminQuery(userContext: UserContext): SuperAdminQueryBuilder {
-  const neon = getNeonClient();
+  const supabase = getSupabaseClient();
 
   const adminQuery = useMemo(() => {
     // This will throw if not super_admin
-    return createSuperAdminQuery(neon, userContext.role);
-  }, [neon, userContext.role]);
+    return createSuperAdminQuery(supabase, userContext.role);
+  }, [supabase, userContext.role]);
 
   return adminQuery;
 }
@@ -154,14 +137,14 @@ export function useSuperAdminQuery(userContext: UserContext): SuperAdminQueryBui
 export function useConditionalQuery(
   userContext: UserContext
 ): SafeQueryBuilder | SuperAdminQueryBuilder {
-  const neon = getNeonClient();
+  const supabase = getSupabaseClient();
 
   const query = useMemo(() => {
     if (userContext.role === 'super_admin') {
-      return createSuperAdminQuery(neon, userContext.role);
+      return createSuperAdminQuery(supabase, userContext.role);
     }
-    return createSafeQuery(neon, userContext.companyId, userContext.role);
-  }, [neon, userContext.companyId, userContext.role]);
+    return createSafeQuery(supabase, userContext.companyId, userContext.role);
+  }, [supabase, userContext.companyId, userContext.role]);
 
   return query;
 }
@@ -218,8 +201,6 @@ export function useUserContext() {
   // In a real app, you'd use React Query, SWR, or similar for caching
   // and would integrate with your auth provider.
   
-  const neon = getNeonClient();
-
   // This is a placeholder - actual implementation would use useEffect
   // and state management to fetch the user context asynchronously.
   // For now, we return a stub that components can build upon.

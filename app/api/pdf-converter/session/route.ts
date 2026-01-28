@@ -7,12 +7,12 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Check authentication
     // TODO: Implement user authentication without Supabase
@@ -56,8 +56,8 @@ export async function GET(request: NextRequest) {
       .from('pdf_detected_fields')
       .select('*')
       .eq('pdf_upload_id', session.pdf_upload_id)
-      .order('section_order', true)
-      .order('field_order', true);
+      .order('section_order', { ascending: true })
+      .order('field_order', { ascending: true });
     
     return NextResponse.json({
       session,
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Check authentication
     // TODO: Implement user authentication without Supabase

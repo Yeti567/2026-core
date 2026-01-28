@@ -6,14 +6,14 @@
  */
 
 import { NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { requireAuth, type AuthError } from '@/lib/auth/helpers';
 import { rateLimitByUser, createRateLimitHeaders } from '@/lib/utils/rate-limit';
 
 export async function GET() {
   try {
     const user = await requireAuth();
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
 
     // Rate limiting: 30 requests per minute per user (prevent DoS on email lookup)
     const rateLimitResult = await rateLimitByUser(user.userId, 30, '1m');

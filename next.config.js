@@ -182,10 +182,21 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  webpack: (config) => {
+  webpack: (config, { isServer }) => {
     config.resolve = config.resolve || {};
     config.resolve.alias = config.resolve.alias || {};
     config.resolve.alias['pg-native'] = false;
+
+    if (!isServer) {
+      config.resolve.alias.pg = false;
+      config.resolve.fallback = {
+        ...(config.resolve.fallback || {}),
+        net: false,
+        tls: false,
+        fs: false,
+      };
+    }
+
     return config;
   },
   async redirects() {

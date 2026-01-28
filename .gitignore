@@ -49,3 +49,11 @@ public/fallback-*.js.map
 
 # Supabase
 .supabase
+
+# Test artifacts
+test-results/
+playwright-report/
+screenshots/
+
+# Temporary files
+*.log

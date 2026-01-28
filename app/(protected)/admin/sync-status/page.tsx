@@ -5,7 +5,6 @@ import { useNetworkStatus, type NetworkStatus } from '@/hooks/useNetworkStatus';
 import { useSyncStatus, type SyncLogEntry } from '@/hooks/useSyncStatus';
 import { localDB, type SyncQueueItem } from '@/lib/db/local-db';
 import { SyncEngine, type SyncNotification } from '@/lib/sync/sync-engine';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 import Link from 'next/link';
 
 // =============================================================================

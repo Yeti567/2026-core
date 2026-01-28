@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 import { extractTextFromPDF, analyzePDFContent } from '@/lib/pdf-converter/ocr-service';
 import { suggestCORElements } from '@/lib/pdf-converter/cor-mapper';
 import type { DetectedField } from '@/lib/pdf-converter/types';
@@ -15,7 +15,7 @@ import { handleFileError, handleApiError } from '@/lib/utils/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Check authentication
     // TODO: Implement user authentication without Supabase

@@ -8,7 +8,6 @@
 import { headers } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from './jwt';
-import { getPostgresClient } from '../db/postgres-client';
 import type { UserRole } from '@/lib/db/types';
 
 // =============================================================================
@@ -70,37 +69,11 @@ export async function getServerUser(): Promise<ServerUserContext | null> {
   }
   
   // Read headers injected by middleware
-  const companyId = headersList.get('x-company-id');
-  const role = headersList.get('x-user-role') as UserRole | null;
+  const companyId = headersList.get('x-company-id') || payload.companyId || null;
+  const role = (headersList.get('x-user-role') as UserRole | null) || (payload.role as UserRole | undefined) || null;
 
-  // If headers aren't present, query directly (fallback)
   if (!companyId || !role) {
-    try {
-      const client = getPostgresClient();
-      const profileResult = await client.query(
-        'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
-        [payload.userId]
-      );
-
-      if (profileResult.rows.length === 0) {
-        return null;
-      }
-
-      const profile = profileResult.rows[0];
-      return {
-        userId: payload.userId,
-        companyId: profile.company_id,
-        role: profile.role,
-      };
-    } catch (error) {
-      // Database not available (likely during build time)
-      console.warn('Database not available during auth check:', error);
-      const authError: AuthError = {
-        status: 500,
-        message: 'Authentication service unavailable',
-      };
-      throw authError;
-    }
+    return null;
   }
 
   return {
@@ -231,31 +204,15 @@ export async function requireAuth(): Promise<ServerUserContext> {
   }
 
   // Read headers injected by middleware
-  const companyId = headersList.get('x-company-id');
-  const role = headersList.get('x-user-role') as UserRole | null;
+  const companyId = headersList.get('x-company-id') || payload.companyId || null;
+  const role = (headersList.get('x-user-role') as UserRole | null) || (payload.role as UserRole | undefined) || null;
 
-  // If headers aren't present, query directly (fallback)
   if (!companyId || !role) {
-    const client = getPostgresClient();
-    const profileResult = await client.query(
-      'SELECT company_id, role FROM company_users WHERE user_id = $1 AND status = \'active\'',
-      [payload.userId]
-    );
-
-    if (profileResult.rows.length === 0) {
-      const authError: AuthError = {
-        status: 500,
-        message: 'User profile not found',
-      };
-      throw authError;
-    }
-
-    const profile = profileResult.rows[0];
-    return {
-      userId: payload.userId,
-      companyId: profile.company_id,
-      role: profile.role,
+    const authError: AuthError = {
+      status: 500,
+      message: 'User context missing from token',
     };
+    throw authError;
   }
 
   return {

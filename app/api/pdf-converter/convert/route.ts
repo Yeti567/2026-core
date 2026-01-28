@@ -6,14 +6,14 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
+import { createRouteHandlerClient } from '@/lib/supabase/server';
 import type { DetectedField, SectionConfig, WorkflowConfig } from '@/lib/pdf-converter/types';
 import { rateLimitByUser, createRateLimitResponse } from '@/lib/utils/rate-limit';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createNeonWrapper();
+    const supabase = createRouteHandlerClient();
     
     // Check authentication
     // TODO: Implement user authentication without Supabase
@@ -84,8 +84,8 @@ export async function POST(request: NextRequest) {
         .select('*')
         .eq('pdf_upload_id', upload.id)
         .eq('is_excluded', false)
-        .order('created_at', false)
-        .order('updated_at', false);
+        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false });
       
       const detectedFields = (fields || []) as DetectedField[];
       const sectionsConfig = (session.sections_config || []) as SectionConfig[];

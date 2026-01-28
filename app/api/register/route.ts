@@ -11,7 +11,6 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import { CompanyRegistration } from '@/lib/validation/company';
 import { validateCompanyRegistration } from '@/lib/validation/company';
-import { createNeonWrapper } from '@/lib/db/neon-wrapper';
 
 // Force Node.js runtime for PostgreSQL compatibility
 export const runtime = 'nodejs';
@@ -32,31 +31,8 @@ function getUserAgent(): string {
   return headersList.get('user-agent') || 'unknown';
 }
 
-// Log registration attempt
-async function logAttempt(
-  neon: ReturnType<typeof createNeonWrapper>,
-  data: {
-    ip_address: string;
-    user_agent: string;
-    company_name?: string;
-    wsib_number?: string;
-    registrant_email?: string;
-    success: boolean;
-    error_code?: string;
-    error_message?: string;
-  }
-) {
-  try {
-    await neon.from('registration_attempts').insert(data);
-  } catch (err) {
-    console.error('Failed to log registration attempt:', err);
-  }
-}
-
 export async function POST(request: Request) {
   console.log('🔄 Registration request received');
-  
-  const neon = createNeonWrapper();
   const ip = getClientIP();
   const userAgent = getUserAgent();
 

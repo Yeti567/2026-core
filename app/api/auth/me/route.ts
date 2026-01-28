@@ -6,12 +6,28 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
 import { verifyToken } from '@/lib/auth/jwt';
-import { getPostgresClient } from '@/lib/db/postgres-client';
 import { handleApiError } from '@/lib/utils/error-handling';
 
 // Force Node.js runtime for PostgreSQL compatibility
 export const runtime = 'nodejs';
+
+function getServiceClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+  if (!supabaseUrl || !serviceKey) {
+    throw new Error('Missing Supabase service role configuration');
+  }
+
+  return createClient(supabaseUrl, serviceKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  });
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -28,28 +44,40 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
     
-    // Get user profile with company info
-    const client = getPostgresClient();
-    const profileResult = await client.query(
-      `SELECT 
-        cu.*,
-        c.id as company_id,
-        c.name as company_name,
-        c.industry,
-        c.employee_count,
-        c.status as company_status
-       FROM company_users cu
-       LEFT JOIN companies c ON cu.company_id = c.id
-       WHERE cu.user_id = $1 AND cu.status = 'active'`,
-      [payload.userId]
-    );
-    
-    if (profileResult.rows.length === 0) {
+    const supabase = getServiceClient();
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select(`
+        id,
+        user_id,
+        company_id,
+        role,
+        name,
+        position,
+        email,
+        status,
+        created_at,
+        updated_at,
+        companies:companies (
+          id,
+          name,
+          industry,
+          employee_count,
+          status
+        )
+      `)
+      .eq('user_id', payload.userId)
+      .eq('status', 'active')
+      .single();
+
+    if (profileError || !profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
     
-    const profile = profileResult.rows[0];
-    
+    const companyRelation = Array.isArray(profile.companies)
+      ? profile.companies[0]
+      : profile.companies;
+
     return NextResponse.json({
       user: {
         id: payload.userId,
@@ -68,12 +96,12 @@ export async function GET(request: NextRequest) {
         created_at: profile.created_at,
         updated_at: profile.updated_at,
         company: profile.company_id ? {
-          id: profile.company_id,
-          name: profile.company_name,
-          industry: profile.industry,
-          employee_count: profile.employee_count,
-          status: profile.company_status
-        } : null
+          id: companyRelation?.id || profile.company_id,
+          name: companyRelation?.name || null,
+          industry: companyRelation?.industry || null,
+          employee_count: companyRelation?.employee_count || null,
+          status: companyRelation?.status || null,
+        } : null,
       },
     });
     
