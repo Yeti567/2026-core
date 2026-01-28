@@ -80,13 +80,33 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Create user using Supabase auth
+    // 2. Create user using Supabase auth with proper error handling
     const { createClient } = await import('@supabase/supabase-js');
+    
+    // Check if required environment variables are set
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error: Database URL not configured' },
+        { status: 500 }
+      );
+    }
+    
+    if (!supabaseServiceKey) {
+      console.error('SUPABASE_SERVICE_ROLE_KEY environment variable is not set');
+      return NextResponse.json(
+        { error: 'Server configuration error: Database key not configured' },
+        { status: 500 }
+      );
+    }
     
     // Use service role key for admin operations (bypasses email confirmation)
     const supabaseAdmin = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+      supabaseUrl,
+      supabaseServiceKey,
       {
         auth: {
           autoRefreshToken: false,
