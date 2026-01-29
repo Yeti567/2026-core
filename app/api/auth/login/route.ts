@@ -16,11 +16,11 @@ const loginSchema = z.object({
 export async function POST(request: Request) {
   try {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
     
-    if (!supabaseUrl || !supabaseAnonKey) {
+    if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
-        { error: 'Server configuration error' },
+        { error: 'Server configuration error', missing: { url: !supabaseUrl, key: !supabaseKey } },
         { status: 500 }
       );
     }
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const cookiesToSet: Array<{ name: string; value: string; options: any }> = [];
     const cookieStore = cookies();
     
-    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+    const supabase = createServerClient(supabaseUrl, supabaseKey, {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
