@@ -34,7 +34,7 @@ async function getUserAgent(): Promise<string> {
   return headersList.get('user-agent') || 'unknown';
 }
 
-const API_VERSION = '2026-01-29-v3';
+const API_VERSION = 'v2.3.2';
 
 export async function POST(request: Request) {
   console.log('🔄 Registration request received - API Version:', API_VERSION);
