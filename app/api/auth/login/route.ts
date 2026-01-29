@@ -37,18 +37,20 @@ export async function POST(request: Request) {
     
     const { email, password } = validation.data;
     
-    // Create Supabase SSR client that handles cookies automatically
+    // Track cookies that Supabase wants to set
+    const cookiesToSet: Array<{ name: string; value: string; options: any }> = [];
     const cookieStore = cookies();
+    
     const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
       cookies: {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
         set(name: string, value: string, options: any) {
-          cookieStore.set({ name, value, ...options });
+          cookiesToSet.push({ name, value, options });
         },
         remove(name: string, options: any) {
-          cookieStore.set({ name, value: '', ...options });
+          cookiesToSet.push({ name, value: '', options });
         },
       },
     });
@@ -93,7 +95,7 @@ export async function POST(request: Request) {
       }
     });
     
-    // Custom JWT for middleware (Supabase session cookies are set automatically by SSR client)
+    // Custom JWT for middleware
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -101,6 +103,11 @@ export async function POST(request: Request) {
       maxAge: 7 * 24 * 60 * 60, // 7 days
       path: '/'
     });
+    
+    // Add Supabase session cookies to response
+    for (const cookie of cookiesToSet) {
+      response.cookies.set(cookie.name, cookie.value, cookie.options);
+    }
     
     return response;
     
