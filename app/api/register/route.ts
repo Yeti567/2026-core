@@ -34,10 +34,24 @@ async function getUserAgent(): Promise<string> {
   return headersList.get('user-agent') || 'unknown';
 }
 
+const API_VERSION = '2026-01-29-v3';
+
 export async function POST(request: Request) {
-  console.log('🔄 Registration request received');
-  const ip = await getClientIP();
-  const userAgent = await getUserAgent();
+  console.log('🔄 Registration request received - API Version:', API_VERSION);
+  
+  let ip: string;
+  let userAgent: string;
+  
+  try {
+    ip = await getClientIP();
+    userAgent = await getUserAgent();
+  } catch (headerError) {
+    console.error('❌ Error getting headers:', headerError);
+    return NextResponse.json(
+      { error: 'Failed to process request headers', version: API_VERSION },
+      { status: 500 }
+    );
+  }
 
   try {
     // TODO: Fix rate limiting - temporarily disabled for testing
@@ -368,6 +382,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       { 
         error: 'An unexpected error occurred. Please try again.',
+        version: API_VERSION,
         debug: {
           message: errorMessage,
           stack: errorStack,
