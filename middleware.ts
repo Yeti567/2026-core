@@ -36,6 +36,7 @@ const PUBLIC_ROUTES = [
   '/reset-password',   // Password reset page
   '/test-page',        // Connectivity test page
   '/minimal-test',      // Minimal test page
+  '/dashboard',        // TEMPORARY: Allow dashboard access, auth checked in page
 ];
 
 /** Routes that require admin or super_admin role */

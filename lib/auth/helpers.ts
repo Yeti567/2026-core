@@ -5,7 +5,7 @@
  * and protecting API routes with authentication checks.
  */
 
-import { headers } from 'next/headers';
+import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { verifyToken } from './jwt';
 import type { UserRole } from '@/lib/db/types';
@@ -54,9 +54,12 @@ export interface AuthError {
  * ```
  */
 export async function getServerUser(): Promise<ServerUserContext | null> {
-  // Get token from headers
+  // Get token from cookie first, then try authorization header
+  const cookieStore = cookies();
   const headersList = headers();
-  const token = headersList.get('authorization')?.replace('Bearer ', '');
+  
+  const token = cookieStore.get('auth-token')?.value || 
+                headersList.get('authorization')?.replace('Bearer ', '');
   
   if (!token) {
     return null;
@@ -68,7 +71,7 @@ export async function getServerUser(): Promise<ServerUserContext | null> {
     return null;
   }
   
-  // Read headers injected by middleware
+  // Read headers injected by middleware, fallback to token payload
   const companyId = headersList.get('x-company-id') || payload.companyId || null;
   const role = (headersList.get('x-user-role') as UserRole | null) || (payload.role as UserRole | undefined) || null;
 
@@ -181,9 +184,11 @@ export async function requireRole(
  * ```
  */
 export async function requireAuth(): Promise<ServerUserContext> {
-  // Get token from headers
+  // Get token from cookie first, then try authorization header
+  const cookieStore = cookies();
   const headersList = headers();
-  const token = headersList.get('authorization')?.replace('Bearer ', '');
+  const token = cookieStore.get('auth-token')?.value || 
+                headersList.get('authorization')?.replace('Bearer ', '');
   
   if (!token) {
     const authError: AuthError = {
@@ -203,7 +208,7 @@ export async function requireAuth(): Promise<ServerUserContext> {
     throw authError;
   }
 
-  // Read headers injected by middleware
+  // Read headers injected by middleware, fallback to token payload
   const companyId = headersList.get('x-company-id') || payload.companyId || null;
   const role = (headersList.get('x-user-role') as UserRole | null) || (payload.role as UserRole | undefined) || null;
 

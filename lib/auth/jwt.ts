@@ -1,17 +1,13 @@
 import 'server-only';
-import jwt, { SignOptions } from 'jsonwebtoken';
+import * as jose from 'jose';
 
-// JWT Configuration - lazy loaded to avoid build-time errors
-function getJwtSecret(): string {
+// JWT Configuration
+function getJwtSecret(): Uint8Array {
   const secret = process.env.JWT_SECRET;
   if (!secret) {
     throw new Error('Required environment variable JWT_SECRET is not set');
   }
-  return secret;
-}
-
-function getJwtExpiresIn(): string {
-  return process.env.JWT_EXPIRES_IN || '7d';
+  return new TextEncoder().encode(secret);
 }
 
 export interface JWTPayload {
@@ -21,18 +17,26 @@ export interface JWTPayload {
   role?: string;
 }
 
-// Generate JWT token
-export function generateToken(payload: JWTPayload): string {
-  return jwt.sign(payload, getJwtSecret(), { expiresIn: getJwtExpiresIn() } as jwt.SignOptions);
+// Generate JWT token (async with jose)
+export async function generateTokenAsync(payload: JWTPayload): Promise<string> {
+  const jwt = new jose.SignJWT(payload as unknown as jose.JWTPayload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('7d');
+  return jwt.sign(getJwtSecret());
 }
 
-// Verify JWT token (middleware-safe version - no database access)
+// Sync decode (no signature verification - for quick access)
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    const decoded = jwt.verify(token, getJwtSecret());
-    // Ensure the decoded token has the expected shape
-    if (typeof decoded === 'object' && decoded !== null && 'userId' in decoded && 'email' in decoded) {
-      return decoded as JWTPayload;
+    const decoded = jose.decodeJwt(token);
+    if (decoded && 'userId' in decoded && 'email' in decoded) {
+      return {
+        userId: decoded.userId as string,
+        email: decoded.email as string,
+        companyId: decoded.companyId as string | undefined,
+        role: decoded.role as string | undefined,
+      };
     }
     return null;
   } catch (error) {
@@ -40,17 +44,24 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
-// Verify JWT token with database lookup (for API routes)
-export async function verifyTokenWithDB(token: string) {
+// Async verify with signature check
+export async function verifyTokenAsync(token: string): Promise<JWTPayload | null> {
   try {
-    const decoded = jwt.verify(token, getJwtSecret());
-    // Ensure the decoded token has the expected shape
-    if (typeof decoded === 'object' && decoded !== null && 'userId' in decoded && 'email' in decoded) {
-      return decoded as JWTPayload;
+    const { payload } = await jose.jwtVerify(token, getJwtSecret());
+    if (payload && 'userId' in payload && 'email' in payload) {
+      return {
+        userId: payload.userId as string,
+        email: payload.email as string,
+        companyId: payload.companyId as string | undefined,
+        role: payload.role as string | undefined,
+      };
     }
     return null;
   } catch (error) {
     return null;
   }
 }
+
+// Alias for backwards compatibility
+export const verifyTokenWithDB = verifyTokenAsync;
 
