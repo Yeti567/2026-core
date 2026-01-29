@@ -56,8 +56,8 @@ function LoginContent() {
       }
 
       // Successful login - redirect to dashboard
-      router.push(redirect);
-      router.refresh();
+      console.log('✅ Login successful, redirecting to:', redirect);
+      window.location.href = redirect;
     } catch (err) {
       setError('Failed to connect to server. Please check your connection.');
     } finally {
