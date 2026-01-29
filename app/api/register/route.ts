@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       );
     }
     
-    // Use service role key for admin operations (bypasses email confirmation)
+    // Use service role key for admin operations (bypasses RLS and email confirmation)
     const supabaseAdmin = createClient(
       supabaseUrl,
       supabaseServiceKey,
@@ -111,42 +111,56 @@ export async function POST(request: Request) {
         auth: {
           autoRefreshToken: false,
           persistSession: false
+        },
+        db: {
+          schema: 'public'
+        },
+        global: {
+          headers: {
+            'X-Client-Info': 'cor-pathway-registration'
+          }
         }
       }
     );
     
+    console.log('🔧 Supabase admin client created with service role');
+    
     try {
-      // 1. Create company record first
-      // Build insert object dynamically - start with required fields only
-      const companyInsert: Record<string, any> = {
+      // 1. Create company record - use ONLY base schema fields to avoid migration issues
+      const companyInsert = {
         name: data.company_name,
-        wsib_number: data.wsib_number,
-        address: data.address || `${data.city || ''}, ${data.province || 'ON'}`
+        wsib_number: data.wsib_number || null,
+        address: data.address || `${data.city || ''}, ${data.province || 'ON'} ${data.postal_code || ''}`
       };
       
-      // Add optional extended fields if they have values
-      if (data.city) companyInsert.city = data.city;
-      if (data.province) companyInsert.province = data.province;
-      if (data.postal_code) companyInsert.postal_code = data.postal_code;
-      if (data.phone) companyInsert.phone = data.phone;
-      if (data.registrant_email) companyInsert.company_email = data.registrant_email;
-      companyInsert.registration_status = 'active';
-      
-      console.log('📝 Attempting company insert with:', JSON.stringify(companyInsert));
+      console.log('📝 Attempting company insert with MINIMAL fields:', JSON.stringify(companyInsert));
       
       const { data: companyData, error: companyError } = await supabaseAdmin
         .from('companies')
         .insert(companyInsert)
-        .select()
+        .select('id, name')
         .single();
 
-      if (companyError || !companyData) {
-        console.error('Failed to create company:', companyError);
+      if (companyError) {
+        console.error('❌ Company insert failed:', JSON.stringify(companyError));
         return NextResponse.json(
           { 
-            error: 'Failed to create company record: ' + (companyError?.message || 'Unknown error'),
-            debug: { code: companyError?.code, details: companyError?.details, hint: companyError?.hint }
+            error: 'Failed to create company: ' + companyError.message,
+            debug: { 
+              code: companyError.code, 
+              details: companyError.details, 
+              hint: companyError.hint,
+              message: companyError.message
+            }
           },
+          { status: 500 }
+        );
+      }
+      
+      if (!companyData) {
+        console.error('❌ No company data returned');
+        return NextResponse.json(
+          { error: 'Company was not created - no data returned' },
           { status: 500 }
         );
       }
@@ -187,34 +201,33 @@ export async function POST(request: Request) {
 
       console.log('✅ User created successfully:', authData.user?.email);
 
-      // 3. Create user_profiles link (links auth user to company)
-      // Build profile insert with required fields first
-      const profileInsert: Record<string, any> = {
+      // 3. Create user_profiles link - use ONLY base schema fields
+      const profileInsert = {
         user_id: authData.user.id,
         company_id: companyData.id,
         role: 'admin'
       };
       
-      // Add optional extended fields
-      if (data.registrant_position) profileInsert.position = data.registrant_position;
-      if (data.registrant_name) profileInsert.display_name = data.registrant_name;
-      profileInsert.first_admin = true;
-      
-      console.log('📝 Attempting profile insert with:', JSON.stringify(profileInsert));
+      console.log('📝 Attempting profile insert with MINIMAL fields:', JSON.stringify(profileInsert));
       
       const { error: profileError } = await supabaseAdmin
         .from('user_profiles')
         .insert(profileInsert);
 
       if (profileError) {
-        console.error('Failed to create user profile:', profileError);
+        console.error('❌ Profile insert failed:', JSON.stringify(profileError));
         // Rollback: delete user and company
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         await supabaseAdmin.from('companies').delete().eq('id', companyData.id);
         return NextResponse.json(
           { 
-            error: 'Failed to link user to company: ' + profileError.message,
-            debug: { code: profileError?.code, details: profileError?.details, hint: profileError?.hint }
+            error: 'Failed to create user profile: ' + profileError.message,
+            debug: { 
+              code: profileError.code, 
+              details: profileError.details, 
+              hint: profileError.hint,
+              message: profileError.message
+            }
           },
           { status: 500 }
         );
