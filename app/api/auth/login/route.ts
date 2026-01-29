@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 
@@ -14,13 +15,12 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // Check environment variables first - use service role key since anon key may not be available
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl || !supabaseKey) {
+    if (!supabaseUrl || !supabaseAnonKey) {
       return NextResponse.json(
-        { error: 'Server configuration error', debug: `Missing: URL=${!supabaseUrl}, KEY=${!supabaseKey}` },
+        { error: 'Server configuration error' },
         { status: 500 }
       );
     }
@@ -37,8 +37,21 @@ export async function POST(request: Request) {
     
     const { email, password } = validation.data;
     
-    // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Create Supabase SSR client that handles cookies automatically
+    const cookieStore = cookies();
+    const supabase = createServerClient(supabaseUrl, supabaseAnonKey, {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: any) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: any) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    });
     
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
@@ -67,7 +80,7 @@ export async function POST(request: Request) {
       { expiresIn: '7d' }
     );
     
-    // Set HTTP-only cookie
+    // Set HTTP-only cookies for both custom JWT and Supabase session
     const response = NextResponse.json({
       success: true,
       user: {
@@ -80,6 +93,7 @@ export async function POST(request: Request) {
       }
     });
     
+    // Custom JWT for middleware (Supabase session cookies are set automatically by SSR client)
     response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
