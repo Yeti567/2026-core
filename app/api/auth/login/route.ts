@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import jwt from 'jsonwebtoken';
 
 export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 
 const loginSchema = z.object({
@@ -44,8 +46,6 @@ export async function POST(request: Request) {
     }
     
     // Create a simple JWT token for middleware compatibility
-    const jwtModule = await import('jsonwebtoken');
-    const jwt = jwtModule.default || jwtModule;
     const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
     
     const token = jwt.sign(
