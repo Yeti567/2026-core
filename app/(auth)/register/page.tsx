@@ -109,14 +109,19 @@ export default function RegisterPage() {
 
   // Check WSIB availability when user leaves the field
   const checkWsibAvailability = useCallback(async (wsib: string) => {
-    if (wsib.length !== 9) return;
+    // Only check if exactly 9 digits
+    if (!/^\d{9}$/.test(wsib)) return;
     
     setWsibChecking(true);
     try {
       const res = await fetch(`/api/check-wsib?wsib=${wsib}`);
+      
+      // Only process successful responses
+      if (!res.ok) return;
+      
       const data = await res.json();
       
-      if (!data.available) {
+      if (data.available === false) {
         setFieldErrors((prev) => ({
           ...prev,
           wsib_number: 'This WSIB number is already registered'
