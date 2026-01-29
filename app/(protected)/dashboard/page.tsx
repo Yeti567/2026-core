@@ -5,6 +5,8 @@ import { AuditSoftStatusWidget } from '@/components/dashboard/auditsoft-status-w
 import { PhasesWidget } from '@/components/dashboard/phases-widget';
 import { OnboardingWidget } from '@/components/dashboard/onboarding-widget';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const user = await getServerUser();
   
