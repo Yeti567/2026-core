@@ -1,11 +1,17 @@
-import { getServerUserOrRedirect } from '@/lib/auth/helpers';
+import { getServerUser } from '@/lib/auth/helpers';
+import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { AuditSoftStatusWidget } from '@/components/dashboard/auditsoft-status-widget';
 import { PhasesWidget } from '@/components/dashboard/phases-widget';
 import { OnboardingWidget } from '@/components/dashboard/onboarding-widget';
 
 export default async function DashboardPage() {
-  const user = await getServerUserOrRedirect();
+  const user = await getServerUser();
+  
+  if (!user) {
+    // Check if we have a cookie but couldn't parse user - show debug info
+    redirect('/login?error=session_invalid');
+  }
 
   return (
     <main className="min-h-screen p-8">

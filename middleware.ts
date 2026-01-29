@@ -135,6 +135,7 @@ export async function middleware(request: NextRequest) {
     // Check if route is public
     const isPublicRoute = matchesRoutes(pathname, PUBLIC_ROUTES);
     const isPublicApiRoute = matchesRoutes(pathname, PUBLIC_API_ROUTES);
+    console.log('[Middleware] pathname:', pathname, 'isPublicRoute:', isPublicRoute);
 
     if (isPublicRoute || isPublicApiRoute) {
       return response;
