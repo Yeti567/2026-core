@@ -117,27 +117,36 @@ export async function POST(request: Request) {
     
     try {
       // 1. Create company record first
-      // Using extended schema from 00300_company_registration migration
+      // Build insert object dynamically - start with required fields only
+      const companyInsert: Record<string, any> = {
+        name: data.company_name,
+        wsib_number: data.wsib_number,
+        address: data.address || `${data.city || ''}, ${data.province || 'ON'}`
+      };
+      
+      // Add optional extended fields if they have values
+      if (data.city) companyInsert.city = data.city;
+      if (data.province) companyInsert.province = data.province;
+      if (data.postal_code) companyInsert.postal_code = data.postal_code;
+      if (data.phone) companyInsert.phone = data.phone;
+      if (data.registrant_email) companyInsert.company_email = data.registrant_email;
+      companyInsert.registration_status = 'active';
+      
+      console.log('📝 Attempting company insert with:', JSON.stringify(companyInsert));
+      
       const { data: companyData, error: companyError } = await supabaseAdmin
         .from('companies')
-        .insert({
-          name: data.company_name,
-          wsib_number: data.wsib_number,
-          address: data.address,
-          city: data.city,
-          province: data.province,
-          postal_code: data.postal_code,
-          phone: data.phone || null,
-          company_email: data.registrant_email,
-          registration_status: 'active'
-        })
+        .insert(companyInsert)
         .select()
         .single();
 
       if (companyError || !companyData) {
         console.error('Failed to create company:', companyError);
         return NextResponse.json(
-          { error: 'Failed to create company record: ' + (companyError?.message || 'Unknown error') },
+          { 
+            error: 'Failed to create company record: ' + (companyError?.message || 'Unknown error'),
+            debug: { code: companyError?.code, details: companyError?.details, hint: companyError?.hint }
+          },
           { status: 500 }
         );
       }
@@ -179,17 +188,23 @@ export async function POST(request: Request) {
       console.log('✅ User created successfully:', authData.user?.email);
 
       // 3. Create user_profiles link (links auth user to company)
-      // Include all required fields from the extended schema
+      // Build profile insert with required fields first
+      const profileInsert: Record<string, any> = {
+        user_id: authData.user.id,
+        company_id: companyData.id,
+        role: 'admin'
+      };
+      
+      // Add optional extended fields
+      if (data.registrant_position) profileInsert.position = data.registrant_position;
+      if (data.registrant_name) profileInsert.display_name = data.registrant_name;
+      profileInsert.first_admin = true;
+      
+      console.log('📝 Attempting profile insert with:', JSON.stringify(profileInsert));
+      
       const { error: profileError } = await supabaseAdmin
         .from('user_profiles')
-        .insert({
-          user_id: authData.user.id,
-          company_id: companyData.id,
-          role: 'admin',
-          first_admin: true,
-          position: data.registrant_position,
-          display_name: data.registrant_name
-        });
+        .insert(profileInsert);
 
       if (profileError) {
         console.error('Failed to create user profile:', profileError);
@@ -197,7 +212,10 @@ export async function POST(request: Request) {
         await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
         await supabaseAdmin.from('companies').delete().eq('id', companyData.id);
         return NextResponse.json(
-          { error: 'Failed to link user to company: ' + profileError.message },
+          { 
+            error: 'Failed to link user to company: ' + profileError.message,
+            debug: { code: profileError?.code, details: profileError?.details, hint: profileError?.hint }
+          },
           { status: 500 }
         );
       }
