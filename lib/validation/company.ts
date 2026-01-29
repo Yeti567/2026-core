@@ -256,10 +256,8 @@ export function validateCompanyRegistration(data: CompanyRegistration): Validati
     errors.company_name = 'Company name is required';
   }
 
-  // WSIB number
-  if (!data.wsib_number.trim()) {
-    errors.wsib_number = 'WSIB number is required';
-  } else if (!isValidWSIBNumber(data.wsib_number)) {
+  // WSIB number (optional - only validate format if provided)
+  if (data.wsib_number?.trim() && !isValidWSIBNumber(data.wsib_number)) {
     errors.wsib_number = 'WSIB number must be exactly 9 digits';
   }
 

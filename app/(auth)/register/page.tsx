@@ -105,34 +105,6 @@ export default function RegisterPage() {
 
   const [showIndustryFields, setShowIndustryFields] = useState(false);
   const [mainServiceInput, setMainServiceInput] = useState('');
-  const [wsibChecking, setWsibChecking] = useState(false);
-
-  // Check WSIB availability when user leaves the field
-  const checkWsibAvailability = useCallback(async (wsib: string) => {
-    // Only check if exactly 9 digits
-    if (!/^\d{9}$/.test(wsib)) return;
-    
-    setWsibChecking(true);
-    try {
-      const res = await fetch(`/api/check-wsib?wsib=${wsib}`);
-      
-      // Only process successful responses
-      if (!res.ok) return;
-      
-      const data = await res.json();
-      
-      if (data.available === false) {
-        setFieldErrors((prev) => ({
-          ...prev,
-          wsib_number: 'This WSIB number is already registered'
-        }));
-      }
-    } catch (err) {
-      console.error('WSIB check failed:', err);
-    } finally {
-      setWsibChecking(false);
-    }
-  }, []);
 
   const updateField = useCallback(<K extends keyof CompanyRegistration,>(
     field: K,
@@ -357,32 +329,20 @@ export default function RegisterPage() {
                   <div className="grid md:grid-cols-2 gap-5">
                     <FormField
                       label="WSIB Number"
-                      required
                       error={fieldErrors.wsib_number}
-                      tooltip="Your 9-digit WSIB account number."
+                      tooltip="Your 9-digit WSIB account number (optional)."
                     >
-                      <div className="relative">
-                        <input
-                          type="text"
-                          className="input w-full p-3 rounded-md bg-[#0d1117] border border-[#30363d] text-white font-mono tracking-wide pr-10"
-                          value={formData.wsib_number}
-                          onChange={(e) => {
-                            const val = e.target.value.replace(/\D/g, '').slice(0, 9);
-                            updateField('wsib_number', val);
-                          }}
-                          onBlur={(e) => checkWsibAvailability(e.target.value)}
-                          placeholder="123456789"
-                          maxLength={9}
-                        />
-                        {wsibChecking && (
-                          <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                            <svg className="animate-spin w-4 h-4 text-[#8b949e]" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
+                      <input
+                        type="text"
+                        className="input w-full p-3 rounded-md bg-[#0d1117] border border-[#30363d] text-white font-mono tracking-wide"
+                        value={formData.wsib_number}
+                        onChange={(e) => {
+                          const val = e.target.value.replace(/\D/g, '').slice(0, 9);
+                          updateField('wsib_number', val);
+                        }}
+                        placeholder="123456789"
+                        maxLength={9}
+                      />
                     </FormField>
 
                     <FormField
