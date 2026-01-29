@@ -44,7 +44,8 @@ export async function POST(request: Request) {
     }
     
     // Create a simple JWT token for middleware compatibility
-    const jwt = await import('jsonwebtoken');
+    const jwtModule = await import('jsonwebtoken');
+    const jwt = jwtModule.default || jwtModule;
     const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret';
     
     const token = jwt.sign(
