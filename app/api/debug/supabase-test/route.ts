@@ -67,7 +67,7 @@ export async function GET() {
 
     results.tables_check = tableResults;
 
-    // 5. Test INSERT capability (then rollback)
+    // 5. Test INSERT with BASIC fields only
     const testCompanyName = `__TEST_DELETE_ME_${Date.now()}`;
     const { data: insertData, error: insertError } = await supabase
       .from('companies')
@@ -75,18 +75,46 @@ export async function GET() {
       .select()
       .single();
 
-    results.insert_test = {
+    results.insert_test_basic = {
       success: !insertError,
       error: insertError?.message || null,
       code: insertError?.code || null,
-      hint: insertError?.hint || null,
-      details: insertError?.details || null,
     };
 
-    // Clean up test data
+    // Clean up basic test
     if (insertData?.id) {
       await supabase.from('companies').delete().eq('id', insertData.id);
-      results.cleanup = 'Test company deleted';
+    }
+
+    // 6. Test INSERT with EXTENDED fields (what registration uses)
+    const { data: extendedData, error: extendedError } = await supabase
+      .from('companies')
+      .insert({
+        name: `__TEST_EXTENDED_${Date.now()}`,
+        wsib_number: '888888888',
+        address: '123 Test St',
+        city: 'Toronto',
+        province: 'ON',
+        postal_code: 'M5V 1A1',
+        phone: '416-555-1234',
+        company_email: 'test@example.com',
+        registration_status: 'active'
+      })
+      .select()
+      .single();
+
+    results.insert_test_extended = {
+      success: !extendedError,
+      error: extendedError?.message || null,
+      code: extendedError?.code || null,
+      hint: extendedError?.hint || null,
+      details: extendedError?.details || null,
+    };
+
+    // Clean up extended test
+    if (extendedData?.id) {
+      await supabase.from('companies').delete().eq('id', extendedData.id);
+      results.cleanup = 'Test companies deleted';
     }
 
     return NextResponse.json(results);
