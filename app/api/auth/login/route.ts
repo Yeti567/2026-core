@@ -14,18 +14,13 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    // Check environment variables first
+    // Check environment variables first - use service role key since anon key may not be available
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     
-    if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('Missing env vars:', { 
-        hasUrl: !!supabaseUrl, 
-        hasKey: !!supabaseAnonKey,
-        urlPrefix: supabaseUrl?.substring(0, 20)
-      });
+    if (!supabaseUrl || !supabaseKey) {
       return NextResponse.json(
-        { error: 'Server configuration error', debug: `Missing: URL=${!supabaseUrl}, KEY=${!supabaseAnonKey}` },
+        { error: 'Server configuration error', debug: `Missing: URL=${!supabaseUrl}, KEY=${!supabaseKey}` },
         { status: 500 }
       );
     }
@@ -43,7 +38,7 @@ export async function POST(request: Request) {
     const { email, password } = validation.data;
     
     // Create Supabase client
-    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    const supabase = createClient(supabaseUrl, supabaseKey);
     
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
