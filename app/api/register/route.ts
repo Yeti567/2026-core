@@ -192,6 +192,22 @@ export async function POST(request: Request) {
 
       if (companyError) {
         console.error('❌ Company insert failed:', JSON.stringify(companyError));
+        
+        // Handle duplicate key errors (WSIB already registered)
+        if (companyError.code === '23505') {
+          let userMessage = 'A company with this information already exists.';
+          if (companyError.details?.includes('wsib_number')) {
+            userMessage = 'This WSIB number is already registered. If this is your company, please sign in instead.';
+          }
+          return NextResponse.json(
+            { 
+              error: userMessage,
+              fields: { wsib_number: 'This WSIB number is already registered' }
+            },
+            { status: 400 }
+          );
+        }
+        
         return NextResponse.json(
           { 
             error: 'Failed to create company: ' + companyError.message,
