@@ -281,8 +281,13 @@ export async function POST(request: Request) {
       });
     } catch (createError) {
       console.error('Failed to create user:', createError);
+      const errMsg = createError instanceof Error ? createError.message : 'Unknown error';
+      const errStack = createError instanceof Error ? createError.stack : undefined;
       return NextResponse.json(
-        { error: 'Failed to create user account. Please try again.' },
+        { 
+          error: 'Failed to create user account. Please try again.',
+          debug: { message: errMsg, stack: errStack, type: createError?.constructor?.name }
+        },
         { status: 500 }
       );
     }
@@ -290,10 +295,19 @@ export async function POST(request: Request) {
     console.error('Registration error:', error);
 
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
 
     console.error('Company registration error:', error);
+    // Return detailed error for debugging (REMOVE IN PRODUCTION)
     return NextResponse.json(
-      { error: 'An unexpected error occurred. Please try again.' },
+      { 
+        error: 'An unexpected error occurred. Please try again.',
+        debug: {
+          message: errorMessage,
+          stack: errorStack,
+          type: error?.constructor?.name
+        }
+      },
       { status: 500 }
     );
   }
