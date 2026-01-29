@@ -141,6 +141,7 @@ export async function middleware(request: NextRequest) {
 
     // Get JWT token from cookie
     const token = request.cookies.get('auth-token')?.value;
+    console.log('[Middleware]', pathname, 'token:', token ? 'present' : 'missing');
 
     // Handle unauthenticated users
     if (!token) {
