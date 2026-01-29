@@ -29,6 +29,7 @@ const PUBLIC_ROUTES = [
   '/auth/confirm',
   '/auth/register-callback',  // Company registration magic link callback
   '/api/debug/auth',   // Debug endpoint for testing
+  '/api/debug/supabase-test',  // Supabase connection test
   '/invite/accept',    // Employee magic link acceptance page (legacy)
   '/accept-invite',    // Employee invitation acceptance page (new)
   '/forgot-password',  // Password reset request
