@@ -48,12 +48,47 @@ export async function POST(request: Request) {
     //   return createRateLimitResponse(rateLimitResult);
     // }
 
-    const body = await request.json();
+    let body;
+    try {
+      body = await request.json();
+    } catch (parseError) {
+      console.error('❌ Failed to parse request body:', parseError);
+      return NextResponse.json(
+        { error: 'Invalid request body - could not parse JSON' },
+        { status: 400 }
+      );
+    }
+    
     console.log('📝 Registration data received:', { ...body, password: '[REDACTED]', confirm_password: '[REDACTED]' });
-    const data = body as CompanyRegistration;
+    
+    // Ensure all required fields exist (prevent .trim() on undefined)
+    const data: CompanyRegistration = {
+      company_name: body.company_name || '',
+      wsib_number: body.wsib_number || '',
+      company_email: body.company_email || '',
+      address: body.address || '',
+      city: body.city || '',
+      province: body.province || '',
+      postal_code: body.postal_code || '',
+      phone: body.phone || '',
+      registrant_name: body.registrant_name || '',
+      registrant_position: body.registrant_position || '',
+      registrant_email: body.registrant_email || '',
+      password: body.password || '',
+      confirm_password: body.confirm_password || '',
+    };
 
     // 1. Validate form data
-    const validation = validateCompanyRegistration(data);
+    let validation;
+    try {
+      validation = validateCompanyRegistration(data);
+    } catch (validationError) {
+      console.error('❌ Validation threw error:', validationError);
+      return NextResponse.json(
+        { error: 'Validation error: ' + (validationError instanceof Error ? validationError.message : 'Unknown') },
+        { status: 400 }
+      );
+    }
     console.log('✅ Validation result:', validation);
     
     if (!validation.valid) {
