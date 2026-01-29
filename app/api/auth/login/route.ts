@@ -14,6 +14,22 @@ const loginSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Check environment variables first
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('Missing env vars:', { 
+        hasUrl: !!supabaseUrl, 
+        hasKey: !!supabaseAnonKey,
+        urlPrefix: supabaseUrl?.substring(0, 20)
+      });
+      return NextResponse.json(
+        { error: 'Server configuration error', debug: `Missing: URL=${!supabaseUrl}, KEY=${!supabaseAnonKey}` },
+        { status: 500 }
+      );
+    }
+    
     const body = await request.json();
     const validation = loginSchema.safeParse(body);
     
@@ -27,10 +43,7 @@ export async function POST(request: Request) {
     const { email, password } = validation.data;
     
     // Create Supabase client
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    );
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Authenticate with Supabase
     const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
