@@ -47,6 +47,7 @@ const PUBLIC_API_ROUTES = [
   '/api/register',              // Company registration
   '/api/invitations/validate',  // Token validation for magic links
   '/api/invitations/accept-with-auth',  // Invitation acceptance (creates user)
+  '/api/debug',                 // Debug endpoints (REMOVE IN PRODUCTION)
 ];
 
 // =============================================================================
