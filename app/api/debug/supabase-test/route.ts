@@ -114,7 +114,59 @@ export async function GET() {
     // Clean up extended test
     if (extendedData?.id) {
       await supabase.from('companies').delete().eq('id', extendedData.id);
-      results.cleanup = 'Test companies deleted';
+    }
+
+    // 7. Test AUTH ADMIN API (the likely culprit)
+    const testEmail = `test_${Date.now()}@delete-me.test`;
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: testEmail,
+      password: 'TestPassword123!',
+      email_confirm: true,
+    });
+
+    results.auth_admin_test = {
+      success: !authError,
+      error: authError?.message || null,
+      code: (authError as any)?.code || null,
+      status: (authError as any)?.status || null,
+    };
+
+    // If auth user created, test user_profiles insert then cleanup
+    if (authData?.user) {
+      // Create a test company for the profile
+      const { data: testCo } = await supabase
+        .from('companies')
+        .insert({ name: '__PROFILE_TEST_CO', wsib_number: '777777777' })
+        .select()
+        .single();
+
+      if (testCo) {
+        const { error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            user_id: authData.user.id,
+            company_id: testCo.id,
+            role: 'admin',
+            first_admin: true,
+            position: 'Test Position',
+            display_name: 'Test User'
+          });
+
+        results.user_profiles_test = {
+          success: !profileError,
+          error: profileError?.message || null,
+          code: profileError?.code || null,
+          hint: profileError?.hint || null,
+        };
+
+        // Cleanup
+        await supabase.from('user_profiles').delete().eq('user_id', authData.user.id);
+        await supabase.from('companies').delete().eq('id', testCo.id);
+      }
+
+      // Delete test auth user
+      await supabase.auth.admin.deleteUser(authData.user.id);
+      results.cleanup = 'All test data deleted';
     }
 
     return NextResponse.json(results);
