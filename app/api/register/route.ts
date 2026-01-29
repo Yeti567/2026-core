@@ -117,16 +117,19 @@ export async function POST(request: Request) {
     
     try {
       // 1. Create company record first
-      // Companies table schema: id, name, wsib_number, address, created_at
-      // DO NOT add email or other columns - they don't exist in the database
-      const fullAddress = `${data.address}, ${data.city}, ${data.province} ${data.postal_code}`;
-      
+      // Using extended schema from 00300_company_registration migration
       const { data: companyData, error: companyError } = await supabaseAdmin
         .from('companies')
         .insert({
           name: data.company_name,
           wsib_number: data.wsib_number,
-          address: fullAddress
+          address: data.address,
+          city: data.city,
+          province: data.province,
+          postal_code: data.postal_code,
+          phone: data.phone || null,
+          company_email: data.registrant_email,
+          registration_status: 'active'
         })
         .select()
         .single();
@@ -176,12 +179,16 @@ export async function POST(request: Request) {
       console.log('✅ User created successfully:', authData.user?.email);
 
       // 3. Create user_profiles link (links auth user to company)
+      // Include all required fields from the extended schema
       const { error: profileError } = await supabaseAdmin
         .from('user_profiles')
         .insert({
           user_id: authData.user.id,
           company_id: companyData.id,
-          role: 'admin'
+          role: 'admin',
+          first_admin: true,
+          position: data.registrant_position,
+          display_name: data.registrant_name
         });
 
       if (profileError) {
