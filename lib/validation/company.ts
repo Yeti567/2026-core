@@ -266,8 +266,6 @@ export function validateCompanyRegistration(data: CompanyRegistration): Validati
     errors.company_email = 'Company email is required';
   } else if (!isValidEmail(data.company_email)) {
     errors.company_email = 'Invalid email format';
-  } else if (isBlockedEmailDomain(data.company_email)) {
-    errors.company_email = 'Business email required (no Gmail, Yahoo, etc.)';
   }
 
   // Address
@@ -314,11 +312,6 @@ export function validateCompanyRegistration(data: CompanyRegistration): Validati
     errors.registrant_email = 'Your email is required';
   } else if (!isValidEmail(data.registrant_email)) {
     errors.registrant_email = 'Invalid email format';
-  } else if (isBlockedEmailDomain(data.registrant_email)) {
-    errors.registrant_email = 'Business email required (no Gmail, Yahoo, etc.)';
-  } else if (data.company_email && !doEmailDomainsMatch(data.registrant_email, data.company_email)) {
-    const companyDomain = getEmailDomain(data.company_email);
-    errors.registrant_email = `Email must be from @${companyDomain}`;
   }
 
   // Password
