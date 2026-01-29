@@ -17,11 +17,15 @@ export async function GET() {
   };
 
   try {
-    // 1. Check environment variables
+    // 1. Check environment variables - show partial values for debugging
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
     results.env_check = {
-      NEXT_PUBLIC_SUPABASE_URL: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
-      SUPABASE_SERVICE_ROLE_KEY: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-      SUPABASE_SERVICE_ROLE_KEY_length: process.env.SUPABASE_SERVICE_ROLE_KEY?.length || 0,
+      NEXT_PUBLIC_SUPABASE_URL: !!url,
+      NEXT_PUBLIC_SUPABASE_URL_preview: url ? url.substring(0, 30) + '...' : 'NOT SET',
+      SUPABASE_SERVICE_ROLE_KEY: !!key,
+      SUPABASE_SERVICE_ROLE_KEY_length: key.length,
+      SUPABASE_SERVICE_ROLE_KEY_preview: key ? key.substring(0, 15) + '...' : 'NOT SET',
     };
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
