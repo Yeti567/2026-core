@@ -210,7 +210,7 @@ export default function FormLibraryPage() {
             </div>
             <div className="flex items-center gap-3">
               <Link
-                href="/admin/form-templates/new/edit"
+                href="/admin/forms/import"
                 className="h-10 px-4 bg-purple-600 text-white rounded-lg font-medium flex items-center gap-2 hover:bg-purple-500 transition-colors"
               >
                 <span>📄</span>
