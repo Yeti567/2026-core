@@ -7,31 +7,33 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createRouteHandlerClient } from '@/lib/supabase/server';
-import {
-  validateFileUpload,
-  createSecureStoragePath,
-  sanitizeFilename,
-} from '@/lib/utils/file-upload-validation';
-import { handleApiError, handleFileError } from '@/lib/utils/error-handling';
+import { handleFileError } from '@/lib/utils/error-handling';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
+// Simple filename sanitization
+function sanitizeFilename(filename: string): string {
+  return filename
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .replace(/_{2,}/g, '_')
+    .substring(0, 255);
+}
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: authUser }, error: authError } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
     if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // Get user's company
+    // Get user's company and profile
     const { data: profile, error: profileError } = await supabase
       .from('user_profiles')
-      .select('company_id, role')
+      .select('id, company_id, role')
       .eq('user_id', authUser.id)
       .single();
     
@@ -44,8 +46,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Company not found' }, { status: 404 });
     }
     
-    // Check permissions
-    if (!['admin', 'internal_auditor'].includes(profile.role)) {
+    // Check permissions - allow admin and safety roles
+    if (!['admin', 'internal_auditor', 'safety_coordinator'].includes(profile.role)) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 });
     }
     
@@ -56,73 +58,64 @@ export async function POST(request: NextRequest) {
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     }
-
-    const uploadedFile = file;
     
-    // Validate file upload (type, size, content validation with magic bytes)
-    const allowedTypes = ['application/pdf'];
-    const validation = await validateFileUpload(file, allowedTypes);
-    
-    if (!validation.valid) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: 400 }
-      );
+    // Validate file type
+    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
+      return NextResponse.json({ error: 'Only PDF files are allowed' }, { status: 400 });
     }
     
-    // Generate secure storage path using UUID-based filename
-    const secureFilename = validation.filename!;
-    const storagePath = createSecureStoragePath(
-      companyId,
-      'pdf-forms',
-      secureFilename
-    );
+    // Validate file size (max 50MB)
+    const maxSize = 50 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return NextResponse.json({ error: 'File too large. Maximum size is 50MB' }, { status: 400 });
+    }
     
-    // Store original filename for display (sanitized)
-    const originalFilename = sanitizeFilename(uploadedFile.name);
+    // Generate secure filename
+    const fileId = randomUUID();
+    const originalFilename = sanitizeFilename(file.name);
+    const storagePath = `${companyId}/pdf-forms/${fileId}.pdf`;
     
-    // Convert file to buffer
-    const arrayBuffer = await uploadedFile.arrayBuffer();
+    // Convert file to buffer for upload
+    const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     
     // Upload to Supabase Storage
-    // TODO: Implement storage without Supabase
-      // const { data: upload, error: uploadError } = await supabase.storage
-      //   .from('pdf-uploads')
-      //   .upload(sanitizedFilename, file, {
-      //     cacheControl: '3600',
-      throw new Error('Storage not implemented yet - please implement file storage');
-      
-      // Get user profile ID
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('user_id', authUser.id)
-        .single();
-      
-      // Create PDF upload record
-      const { data: pdfUpload, error: insertError } = await supabase
-        .from('pdf_form_uploads')
-        .insert({
-          company_id: companyId,
-          uploaded_by: userProfile?.id || null,
-          file_name: originalFilename, // Store sanitized original name for display
-          file_size_bytes: uploadedFile.size,
-          storage_path: secureFilename,
-          mime_type: uploadedFile.type,
-          status: 'uploaded',
-          processing_status: 'pending',
-          processing_attempts: 0,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        })
-        .select()
-        .single();
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('documents')
+      .upload(storagePath, buffer, {
+        contentType: 'application/pdf',
+        cacheControl: '3600',
+        upsert: false,
+      });
+    
+    if (uploadError) {
+      console.error('Storage upload error:', uploadError);
+      return NextResponse.json({ error: 'Failed to upload file' }, { status: 500 });
+    }
+    
+    // Create PDF upload record in database
+    const { data: pdfUpload, error: insertError } = await supabase
+      .from('pdf_form_uploads')
+      .insert({
+        company_id: companyId,
+        uploaded_by: profile.id,
+        file_name: originalFilename,
+        file_size_bytes: file.size,
+        storage_path: storagePath,
+        mime_type: 'application/pdf',
+        status: 'uploaded',
+        processing_status: 'pending',
+        processing_attempts: 0,
+        page_count: 1, // Will be updated during processing
+        ocr_confidence: 0,
+      })
+      .select()
+      .single();
     
     if (insertError) {
       console.error('Database insert error:', insertError);
-      // TODO: Clean up uploaded file when storage is implemented
-      // await supabase.storage.from('documents').remove([storagePath]);
+      // Clean up uploaded file
+      await supabase.storage.from('documents').remove([storagePath]);
       return NextResponse.json({ error: 'Failed to create upload record' }, { status: 500 });
     }
     
@@ -132,13 +125,14 @@ export async function POST(request: NextRequest) {
       .insert({
         pdf_upload_id: pdfUpload.id,
         current_step: 'upload',
-        created_by: userProfile?.id || null,
+        created_by: profile.id,
       })
       .select()
       .single();
     
     if (sessionError) {
       console.error('Session creation error:', sessionError);
+      // Continue anyway - session is not critical for upload
     }
     
     return NextResponse.json({
@@ -148,6 +142,7 @@ export async function POST(request: NextRequest) {
     });
     
   } catch (error) {
+    console.error('PDF upload error:', error);
     return handleFileError(error, 'upload PDF');
   }
 }

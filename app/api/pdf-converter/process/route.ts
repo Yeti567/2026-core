@@ -20,9 +20,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: authUser }, error: authError } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
     if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -53,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if already processed
-    if (pdfUpload.status !== 'pending' && pdfUpload.status !== 'failed') {
+    if (pdfUpload.processing_status === 'completed') {
       return NextResponse.json({ error: 'PDF already processed' }, { status: 400 });
     }
     
@@ -61,20 +60,120 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('pdf_form_uploads')
       .update({ 
-        status: 'processing',
-        processing_attempts: pdfUpload.processing_attempts + 1,
+        processing_status: 'processing',
+        processing_attempts: (pdfUpload.processing_attempts || 0) + 1,
       })
       .eq('id', upload_id);
     
     try {
       // Download PDF from storage
-      // TODO: Implement storage without Supabase
-      // const { data: fileData, error: downloadError } = await supabase.storage
-      //   .from('pdf-uploads')
-      //   .download(pdfUpload.storage_path);
+      const { data: fileData, error: downloadError } = await supabase.storage
+        .from('documents')
+        .download(pdfUpload.storage_path);
       
-      // For now, return an error
-      throw new Error('Storage not implemented yet - please implement file storage');
+      if (downloadError || !fileData) {
+        throw new Error('Failed to download PDF from storage');
+      }
+      
+      // Convert to buffer for processing
+      const arrayBuffer = await fileData.arrayBuffer();
+      const buffer = Buffer.from(arrayBuffer);
+      
+      // Extract text from PDF (OCR if needed)
+      let extractedText = '';
+      let pageCount = 1;
+      let ocrConfidence = 85;
+      
+      try {
+        const ocrResult = await extractTextFromPDF(buffer);
+        extractedText = ocrResult.text || '';
+        pageCount = ocrResult.pageCount || 1;
+        ocrConfidence = calculateOCRConfidence(extractedText, pageCount);
+      } catch (ocrError) {
+        console.error('[PDF Process] OCR error:', ocrError);
+        // Continue with empty text - user can manually add fields
+        extractedText = '';
+        ocrConfidence = 0;
+      }
+      
+      // Analyze content to detect fields
+      let detectedFields: DetectedField[] = [];
+      let corSuggestions: { element_number: number; confidence: number; reasoning: string }[] = [];
+      
+      if (extractedText.length > 0) {
+        try {
+          const analysisResult = await analyzePDFContent(extractedText, pageCount, pdfUpload.file_name);
+          detectedFields = (analysisResult.detectedFields || []) as DetectedField[];
+          
+          // Get COR element suggestions
+          const suggestions = suggestCORElements(analysisResult.analysis, detectedFields, extractedText);
+          corSuggestions = suggestions.map(s => ({
+            element_number: s.element_number,
+            confidence: s.confidence,
+            reasoning: s.reasoning,
+          }));
+        } catch (analysisError) {
+          console.error('[PDF Process] Analysis error:', analysisError);
+          // Continue without AI analysis
+        }
+      }
+      
+      // Update PDF upload with results
+      await supabase
+        .from('pdf_form_uploads')
+        .update({
+          processing_status: 'completed',
+          ocr_text: extractedText,
+          ocr_confidence: ocrConfidence,
+          page_count: pageCount,
+        })
+        .eq('id', upload_id);
+      
+      // Store detected fields
+      if (detectedFields.length > 0) {
+        const fieldsToInsert = detectedFields.map((field, index) => ({
+          pdf_upload_id: upload_id,
+          field_code: field.field_code || `field_${index + 1}`,
+          detected_label: field.detected_label || `Field ${index + 1}`,
+          suggested_type: field.suggested_type || 'text',
+          type_confidence: field.type_confidence || 50,
+          page_number: field.page_number || 1,
+          field_order: index,
+          is_confirmed: false,
+          is_excluded: false,
+        }));
+        
+        await supabase
+          .from('pdf_detected_fields')
+          .insert(fieldsToInsert);
+      }
+      
+      // Update conversion session
+      const { data: session } = await supabase
+        .from('pdf_conversion_sessions')
+        .select('id')
+        .eq('pdf_upload_id', upload_id)
+        .single();
+      
+      if (session) {
+        await supabase
+          .from('pdf_conversion_sessions')
+          .update({
+            current_step: 'review_ocr',
+            form_name: pdfUpload.file_name.replace(/\.pdf$/i, ''),
+          })
+          .eq('id', session.id);
+      }
+      
+      return NextResponse.json({
+        success: true,
+        detected_fields: detectedFields,
+        cor_suggestions: corSuggestions,
+        ocr_confidence: ocrConfidence,
+        page_count: pageCount,
+        text_preview: extractedText.substring(0, 500),
+      });
+      
     } catch (error) {
       console.error('[PDF Process] Error:', error);
       
@@ -82,9 +181,8 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('pdf_form_uploads')
         .update({
-          status: 'error',
-          error_message: error instanceof Error ? error.message : 'Unknown error',
-          processing_attempts: pdfUpload.processing_attempts + 1,
+          processing_status: 'failed',
+          processing_attempts: (pdfUpload.processing_attempts || 0) + 1,
         })
         .eq('id', upload_id);
       
