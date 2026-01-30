@@ -210,14 +210,14 @@ export default function FormLibraryPage() {
             </div>
             <div className="flex items-center gap-3">
               <Link
-                href="/admin/forms/import"
+                href="/admin/form-templates/new/edit"
                 className="h-10 px-4 bg-purple-600 text-white rounded-lg font-medium flex items-center gap-2 hover:bg-purple-500 transition-colors"
               >
                 <span>📄</span>
                 <span>Import PDF</span>
               </Link>
               <Link
-                href="/admin/forms/new"
+                href="/admin/form-templates/new/edit"
                 className="h-10 px-4 bg-[var(--primary)] text-white rounded-lg font-medium flex items-center gap-2 hover:bg-[var(--primary-hover)] transition-colors"
               >
                 <span>+</span>
@@ -359,7 +359,7 @@ export default function FormLibraryPage() {
                 : 'Create your first custom form template'}
             </p>
             <Link
-              href="/admin/forms/new"
+              href="/admin/form-templates/new/edit"
               className="inline-flex items-center gap-2 h-10 px-4 bg-[var(--primary)] text-white rounded-lg font-medium hover:bg-[var(--primary-hover)] transition-colors"
             >
               <span>+</span>
