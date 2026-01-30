@@ -17,9 +17,8 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: user }, error: authError } = { data: { user: null }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -56,9 +55,8 @@ export async function PATCH(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: user }, error: authError } = { data: { user: null }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -116,9 +114,8 @@ export async function PUT(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: user }, error: authError } = { data: { user: null }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

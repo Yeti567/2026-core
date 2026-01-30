@@ -18,9 +18,8 @@ export async function POST(request: NextRequest) {
   try {
     const supabase = createRouteHandlerClient();
     
-    // Check authentication
-    // TODO: Implement user authentication without Supabase
-      const { data: { user: authUser }, error: authError } = { data: { user: { id: 'placeholder' } }, error: new Error('Auth not implemented') };;
+    // Check authentication using Supabase
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
     if (authError || !authUser) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
