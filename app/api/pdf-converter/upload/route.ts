@@ -102,12 +102,9 @@ export async function POST(request: NextRequest) {
         file_name: originalFilename,
         file_size_bytes: file.size,
         storage_path: storagePath,
-        mime_type: 'application/pdf',
-        status: 'uploaded',
-        processing_status: 'pending',
+        status: 'pending',
         processing_attempts: 0,
-        page_count: 1, // Will be updated during processing
-        ocr_confidence: 0,
+        page_count: 1,
       })
       .select()
       .single();

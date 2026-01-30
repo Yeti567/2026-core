@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     }
     
     // Check if already processed
-    if (pdfUpload.processing_status === 'completed') {
+    if (pdfUpload.status === 'completed' || pdfUpload.status === 'analyzed') {
       return NextResponse.json({ error: 'PDF already processed' }, { status: 400 });
     }
     
@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
     await supabase
       .from('pdf_form_uploads')
       .update({ 
-        processing_status: 'processing',
+        status: 'processing',
         processing_attempts: (pdfUpload.processing_attempts || 0) + 1,
       })
       .eq('id', upload_id);
@@ -122,10 +122,11 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('pdf_form_uploads')
         .update({
-          processing_status: 'completed',
+          status: 'analyzed',
           ocr_text: extractedText,
           ocr_confidence: ocrConfidence,
           page_count: pageCount,
+          processed_at: new Date().toISOString(),
         })
         .eq('id', upload_id);
       
@@ -181,7 +182,8 @@ export async function POST(request: NextRequest) {
       await supabase
         .from('pdf_form_uploads')
         .update({
-          processing_status: 'failed',
+          status: 'failed',
+          error_message: error instanceof Error ? error.message : 'Processing failed',
           processing_attempts: (pdfUpload.processing_attempts || 0) + 1,
         })
         .eq('id', upload_id);
