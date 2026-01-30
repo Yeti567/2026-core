@@ -52,7 +52,7 @@ WITH CHECK (
   AND (storage.foldername(name))[1] IN (
     SELECT company_id::text FROM user_profiles 
     WHERE user_id = auth.uid() 
-    AND role IN ('super_admin', 'admin', 'internal_auditor', 'safety_coordinator')
+    AND role IN ('super_admin', 'admin', 'internal_auditor')
   )
 );
 
