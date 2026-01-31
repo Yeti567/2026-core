@@ -434,17 +434,24 @@ export const useFormBuilderStore = create<FormBuilderState & FormBuilderActions>
       },
 
       reorderFields: (sectionId, sourceIndex, destIndex) => {
+        if (sourceIndex === destIndex) return;
+        
         get().pushHistory();
         set((state) => {
           const fields = state.fields.get(sectionId);
-          if (fields) {
-            const [removed] = fields.splice(sourceIndex, 1);
-            fields.splice(destIndex, 0, removed);
+          if (fields && fields.length > 0) {
+            // Create a new array to ensure React detects the change
+            const newFields = [...fields];
+            const [removed] = newFields.splice(sourceIndex, 1);
+            newFields.splice(destIndex, 0, removed);
             
-            // Update order indices
-            fields.forEach((f, index) => {
-              f.order_index = index;
-            });
+            // Update order indices and create new field objects
+            const reorderedFields = newFields.map((f, index) => ({
+              ...f,
+              order_index: index,
+            }));
+            
+            state.fields.set(sectionId, reorderedFields);
             state.isDirty = true;
           }
         });
