@@ -8,6 +8,7 @@ import {
   Upload, Bell, FileCheck, Layers, MapPin, Briefcase,
   Package, Receipt, Clock, CheckSquare, TrendingUp, HelpCircle
 } from 'lucide-react';
+import { ComplianceStatsWidget } from '@/components/dashboard/compliance-stats-widget';
 
 export const dynamic = 'force-dynamic';
 
@@ -131,6 +132,11 @@ export default async function DashboardPage() {
             </form>
           </div>
         </header>
+
+        {/* Compliance Stats Dashboard */}
+        <div className="mb-10">
+          <ComplianceStatsWidget />
+        </div>
 
         {/* All Features by Category */}
         <div className="space-y-8">
