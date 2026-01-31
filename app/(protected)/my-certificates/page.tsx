@@ -259,7 +259,7 @@ export default function MyCertificatesPage() {
           <span className="text-2xl">🎓</span>
           <h1 className="font-semibold">My Certificates</h1>
         </div>
-        <Link href="/dashboard" className="p-2 hover:bg-slate-800 rounded-lg">
+        <Link href="/audit" className="p-2 hover:bg-slate-800 rounded-lg">
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
           </svg>
@@ -521,7 +521,7 @@ export default function MyCertificatesPage() {
               <button onClick={resetUpload} className="btn btn-primary">
                 Upload Another
               </button>
-              <Link href="/dashboard" className="btn border border-slate-600">
+              <Link href="/audit" className="btn border border-slate-600">
                 Back to Dashboard
               </Link>
             </div>

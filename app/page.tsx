@@ -10,8 +10,8 @@ export default async function HomePage() {
   if (token) {
     const payload = verifyToken(token);
     if (payload) {
-      // Authenticated - go to dashboard
-      redirect('/dashboard');
+      // Authenticated - go to COR Audit Dashboard
+      redirect('/audit');
     }
   }
   

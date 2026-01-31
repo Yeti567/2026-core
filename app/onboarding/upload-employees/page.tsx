@@ -559,7 +559,7 @@ function UploadEmployeesContent() {
         {sendingProgress.status === 'idle' && (
           <div className="mt-8 text-center">
             <Link
-              href="/dashboard"
+              href="/audit"
               className="text-[#8b949e] hover:text-white text-sm"
             >
               Skip for now → Go to Dashboard

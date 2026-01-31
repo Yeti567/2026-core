@@ -13,7 +13,7 @@ function LoginContent() {
 
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/dashboard';
+  const redirect = searchParams.get('redirect') || '/audit';
   const message = searchParams.get('message');
   const prefillEmail = searchParams.get('email');
 

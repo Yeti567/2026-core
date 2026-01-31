@@ -64,7 +64,7 @@ export default function OnboardingWizard() {
             if (progress) {
                 // If everything is completed, redirect to dashboard
                 if (progress.completed_steps.length === STEPS.length) {
-                    router.push('/dashboard');
+                    router.push('/audit');
                     return;
                 }
                 setCurrentStep(progress.current_step);
@@ -108,7 +108,7 @@ export default function OnboardingWizard() {
 
         if (!error) {
             if (step === STEPS.length && completed) {
-                router.push('/dashboard');
+                router.push('/audit');
             } else {
                 setCurrentStep(nextStep);
                 setCompletedSteps(newCompleted);
