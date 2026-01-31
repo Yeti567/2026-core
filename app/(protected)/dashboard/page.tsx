@@ -188,6 +188,21 @@ export default async function DashboardPage() {
             </Link>
           </div>
         </div>
+
+        {/* Contact Support */}
+        <div className="mt-10 text-center p-6 rounded-xl bg-slate-800/50 border border-slate-700">
+          <h3 className="text-lg font-semibold text-white mb-2">Need Help?</h3>
+          <p className="text-slate-400 mb-4">
+            Questions about COR Pathway? Our team is here to help.
+          </p>
+          <a 
+            href="mailto:blake@calibribusinesssolutions.ca"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
+          >
+            <HelpCircle className="w-4 h-4" />
+            Contact Support
+          </a>
+        </div>
       </div>
     </main>
   );

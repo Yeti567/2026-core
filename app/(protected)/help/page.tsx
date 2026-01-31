@@ -195,7 +195,7 @@ export default function HelpPage() {
             Can't find what you're looking for? Contact our support team.
           </p>
           <a 
-            href="mailto:support@corpathways.ca"
+            href="mailto:blake@calibribusinesssolutions.ca"
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
           >
             Contact Support
