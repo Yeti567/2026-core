@@ -117,22 +117,37 @@ export function FormBuilder({ onSave, onPublish, onCancel }: FormBuilderProps) {
     // Check if dragging a field type from sidebar
     if (activeIdStr.startsWith('fieldtype-')) {
       const fieldType = activeIdStr.replace('fieldtype-', '') as FieldType;
+      const store = useFormBuilderStore.getState();
 
       // Determine target section
-      let targetSectionId = overIdStr;
-      if (overIdStr.startsWith('field-')) {
-        // Find the section containing this field
-        const store = useFormBuilderStore.getState();
+      let targetSectionId: string | null = null;
+      
+      // Case 1: Dropped on a section droppable (section.id without prefix)
+      const directSection = store.sections.find(s => s.id === overIdStr);
+      if (directSection) {
+        targetSectionId = directSection.id;
+      }
+      // Case 2: Dropped on a section sortable wrapper (section-{id})
+      else if (overIdStr.startsWith('section-')) {
+        const sectionId = overIdStr.replace('section-', '');
+        const section = store.sections.find(s => s.id === sectionId);
+        if (section) {
+          targetSectionId = section.id;
+        }
+      }
+      // Case 3: Dropped on a field (find its parent section)
+      else if (overIdStr.startsWith('field-')) {
+        const fieldId = overIdStr.replace('field-', '');
         for (const section of store.sections) {
           const sectionFields = store.getSectionFields(section.id);
-          if (sectionFields.some(f => f.id === overIdStr.replace('field-', ''))) {
+          if (sectionFields.some(f => f.id === fieldId)) {
             targetSectionId = section.id;
             break;
           }
         }
       }
 
-      if (targetSectionId && !targetSectionId.startsWith('field-')) {
+      if (targetSectionId) {
         addField(targetSectionId, {
           field_type: fieldType,
           label: getFieldTypeLabel(fieldType),

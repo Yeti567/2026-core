@@ -185,8 +185,30 @@ export const useFormBuilderStore = create<FormBuilderState & FormBuilderActions>
             is_mandatory: false,
             version: 1,
           };
-          state.sections = [];
-          state.fields = new Map();
+          
+          // For new templates (no existing template passed), create a default section
+          if (!template) {
+            const defaultSectionId = generateId();
+            state.sections = [{
+              id: defaultSectionId,
+              form_template_id: '',
+              title: 'Section 1',
+              description: null,
+              order_index: 0,
+              is_repeatable: false,
+              min_repeats: 1,
+              max_repeats: 10,
+              conditional_logic: null,
+              created_at: new Date().toISOString(),
+            }];
+            state.fields = new Map([[defaultSectionId, []]]);
+            state.selectedSectionId = defaultSectionId;
+          } else {
+            state.sections = [];
+            state.fields = new Map();
+            state.selectedSectionId = null;
+          }
+          
           state.workflow = {
             submit_to_role: 'supervisor',
             notify_roles: [],
@@ -196,7 +218,6 @@ export const useFormBuilderStore = create<FormBuilderState & FormBuilderActions>
             sync_priority: 3,
             auto_create_evidence: false,
           };
-          state.selectedSectionId = null;
           state.selectedFieldId = null;
           state.isDirty = false;
           state.history = [];
