@@ -52,6 +52,19 @@ test.describe('Authentication', () => {
 // ============================================================================
 // DASHBOARD TESTS
 // ============================================================================
+// Helper to check for actual server errors (not CSS classes like "indigo-500")
+async function checkNoServerError(page: Page) {
+  const content = await page.content();
+  // Check for actual error messages, not CSS classes
+  expect(content).not.toContain('Internal Server Error');
+  expect(content).not.toContain('500 Internal');
+  expect(content).not.toContain('Application error');
+  expect(content).not.toContain('NEXT_NOT_FOUND');
+  // Check HTTP status via response
+  const response = await page.reload();
+  expect(response?.status()).toBeLessThan(500);
+}
+
 test.describe('Dashboard', () => {
   test.beforeEach(async ({ page }) => {
     await login(page);
@@ -60,17 +73,13 @@ test.describe('Dashboard', () => {
   test('Dashboard loads after login', async ({ page }) => {
     await page.goto(`${BASE_URL}/dashboard`);
     await page.waitForLoadState('networkidle');
-    // Check page doesn't show error
-    const content = await page.content();
-    expect(content).not.toContain('500');
-    expect(content).not.toContain('Internal Server Error');
+    await checkNoServerError(page);
   });
 
   test('Admin page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -85,30 +94,25 @@ test.describe('Form Builder', () => {
   test('Form Library page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/forms`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
-    expect(content).not.toContain('Internal Server Error');
+    await checkNoServerError(page);
   });
 
   test('Form Templates page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/form-templates`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('PDF Import page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/forms/import`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('New Form Template editor loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/form-templates/new/edit`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -123,22 +127,19 @@ test.describe('Documents', () => {
   test('Documents page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/documents`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Document Registry loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/document-registry`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Document Upload page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/documents/upload`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -153,15 +154,13 @@ test.describe('Employees', () => {
   test('Employees page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/employees`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Departments page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/departments`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -176,22 +175,19 @@ test.describe('Certifications', () => {
   test('Certifications page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/certifications`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('New Certification page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/certifications/new`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Certification Reports page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/certifications/reports`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -206,22 +202,19 @@ test.describe('Audit', () => {
   test('Audit Dashboard loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/audit-dashboard`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Mock Audit page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/mock-audit`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Audit Documents page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/audit/documents`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -236,8 +229,7 @@ test.describe('Action Plan', () => {
   test('Action Plan page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/action-plan`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -252,8 +244,7 @@ test.describe('Maintenance', () => {
   test('Maintenance page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/maintenance`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -268,29 +259,25 @@ test.describe('Settings', () => {
   test('Settings page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/settings`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Team Settings page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/settings/team`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Integrations page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/settings/integrations`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Profile page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/profile`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -305,15 +292,13 @@ test.describe('COR Roadmap', () => {
   test('COR Roadmap page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/cor-roadmap`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Phases page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/phases`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -328,8 +313,7 @@ test.describe('Libraries', () => {
   test('Libraries page loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/admin/libraries`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
@@ -344,22 +328,19 @@ test.describe('Worker Portal', () => {
   test('Forms page (worker) loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/forms`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Documents page (worker) loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/documents`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 
   test('Documents Portal loads', async ({ page }) => {
     await page.goto(`${BASE_URL}/documents/portal`);
     await page.waitForLoadState('networkidle');
-    const content = await page.content();
-    expect(content).not.toContain('500');
+    await checkNoServerError(page);
   });
 });
 
