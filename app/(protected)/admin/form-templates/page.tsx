@@ -590,8 +590,8 @@ export default function FormTemplatesPage() {
   // =============================================================================
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800">
-      <div className="container mx-auto py-8 px-4">
+    <main className="min-h-screen p-8 bg-gradient-to-br from-[#0a0a0a] via-[#0f1419] to-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-8">
           <div>
@@ -1251,6 +1251,6 @@ export default function FormTemplatesPage() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+    </main>
   );
 }
