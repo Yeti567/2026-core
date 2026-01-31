@@ -48,7 +48,7 @@ const features = [
 
 const benefits = [
   { icon: Clock, text: 'Save 20+ hours per month on paperwork' },
-  { icon: Shield, text: 'Stay compliant with Alberta OHS regulations' },
+  { icon: Shield, text: 'Stay compliant with Ontario OHS regulations' },
   { icon: TrendingUp, text: 'Track progress toward COR certification' },
   { icon: Award, text: 'Reduce WCB premiums up to 20%' },
 ];
@@ -99,7 +99,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-sm font-medium mb-8">
             <CheckCircle2 className="w-4 h-4" />
-            Trusted by Alberta Construction Companies
+            Trusted by Ontario Construction Companies
           </div>
           
           <h2 className="text-5xl md:text-7xl font-bold mb-6 leading-tight">
@@ -191,7 +191,7 @@ export default function LandingPage() {
             <div className="relative z-10">
               <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full text-white/90 text-sm font-medium mb-6">
                 <Award className="w-4 h-4" />
-                Join 100+ Alberta Companies
+                Join 100+ Ontario Companies
               </div>
               
               <h3 className="text-3xl md:text-4xl font-bold mb-4">
