@@ -102,11 +102,13 @@ function NewMaintenanceRecordModal({
   onClose,
   equipment,
   onSave,
+  trackCosts = true,
 }: {
   isOpen: boolean;
   onClose: () => void;
   equipment: Equipment[];
   onSave: (data: Record<string, unknown>) => void;
+  trackCosts?: boolean;
 }) {
   const [formData, setFormData] = useState({
     equipment_id: '',
@@ -230,7 +232,7 @@ function NewMaintenanceRecordModal({
             />
           </div>
           
-          <div className="grid grid-cols-3 gap-4">
+          <div className={`grid ${trackCosts ? 'grid-cols-3' : 'grid-cols-2'} gap-4`}>
             <div>
               <label className="text-sm font-medium">Hour Meter Reading</label>
               <Input
@@ -240,15 +242,17 @@ function NewMaintenanceRecordModal({
                 placeholder="Hours"
               />
             </div>
-            <div>
-              <label className="text-sm font-medium">Labor Cost ($)</label>
-              <Input
-                type="number"
-                value={formData.labor_cost}
-                onChange={(e) => setFormData({ ...formData, labor_cost: e.target.value })}
-                placeholder="0.00"
-              />
-            </div>
+            {trackCosts && (
+              <div>
+                <label className="text-sm font-medium">Labor Cost ($)</label>
+                <Input
+                  type="number"
+                  value={formData.labor_cost}
+                  onChange={(e) => setFormData({ ...formData, labor_cost: e.target.value })}
+                  placeholder="0.00"
+                />
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium">Result</label>
               <select
@@ -634,6 +638,7 @@ export default function MaintenancePage() {
   const [schedules, setSchedules] = useState<MaintenanceSchedule[]>([]);
   const [downtime, setDowntime] = useState<EquipmentDowntime[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [trackMaintenanceCosts, setTrackMaintenanceCosts] = useState(true);
   
   // Modal states
   const [showNewRecordModal, setShowNewRecordModal] = useState(false);
@@ -651,13 +656,14 @@ export default function MaintenancePage() {
       setIsLoading(true);
       
       // Fetch all data in parallel
-      const [statsRes, equipmentRes, recordsRes, workOrdersRes, schedulesRes, downtimeRes] = await Promise.all([
+      const [statsRes, equipmentRes, recordsRes, workOrdersRes, schedulesRes, downtimeRes, settingsRes] = await Promise.all([
         fetch('/api/maintenance').then(r => r.ok ? r.json() : null),
         fetch('/api/admin/equipment').then(r => r.ok ? r.json() : { equipment: [] }),
         fetch('/api/maintenance/records?limit=100').then(r => r.ok ? r.json() : { records: [] }),
         fetch('/api/maintenance/work-orders?limit=100').then(r => r.ok ? r.json() : { workOrders: [] }),
         fetch('/api/maintenance/schedules?limit=100').then(r => r.ok ? r.json() : { schedules: [] }),
         fetch('/api/maintenance/downtime?limit=50').then(r => r.ok ? r.json() : { downtime: [] }),
+        fetch('/api/admin/company/settings').then(r => r.ok ? r.json() : { settings: {} }),
       ]);
       
       setStats(statsRes);
@@ -666,6 +672,11 @@ export default function MaintenancePage() {
       setWorkOrders(workOrdersRes.workOrders || []);
       setSchedules(schedulesRes.schedules || []);
       setDowntime(downtimeRes.downtime || []);
+      
+      // Set cost tracking preference from company settings
+      if (typeof settingsRes?.settings?.track_maintenance_costs === 'boolean') {
+        setTrackMaintenanceCosts(settingsRes.settings.track_maintenance_costs);
+      }
     } catch (err) {
       console.error('Error fetching maintenance data:', err);
     } finally {
@@ -923,46 +934,48 @@ export default function MaintenancePage() {
               </CardContent>
             </Card>
 
-            {/* Cost Summary Card */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  💰 Maintenance Costs (YTD)
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-4">
-                  <div className="text-4xl font-bold text-green-500">
-                    ${stats.total_maintenance_cost_ytd.toLocaleString()}
+            {/* Cost Summary Card - Only show if tracking costs */}
+            {trackMaintenanceCosts && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    💰 Maintenance Costs (YTD)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-center py-4">
+                    <div className="text-4xl font-bold text-green-500">
+                      ${stats.total_maintenance_cost_ytd.toLocaleString()}
+                    </div>
+                    <div className="text-sm text-[var(--muted)]">Total Year to Date</div>
                   </div>
-                  <div className="text-sm text-[var(--muted)]">Total Year to Date</div>
-                </div>
-                <div className="space-y-2 mt-4">
-                  {Object.entries(stats.total_cost_by_type).slice(0, 5).map(([type, cost]) => {
-                    const config = MAINTENANCE_TYPE_CONFIG[type as MaintenanceRecordType];
-                    const percentage = stats.total_maintenance_cost_ytd > 0 
-                      ? (cost / stats.total_maintenance_cost_ytd * 100) 
-                      : 0;
-                    return (
-                      <div key={type} className="flex items-center gap-2">
-                        <span className="text-sm w-32 truncate">
-                          {config?.icon || '📋'} {config?.label || type}
-                        </span>
-                        <div className="flex-1 h-2 bg-[var(--muted)]/20 rounded-full overflow-hidden">
-                          <div 
-                            className={`h-full ${config?.color || 'bg-gray-500'}`}
-                            style={{ width: `${percentage}%` }}
-                          />
+                  <div className="space-y-2 mt-4">
+                    {Object.entries(stats.total_cost_by_type).slice(0, 5).map(([type, cost]) => {
+                      const config = MAINTENANCE_TYPE_CONFIG[type as MaintenanceRecordType];
+                      const percentage = stats.total_maintenance_cost_ytd > 0 
+                        ? (cost / stats.total_maintenance_cost_ytd * 100) 
+                        : 0;
+                      return (
+                        <div key={type} className="flex items-center gap-2">
+                          <span className="text-sm w-32 truncate">
+                            {config?.icon || '📋'} {config?.label || type}
+                          </span>
+                          <div className="flex-1 h-2 bg-[var(--muted)]/20 rounded-full overflow-hidden">
+                            <div 
+                              className={`h-full ${config?.color || 'bg-gray-500'}`}
+                              style={{ width: `${percentage}%` }}
+                            />
+                          </div>
+                          <span className="text-sm font-medium w-20 text-right">
+                            ${cost.toLocaleString()}
+                          </span>
                         </div>
-                        <span className="text-sm font-medium w-20 text-right">
-                          ${cost.toLocaleString()}
-                        </span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </CardContent>
-            </Card>
+                      );
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* Recent Activity */}
@@ -1081,7 +1094,7 @@ export default function MaintenancePage() {
                     <th className="text-left p-4 font-medium text-sm">Equipment</th>
                     <th className="text-left p-4 font-medium text-sm">Title</th>
                     <th className="text-left p-4 font-medium text-sm">Type</th>
-                    <th className="text-left p-4 font-medium text-sm">Cost</th>
+                    {trackMaintenanceCosts && <th className="text-left p-4 font-medium text-sm">Cost</th>}
                     <th className="text-left p-4 font-medium text-sm">Result</th>
                   </tr>
                 </thead>
@@ -1095,9 +1108,11 @@ export default function MaintenancePage() {
                       </td>
                       <td className="p-4 text-sm">{record.title}</td>
                       <td className="p-4"><MaintenanceTypeBadge type={record.record_type} /></td>
-                      <td className="p-4 text-sm">
-                        {record.total_cost ? `$${record.total_cost.toLocaleString()}` : '-'}
-                      </td>
+                      {trackMaintenanceCosts && (
+                        <td className="p-4 text-sm">
+                          {record.total_cost ? `$${record.total_cost.toLocaleString()}` : '-'}
+                        </td>
+                      )}
                       <td className="p-4">
                         {record.passed !== null && (
                           <span className={`text-sm font-medium ${record.passed ? 'text-green-500' : 'text-red-500'}`}>
@@ -1109,7 +1124,7 @@ export default function MaintenancePage() {
                   ))}
                   {filteredRecords.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="p-12 text-center text-[var(--muted)]">
+                      <td colSpan={trackMaintenanceCosts ? 6 : 5} className="p-12 text-center text-[var(--muted)]">
                         <div className="text-4xl mb-2">📋</div>
                         <p>No maintenance records found</p>
                       </td>
@@ -1387,6 +1402,7 @@ export default function MaintenancePage() {
         onClose={() => setShowNewRecordModal(false)}
         equipment={equipment}
         onSave={handleCreateRecord}
+        trackCosts={trackMaintenanceCosts}
       />
       <NewWorkOrderModal
         isOpen={showNewWorkOrderModal}

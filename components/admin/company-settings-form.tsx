@@ -35,6 +35,7 @@ interface CompanySettings {
   fiscal_year_start_month?: number;
   target_certification_date?: string;
   audit_timeline_months?: number;
+  track_maintenance_costs?: boolean;
 }
 
 export default function CompanySettingsForm() {
@@ -71,6 +72,9 @@ export default function CompanySettingsForm() {
   const [targetDate, setTargetDate] = useState('');
   const [timelineMonths, setTimelineMonths] = useState(9);
 
+  // Maintenance settings
+  const [trackMaintenanceCosts, setTrackMaintenanceCosts] = useState(true);
+
   // Load settings
   useEffect(() => {
     loadSettings();
@@ -101,6 +105,9 @@ export default function CompanySettingsForm() {
           }
           if (data.settings.audit_timeline_months) {
             setTimelineMonths(data.settings.audit_timeline_months);
+          }
+          if (typeof data.settings.track_maintenance_costs === 'boolean') {
+            setTrackMaintenanceCosts(data.settings.track_maintenance_costs);
           }
         }
       }
@@ -161,6 +168,7 @@ export default function CompanySettingsForm() {
           fiscal_year_start_month: fiscalYearStart,
           target_certification_date: calculatedTargetDate,
           audit_timeline_months: timelineMonths,
+          track_maintenance_costs: trackMaintenanceCosts,
         }),
       });
 
@@ -611,6 +619,41 @@ export default function CompanySettingsForm() {
           <p className="text-sm text-[var(--muted)] mt-2">
             Your fiscal year runs from {monthNames[fiscalYearStart - 1]} to {monthNames[(fiscalYearStart - 2 + 12) % 12]}
           </p>
+        </div>
+      </div>
+
+      {/* Maintenance Settings */}
+      <div className="card">
+        <h3 className="font-semibold mb-4 flex items-center gap-2">
+          <svg className="w-4 h-4 text-[var(--muted)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Maintenance Settings
+        </h3>
+
+        <div className="space-y-4">
+          <div className="flex items-center justify-between py-2">
+            <div className="flex-1">
+              <p className="font-medium">Track Maintenance Costs</p>
+              <p className="text-xs text-[var(--muted)]">
+                Show dollar amounts for labor, parts, and total costs on maintenance records. 
+                Turn off to only track maintenance activities without cost information.
+              </p>
+            </div>
+            <button
+              onClick={() => setTrackMaintenanceCosts(!trackMaintenanceCosts)}
+              className={`relative w-12 h-6 rounded-full transition-colors ${
+                trackMaintenanceCosts ? 'bg-indigo-600' : 'bg-slate-700'
+              }`}
+            >
+              <span
+                className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-transform ${
+                  trackMaintenanceCosts ? 'left-7' : 'left-1'
+                }`}
+              />
+            </button>
+          </div>
         </div>
       </div>
 
