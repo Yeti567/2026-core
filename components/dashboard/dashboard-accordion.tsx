@@ -7,11 +7,25 @@ import {
   Wrench, Settings, BarChart3, ClipboardCheck, Building2,
   Camera, BookOpen, AlertTriangle, Calendar, Target,
   Upload, Bell, FileCheck, Layers, MapPin, Briefcase,
-  Package, CheckSquare, TrendingUp, HelpCircle
+  Package, CheckSquare, TrendingUp, HelpCircle, FolderPlus
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const dashboardCategories = [
+  {
+    category: 'Administrative',
+    icon: FolderPlus,
+    color: 'text-cyan-400',
+    bgColor: 'bg-cyan-500/20',
+    features: [
+      { title: 'Add Employees', href: '/admin/employees', icon: Users, description: 'Enter your workforce' },
+      { title: 'Add Departments', href: '/admin/departments', icon: Building2, description: 'Set up your teams' },
+      { title: 'Upload Documents', href: '/admin/documents/upload', icon: Upload, description: 'Add company documents' },
+      { title: 'Equipment & Assets', href: '/admin/libraries', icon: Package, description: 'Enter equipment lists' },
+      { title: 'Upload Certifications', href: '/admin/certifications/bulk-upload', icon: GraduationCap, description: 'Add training records' },
+      { title: 'Company Settings', href: '/admin/settings', icon: Settings, description: 'Company profile & info' },
+    ]
+  },
   {
     category: 'COR Compliance',
     icon: Shield,
@@ -25,7 +39,7 @@ const dashboardCategories = [
     ]
   },
   {
-    category: 'Forms & Documents',
+    category: 'Forms & Inspections',
     icon: FileText,
     color: 'text-emerald-400',
     bgColor: 'bg-emerald-500/20',
@@ -34,8 +48,15 @@ const dashboardCategories = [
       { title: 'Forms Manager', href: '/admin/forms', icon: Layers, description: 'Build custom forms' },
       { title: 'Submissions', href: '/forms', icon: CheckSquare, description: 'View completed forms' },
       { title: 'PDF Import', href: '/admin/forms/import', icon: Upload, description: 'Import existing PDFs' },
+    ]
+  },
+  {
+    category: 'Documents',
+    icon: FolderOpen,
+    color: 'text-orange-400',
+    bgColor: 'bg-orange-500/20',
+    features: [
       { title: 'Document Registry', href: '/admin/documents', icon: FolderOpen, description: 'All company documents' },
-      { title: 'Upload Documents', href: '/admin/documents/upload', icon: Upload, description: 'Add new documents' },
       { title: 'Document Reviews', href: '/admin/documents/reviews', icon: FileCheck, description: 'Pending approvals' },
       { title: 'Audit Documents', href: '/admin/audit/documents', icon: Shield, description: 'COR evidence files' },
     ]
@@ -46,23 +67,28 @@ const dashboardCategories = [
     color: 'text-violet-400',
     bgColor: 'bg-violet-500/20',
     features: [
-      { title: 'Employees', href: '/admin/employees', icon: Users, description: 'Manage your workforce' },
-      { title: 'Departments', href: '/admin/departments', icon: Building2, description: 'Organize your team' },
+      { title: 'Employee Directory', href: '/admin/employees', icon: Users, description: 'View all employees' },
       { title: 'Certifications', href: '/admin/certifications', icon: GraduationCap, description: 'Track training & tickets' },
-      { title: 'Bulk Upload Certs', href: '/admin/certifications/bulk-upload', icon: Upload, description: 'Upload multiple certs' },
       { title: 'My Certificates', href: '/my-certificates', icon: Camera, description: 'Upload your tickets' },
     ]
   },
   {
-    category: 'Equipment & Libraries',
+    category: 'Equipment & Maintenance',
     icon: Wrench,
     color: 'text-amber-400',
     bgColor: 'bg-amber-500/20',
     features: [
       { title: 'Maintenance Dashboard', href: '/admin/maintenance', icon: Wrench, description: 'Equipment overview' },
       { title: 'Work Orders', href: '/admin/maintenance', icon: ClipboardCheck, description: 'Track repairs' },
-      { title: 'Equipment List', href: '/admin/libraries', icon: Package, description: 'All equipment' },
       { title: 'Inspection Schedules', href: '/admin/maintenance', icon: Calendar, description: 'Upcoming inspections' },
+    ]
+  },
+  {
+    category: 'Libraries',
+    icon: BookOpen,
+    color: 'text-pink-400',
+    bgColor: 'bg-pink-500/20',
+    features: [
       { title: 'Hazard Library', href: '/admin/libraries', icon: AlertTriangle, description: 'Hazards & controls' },
       { title: 'Task Library', href: '/admin/libraries', icon: Briefcase, description: 'Standard tasks' },
       { title: 'SDS Library', href: '/admin/libraries', icon: FileText, description: 'Safety data sheets' },
@@ -70,17 +96,15 @@ const dashboardCategories = [
     ]
   },
   {
-    category: 'Reports & Settings',
-    icon: Settings,
+    category: 'Reports & Export',
+    icon: BarChart3,
     color: 'text-slate-400',
     bgColor: 'bg-slate-500/20',
     features: [
       { title: 'AuditSoft Export', href: '/admin/auditsoft', icon: Package, description: 'Export to AuditSoft' },
       { title: 'Reports', href: '/admin/certifications/reports', icon: BarChart3, description: 'Generate reports' },
       { title: 'Notifications', href: '/admin/certifications/notifications', icon: Bell, description: 'Alert settings' },
-      { title: 'Company Settings', href: '/admin/settings', icon: Settings, description: 'Company profile' },
       { title: 'Help Center', href: '/help', icon: HelpCircle, description: 'Guides & tutorials' },
-      { title: 'About', href: '/about', icon: Building2, description: 'About COR Pathway' },
     ]
   },
 ];
