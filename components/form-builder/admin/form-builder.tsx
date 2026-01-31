@@ -523,6 +523,7 @@ function getFieldTypeLabel(type: FieldType): string {
     checkbox: 'Checkbox',
     multiselect: 'Multi-select',
     signature: 'Signature',
+    multi_signature: 'Multi-Signature',
     photo: 'Photo',
     file: 'File Upload',
     gps: 'GPS Location',

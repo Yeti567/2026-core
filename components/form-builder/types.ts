@@ -189,6 +189,7 @@ export type FieldType =
   | 'checkbox'
   | 'multiselect'
   | 'signature'
+  | 'multi_signature'
   | 'photo'
   | 'file'
   | 'gps'

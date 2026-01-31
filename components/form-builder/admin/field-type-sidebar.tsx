@@ -72,14 +72,15 @@ const FIELD_TYPES: FieldTypeInfo[] = [
   
   // Media fields
   { type: 'signature', label: 'Signature', icon: PenLine, category: 'media' },
+  { type: 'multi_signature', label: 'Multi-Signature', icon: Users, category: 'media' },
   { type: 'photo', label: 'Photo', icon: Camera, category: 'media' },
   { type: 'file', label: 'File Upload', icon: Paperclip, category: 'media' },
   
   // Context fields
   { type: 'gps', label: 'GPS Location', icon: MapPin, category: 'context' },
-  { type: 'worker_select', label: 'Worker', icon: Users, category: 'context' },
-  { type: 'jobsite_select', label: 'Jobsite', icon: Building2, category: 'context' },
-  { type: 'equipment_select', label: 'Equipment', icon: Wrench, category: 'context' },
+  { type: 'worker_select', label: 'Employee Dropdown', icon: Users, category: 'context' },
+  { type: 'jobsite_select', label: 'Jobsite Dropdown', icon: Building2, category: 'context' },
+  { type: 'equipment_select', label: 'Equipment Dropdown', icon: Wrench, category: 'context' },
   
   // Special fields
   { type: 'body_diagram', label: 'Body Diagram', icon: PersonStanding, category: 'special' },
