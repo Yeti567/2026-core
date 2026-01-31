@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/auth/jwt';
+import LandingPage from './(public)/landing/page';
 
 export default async function HomePage() {
   // Check if user is authenticated
@@ -15,6 +16,6 @@ export default async function HomePage() {
     }
   }
   
-  // Not authenticated - go to login
-  redirect('/login');
+  // Not authenticated - show landing page
+  return <LandingPage />;
 }
