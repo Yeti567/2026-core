@@ -3,13 +3,14 @@
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Home } from 'lucide-react';
 import Link from 'next/link';
+import { Suspense } from 'react';
 
-export function NavHeader() {
+function NavHeaderContent() {
   const pathname = usePathname();
   const router = useRouter();
 
-  // Don't show on dashboard (it's the home page)
-  if (pathname === '/dashboard') {
+  // Don't show on dashboard (it's the home page) or if pathname is not ready
+  if (!pathname || pathname === '/dashboard') {
     return null;
   }
 
@@ -73,5 +74,13 @@ export function NavHeader() {
         </div>
       </div>
     </div>
+  );
+}
+
+export function NavHeader() {
+  return (
+    <Suspense fallback={null}>
+      <NavHeaderContent />
+    </Suspense>
   );
 }
