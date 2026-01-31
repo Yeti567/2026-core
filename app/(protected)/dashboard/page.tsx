@@ -27,9 +27,9 @@ const featureCategories = [
     color: 'from-emerald-500 to-teal-600',
     features: [
       { title: 'Form Templates', href: '/admin/form-templates', icon: FileText, description: 'Create & manage forms' },
-      { title: 'Form Builder', href: '/form-builder', icon: Layers, description: 'Build custom forms' },
+      { title: 'Forms Manager', href: '/admin/forms', icon: Layers, description: 'Build custom forms' },
       { title: 'Submissions', href: '/forms', icon: CheckSquare, description: 'View completed forms' },
-      { title: 'PDF Import', href: '/form-builder', icon: Upload, description: 'Import existing PDFs' },
+      { title: 'PDF Import', href: '/admin/forms/import', icon: Upload, description: 'Import existing PDFs' },
     ]
   },
   {
