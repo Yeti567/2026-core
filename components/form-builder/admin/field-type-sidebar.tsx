@@ -37,6 +37,7 @@ import {
   Cloud,
   Thermometer,
   EyeOff,
+  Flag,
 } from 'lucide-react';
 
 interface FieldTypeInfo {
@@ -74,6 +75,7 @@ const FIELD_TYPES: FieldTypeInfo[] = [
   { type: 'signature', label: 'Signature', icon: PenLine, category: 'media' },
   { type: 'multi_signature', label: 'Multi-Signature', icon: Users, category: 'media' },
   { type: 'photo', label: 'Photo', icon: Camera, category: 'media' },
+  { type: 'flagged_photo', label: 'Photo + Flag', icon: Flag, category: 'media' },
   { type: 'file', label: 'File Upload', icon: Paperclip, category: 'media' },
   
   // Context fields

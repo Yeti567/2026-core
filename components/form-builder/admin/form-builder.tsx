@@ -525,6 +525,7 @@ function getFieldTypeLabel(type: FieldType): string {
     signature: 'Signature',
     multi_signature: 'Multi-Signature',
     photo: 'Photo',
+    flagged_photo: 'Photo + Flag',
     file: 'File Upload',
     gps: 'GPS Location',
     worker_select: 'Worker Select',

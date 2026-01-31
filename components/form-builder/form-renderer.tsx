@@ -48,6 +48,7 @@ import CheckboxField from './fields/checkbox-field';
 import MultiselectField from './fields/multiselect-field';
 import SignatureField from './fields/signature-field';
 import PhotoField from './fields/photo-field';
+import FlaggedPhotoField from './fields/flagged-photo-field';
 import FileField from './fields/file-field';
 import GPSField from './fields/gps-field';
 import RatingField from './fields/rating-field';
@@ -185,7 +186,9 @@ export function DynamicFormRenderer({
       checkbox: <CheckboxField {...commonProps} onChange={(v) => handleChange(v)} />,
       multiselect: <MultiselectField {...commonProps} onChange={(v) => handleChange(v)} />,
       signature: <SignatureField {...commonProps} onChange={(v) => handleChange(v)} />,
+      multi_signature: <SignatureField {...commonProps} onChange={(v) => handleChange(v)} />,
       photo: <PhotoField {...commonProps} onChange={(v) => handleChange(v)} />,
+      flagged_photo: <FlaggedPhotoField {...commonProps} onChange={(v) => handleChange(v)} />,
       file: <FileField {...commonProps} onChange={(v) => handleChange(v)} />,
       gps: (
         <GPSField

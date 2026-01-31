@@ -191,6 +191,7 @@ export type FieldType =
   | 'signature'
   | 'multi_signature'
   | 'photo'
+  | 'flagged_photo'
   | 'file'
   | 'gps'
   | 'worker_select'
