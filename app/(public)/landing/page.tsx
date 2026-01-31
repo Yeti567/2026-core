@@ -391,9 +391,14 @@ export default function LandingPage() {
             <Link href="/register" className="hover:text-white transition-colors">Register</Link>
           </div>
           
-          <p className="text-sm text-slate-500">
-            © {new Date().getFullYear()} COR Pathway. All rights reserved.
-          </p>
+          <div className="text-center md:text-right">
+            <p className="text-sm text-slate-500">
+              © {new Date().getFullYear()} COR Pathway. All rights reserved.
+            </p>
+            <p className="text-xs text-slate-600 mt-1">
+              Powered by <span className="text-slate-400">Yeti Digital Services Ltd.</span>
+            </p>
+          </div>
         </div>
       </footer>
     </div>
