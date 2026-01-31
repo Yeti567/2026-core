@@ -117,12 +117,13 @@ export async function GET() {
       }
 
       // Find the requirement for this activity
-      let requirement = null;
+      let requirement: { min: number; label: string; period: string } | null = null;
       let label = activityType.replace(/_/g, ' ');
       
       for (const freq of Object.values(FREQUENCY_REQUIREMENTS)) {
-        if (freq[activityType as keyof typeof freq]) {
-          requirement = freq[activityType as keyof typeof freq];
+        const freqTyped = freq as Record<string, { min: number; label: string; period: string }>;
+        if (freqTyped[activityType]) {
+          requirement = freqTyped[activityType];
           label = requirement.label;
           break;
         }
