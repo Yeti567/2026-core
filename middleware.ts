@@ -137,6 +137,23 @@ export async function middleware(request: NextRequest) {
     const isPublicApiRoute = matchesRoutes(pathname, PUBLIC_API_ROUTES);
     console.log('[Middleware] pathname:', pathname, 'isPublicRoute:', isPublicRoute);
 
+    // For the home page, redirect authenticated users to dashboard
+    if (pathname === '/') {
+      const token = request.cookies.get('auth-token')?.value;
+      if (token) {
+        const payload = verifyToken(token);
+        if (payload) {
+          // User is authenticated, redirect to dashboard
+          const dashboardUrl = new URL('/dashboard', request.url);
+          const redirectResponse = NextResponse.redirect(dashboardUrl);
+          redirectResponse.headers.set('Content-Security-Policy', cspHeader);
+          return redirectResponse;
+        }
+      }
+      // Not authenticated, show the landing page
+      return response;
+    }
+
     if (isPublicRoute || isPublicApiRoute) {
       return response;
     }
