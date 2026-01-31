@@ -1,21 +1,23 @@
 import { getServerUser } from '@/lib/auth/helpers';
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { 
   Shield, FileText, Users, GraduationCap, FolderOpen, 
   Wrench, Settings, BarChart3, ClipboardCheck, Building2,
   Camera, BookOpen, AlertTriangle, Calendar, Target,
   Upload, Bell, FileCheck, Layers, MapPin, Briefcase,
-  Package, Receipt, Clock, CheckSquare, TrendingUp, HelpCircle
+  Package, CheckSquare, TrendingUp, HelpCircle
 } from 'lucide-react';
 import { ComplianceStatsWidget } from '@/components/dashboard/compliance-stats-widget';
+import { DashboardAccordion } from '@/components/dashboard/dashboard-accordion';
 
 export const dynamic = 'force-dynamic';
 
-const featureCategories = [
+const dashboardCategories = [
   {
     category: 'COR Compliance',
-    color: 'from-blue-500 to-indigo-600',
+    icon: Shield,
+    color: 'text-blue-400',
+    bgColor: 'bg-blue-500/20',
     features: [
       { title: 'COR Audit Dashboard', href: '/audit', icon: Shield, description: 'Track all 14 COR elements' },
       { title: 'Compliance Scorecard', href: '/audit', icon: TrendingUp, description: 'View your audit readiness' },
@@ -24,29 +26,15 @@ const featureCategories = [
     ]
   },
   {
-    category: 'Forms & Inspections',
-    color: 'from-emerald-500 to-teal-600',
+    category: 'Forms & Documents',
+    icon: FileText,
+    color: 'text-emerald-400',
+    bgColor: 'bg-emerald-500/20',
     features: [
       { title: 'Form Templates', href: '/admin/form-templates', icon: FileText, description: 'Create & manage forms' },
       { title: 'Forms Manager', href: '/admin/forms', icon: Layers, description: 'Build custom forms' },
       { title: 'Submissions', href: '/forms', icon: CheckSquare, description: 'View completed forms' },
       { title: 'PDF Import', href: '/admin/forms/import', icon: Upload, description: 'Import existing PDFs' },
-    ]
-  },
-  {
-    category: 'Team Management',
-    color: 'from-violet-500 to-purple-600',
-    features: [
-      { title: 'Employees', href: '/admin/employees', icon: Users, description: 'Manage your workforce' },
-      { title: 'Departments', href: '/admin/departments', icon: Building2, description: 'Organize your team' },
-      { title: 'Certifications', href: '/admin/certifications', icon: GraduationCap, description: 'Track training & tickets' },
-      { title: 'Bulk Upload Certs', href: '/admin/certifications/bulk-upload', icon: Upload, description: 'Upload multiple certs' },
-    ]
-  },
-  {
-    category: 'Documents',
-    color: 'from-cyan-500 to-blue-600',
-    features: [
       { title: 'Document Registry', href: '/admin/documents', icon: FolderOpen, description: 'All company documents' },
       { title: 'Upload Documents', href: '/admin/documents/upload', icon: Upload, description: 'Add new documents' },
       { title: 'Document Reviews', href: '/admin/documents/reviews', icon: FileCheck, description: 'Pending approvals' },
@@ -54,19 +42,28 @@ const featureCategories = [
     ]
   },
   {
-    category: 'Equipment & Maintenance',
-    color: 'from-rose-500 to-pink-600',
+    category: 'Team & Training',
+    icon: Users,
+    color: 'text-violet-400',
+    bgColor: 'bg-violet-500/20',
+    features: [
+      { title: 'Employees', href: '/admin/employees', icon: Users, description: 'Manage your workforce' },
+      { title: 'Departments', href: '/admin/departments', icon: Building2, description: 'Organize your team' },
+      { title: 'Certifications', href: '/admin/certifications', icon: GraduationCap, description: 'Track training & tickets' },
+      { title: 'Bulk Upload Certs', href: '/admin/certifications/bulk-upload', icon: Upload, description: 'Upload multiple certs' },
+      { title: 'My Certificates', href: '/my-certificates', icon: Camera, description: 'Upload your tickets' },
+    ]
+  },
+  {
+    category: 'Equipment & Libraries',
+    icon: Wrench,
+    color: 'text-amber-400',
+    bgColor: 'bg-amber-500/20',
     features: [
       { title: 'Maintenance Dashboard', href: '/admin/maintenance', icon: Wrench, description: 'Equipment overview' },
       { title: 'Work Orders', href: '/admin/maintenance', icon: ClipboardCheck, description: 'Track repairs' },
       { title: 'Equipment List', href: '/admin/libraries', icon: Package, description: 'All equipment' },
       { title: 'Inspection Schedules', href: '/admin/maintenance', icon: Calendar, description: 'Upcoming inspections' },
-    ]
-  },
-  {
-    category: 'Libraries & Reference',
-    color: 'from-amber-500 to-orange-600',
-    features: [
       { title: 'Hazard Library', href: '/admin/libraries', icon: AlertTriangle, description: 'Hazards & controls' },
       { title: 'Task Library', href: '/admin/libraries', icon: Briefcase, description: 'Standard tasks' },
       { title: 'SDS Library', href: '/admin/libraries', icon: FileText, description: 'Safety data sheets' },
@@ -74,18 +71,14 @@ const featureCategories = [
     ]
   },
   {
-    category: 'Integrations & Export',
-    color: 'from-indigo-500 to-purple-600',
+    category: 'Reports & Settings',
+    icon: Settings,
+    color: 'text-slate-400',
+    bgColor: 'bg-slate-500/20',
     features: [
       { title: 'AuditSoft Export', href: '/admin/auditsoft', icon: Package, description: 'Export to AuditSoft' },
       { title: 'Reports', href: '/admin/certifications/reports', icon: BarChart3, description: 'Generate reports' },
       { title: 'Notifications', href: '/admin/certifications/notifications', icon: Bell, description: 'Alert settings' },
-    ]
-  },
-  {
-    category: 'Settings & Help',
-    color: 'from-slate-500 to-gray-600',
-    features: [
       { title: 'Company Settings', href: '/admin/settings', icon: Settings, description: 'Company profile' },
       { title: 'Help Center', href: '/help', icon: HelpCircle, description: 'Guides & tutorials' },
       { title: 'About', href: '/about', icon: Building2, description: 'About COR Pathway' },
@@ -138,56 +131,8 @@ export default async function DashboardPage() {
           <ComplianceStatsWidget />
         </div>
 
-        {/* All Features by Category */}
-        <div className="space-y-8">
-          {featureCategories.map((cat) => (
-            <div key={cat.category}>
-              <h2 className={`text-lg font-semibold mb-4 flex items-center gap-2`}>
-                <span className={`w-3 h-3 rounded-full bg-gradient-to-r ${cat.color}`} />
-                {cat.category}
-              </h2>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                {cat.features.map((feature) => (
-                  <Link
-                    key={feature.href + feature.title}
-                    href={feature.href}
-                    className="group flex items-start gap-3 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01]"
-                  >
-                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
-                      <feature.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div className="min-w-0">
-                      <h3 className="font-medium text-sm">{feature.title}</h3>
-                      <p className="text-xs text-slate-400 truncate">{feature.description}</p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Quick Action - Upload Certificates */}
-        <div className="mt-10 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
-                <Camera className="w-6 h-6 text-emerald-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold">Upload Training Certificates</h3>
-                <p className="text-sm text-slate-400">Take a photo of your safety tickets or licenses</p>
-              </div>
-            </div>
-            <Link 
-              href="/my-certificates" 
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
-            >
-              <Camera className="w-4 h-4" />
-              Upload Certificate
-            </Link>
-          </div>
-        </div>
+        {/* Navigation Accordion */}
+        <DashboardAccordion categories={dashboardCategories} />
 
         {/* Contact Support */}
         <div className="mt-10 text-center p-6 rounded-xl bg-slate-800/50 border border-slate-700">
