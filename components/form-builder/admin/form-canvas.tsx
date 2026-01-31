@@ -284,11 +284,13 @@ function SortableField({ field, isSelected, onSelect }: SortableFieldProps) {
       className={cn('p-1', widthClass)}
     >
       <div
+        {...attributes}
+        {...listeners}
         className={cn(
-          'border rounded-lg p-3 bg-background cursor-pointer transition-all',
+          'border rounded-lg p-3 bg-background cursor-grab transition-all',
           'hover:border-primary/50 hover:shadow-sm',
           isSelected && 'border-primary ring-1 ring-primary',
-          isDragging && 'opacity-50 shadow-lg'
+          isDragging && 'opacity-50 shadow-lg cursor-grabbing'
         )}
         onClick={(e) => {
           e.stopPropagation();
@@ -296,14 +298,9 @@ function SortableField({ field, isSelected, onSelect }: SortableFieldProps) {
         }}
       >
         <div className="flex items-start gap-2">
-          <button
-            {...attributes}
-            {...listeners}
-            className="cursor-grab p-1 -ml-1 -mt-1 hover:bg-muted rounded flex-shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="p-1 -ml-1 -mt-1 flex-shrink-0">
             <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </button>
+          </div>
           
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">

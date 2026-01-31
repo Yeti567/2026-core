@@ -8,6 +8,7 @@
 import { create } from 'zustand';
 import { persist, devtools } from 'zustand/middleware';
 import { immer } from 'zustand/middleware/immer';
+import { enableMapSet } from 'immer';
 import {
   FormTemplate,
   FormSection,
@@ -17,6 +18,9 @@ import {
   ValidationRules,
   ConditionalLogic,
 } from '@/components/form-builder/types';
+
+// Enable Map/Set support in immer (required for fields Map)
+enableMapSet();
 
 // =============================================================================
 // TYPES

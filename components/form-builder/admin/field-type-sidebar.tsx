@@ -4,11 +4,13 @@
  * Field Type Sidebar
  * 
  * Draggable field types for the form builder.
+ * Supports both drag-and-drop and click-to-add.
  */
 
 import { useDraggable } from '@dnd-kit/core';
 import { cn } from '@/lib/utils';
 import { FieldType } from '../types';
+import { useFormBuilderStore } from '@/lib/stores/form-builder-store';
 import {
   Type,
   AlignLeft,
@@ -19,6 +21,7 @@ import {
   ChevronDown,
   Circle,
   CheckSquare,
+  Plus,
   ListChecks,
   PenLine,
   Camera,
@@ -103,26 +106,55 @@ interface DraggableFieldTypeProps {
   fieldType: FieldTypeInfo;
 }
 
+function getFieldTypeLabel(type: FieldType): string {
+  const fieldInfo = FIELD_TYPES.find(f => f.type === type);
+  return fieldInfo?.label || type;
+}
+
 function DraggableFieldType({ fieldType }: DraggableFieldTypeProps) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: `fieldtype-${fieldType.type}`,
   });
   
+  const { sections, selectedSectionId, addField } = useFormBuilderStore();
+  
+  const handleAddField = () => {
+    // Determine which section to add to: selected section, or first section
+    const targetSectionId = selectedSectionId || sections[0]?.id;
+    
+    if (targetSectionId) {
+      addField(targetSectionId, {
+        field_type: fieldType.type,
+        label: getFieldTypeLabel(fieldType.type),
+      });
+    }
+  };
+  
   const Icon = fieldType.icon;
   
   return (
-    <div
-      ref={setNodeRef}
-      {...listeners}
-      {...attributes}
-      className={cn(
-        'flex items-center gap-2 p-2 rounded-md border bg-background cursor-grab',
-        'hover:bg-muted/50 hover:border-primary/50 transition-colors',
-        isDragging && 'opacity-50 cursor-grabbing'
-      )}
-    >
-      <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-      <span className="text-sm truncate">{fieldType.label}</span>
+    <div className="flex items-center gap-1">
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        className={cn(
+          'flex-1 flex items-center gap-2 p-2 rounded-md border bg-background cursor-grab',
+          'hover:bg-muted/50 hover:border-primary/50 transition-colors',
+          isDragging && 'opacity-50 cursor-grabbing'
+        )}
+      >
+        <Icon className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+        <span className="text-sm truncate">{fieldType.label}</span>
+      </div>
+      <button
+        type="button"
+        onClick={handleAddField}
+        className="p-2 rounded-md border bg-background hover:bg-primary hover:text-primary-foreground transition-colors"
+        title="Click to add"
+      >
+        <Plus className="h-4 w-4" />
+      </button>
     </div>
   );
 }
@@ -131,7 +163,7 @@ export function FieldTypeSidebar() {
   return (
     <div className="p-4 space-y-6">
       <p className="text-xs text-muted-foreground">
-        Drag fields onto the form canvas to add them
+        Drag fields onto the canvas or click + to add
       </p>
       
       {CATEGORIES.map((category) => {
