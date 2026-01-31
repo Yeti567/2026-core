@@ -143,9 +143,9 @@ export async function middleware(request: NextRequest) {
       if (token) {
         const payload = verifyToken(token);
         if (payload) {
-          // User is authenticated, redirect to COR Audit Dashboard
-          const auditUrl = new URL('/audit', request.url);
-          const redirectResponse = NextResponse.redirect(auditUrl);
+          // User is authenticated, redirect to main dashboard
+          const dashboardUrl = new URL('/dashboard', request.url);
+          const redirectResponse = NextResponse.redirect(dashboardUrl);
           redirectResponse.headers.set('Content-Security-Policy', cspHeader);
           return redirectResponse;
         }
