@@ -1,0 +1,1455 @@
+﻿=== app\(auth)\accept-invite\[token]\page.tsx ===
+=== app\(auth)\forgot-password\page.tsx ===
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+
+export default function ForgotPasswordPage() {
+  const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sent, setSent] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || 'Failed to send reset link');
+        return;
+      }
+
+      setSent(true);
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (sent) {
+    return (
+=== app\(auth)\login\page.tsx ===
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
+function LoginContent() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/dashboard';
+  const message = searchParams.get('message');
+  const prefillEmail = searchParams.get('email');
+
+  // Handle messages from other pages
+  useEffect(() => {
+    if (message === 'invitation_accepted') {
+      setSuccess('Welcome! Check your email for a link to set your password.');
+    } else if (message === 'password_updated') {
+      setSuccess('Your password has been updated. You can now sign in.');
+    } else if (message === 'password_reset_sent') {
+      setSuccess('Password reset link sent! Check your email.');
+    }
+    if (prefillEmail) {
+      setEmail(decodeURIComponent(prefillEmail));
+    }
+  }, [message, prefillEmail]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    setSuccess(null);
+
+=== app\(auth)\register\page.tsx ===
+'use client';
+
+import { useState, useCallback } from 'react';
+import Link from 'next/link';
+import { Header } from '@/components/layout/Header';
+import {
+  validateCompanyRegistration,
+  isBlockedEmailDomain,
+  getEmailDomain,
+  formatPhoneNumber,
+  CANADIAN_PROVINCES,
+  REGISTRANT_POSITIONS,
+  INDUSTRIES,
+  type CompanyRegistration,
+  type RegistrantPosition,
+  type Industry,
+} from '@/lib/validation/company';
+
+type Step = 'form' | 'submitting' | 'success';
+
+// Tooltip component
+function Tooltip({ children, content }: { children: React.ReactNode; content: string }) {
+  const [show, setShow] = useState(false);
+
+  return (
+    <span className="relative inline-block ml-1">
+      <button
+        type="button"
+        className="text-[#8b949e] hover:text-white transition-colors"
+        onMouseEnter={() => setShow(true)}
+        onMouseLeave={() => setShow(false)}
+        onClick={(e) => {
+          e.preventDefault();
+          setShow(!show);
+        }}
+        aria-label="Show info"
+      >
+        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+=== app\(auth)\reset-password\page.tsx ===
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+
+function ResetPasswordContent() {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [verifying, setVerifying] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [isNewUser, setIsNewUser] = useState(false);
+
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const type = searchParams.get('type'); // 'recovery' for password reset, 'invite' for new user setup
+
+  const supabase = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // Verify the session from the magic link
+  useEffect(() => {
+    async function verifySession() {
+      try {
+        // The magic link will have set up a session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+
+        if (sessionError || !session) {
+          setError('Invalid or expired link. Please request a new password reset.');
+          setVerifying(false);
+          return;
+        }
+
+        // Check if this is a new user (from invitation)
+        if (type === 'invite') {
+=== app\(auth)\signup\page.tsx ===
+import { redirect } from 'next/navigation';
+
+/**
+ * Signup page - Redirects to company registration
+ * 
+ * Individual user signup is not allowed. Users must either:
+ * 1. Register a new company at /register
+ * 2. Accept an invitation from their company admin
+ * 
+ * This redirect ensures users don't bypass the controlled onboarding process.
+ */
+export default function SignupPage() {
+  redirect('/register');
+}
+=== app\(protected)\about\page.tsx ===
+'use client';
+
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
+import { usePwaUpdate } from '@/hooks/usePwaUpdate';
+import { RefreshCw, CheckCircle, Info, Download } from 'lucide-react';
+import Link from 'next/link';
+
+export default function AboutPage() {
+  const {
+    updateAvailable,
+    isUpdating,
+    versionLabel,
+    lastCheckedAt,
+    updateNow,
+    checkForUpdate
+  } = usePwaUpdate();
+
+  const [isChecking, setIsChecking] = useState(false);
+
+  const handleCheckForUpdates = async () => {
+    setIsChecking(true);
+    try {
+      await checkForUpdate('manual');
+    } finally {
+      setTimeout(() => setIsChecking(false), 1000);
+    }
+  };
+
+  const formatLastChecked = (timestamp: number | null) => {
+    if (!timestamp) return 'Never';
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    if (minutes < 1) return 'Just now';
+    if (minutes === 1) return '1 minute ago';
+    if (minutes < 60) return `${minutes} minutes ago`;
+    const hours = Math.floor(minutes / 60);
+    if (hours === 1) return '1 hour ago';
+=== app\(protected)\admin\action-plan\page.tsx ===
+'use client';
+
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import {
+  Target,
+  Calendar,
+  Clock,
+  CheckCircle2,
+  Circle,
+  AlertCircle,
+  AlertTriangle,
+  Loader2,
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  User,
+  RefreshCw,
+  Download,
+  Mail,
+  Lock,
+  Play,
+  ArrowLeft,
+  X,
+  MessageSquare,
+  Paperclip,
+  Flag
+} from 'lucide-react';
+import { COR_ELEMENTS } from '@/lib/audit/types';
+import type { 
+  ActionPlan, 
+  ActionPhase, 
+  ActionTask, 
+  ActionSubtask,
+  TaskStatus,
+  TaskPriority 
+} from '@/lib/audit/action-plan-generator';
+
+// =============================================================================
+// TYPES
+=== app\(protected)\admin\audit\documents\page.tsx ===
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import {
+  ChevronLeft, FileText, Check, AlertTriangle, X, Upload, Eye,
+  Loader2, AlertCircle, ChevronRight, Search, Filter, Download,
+  ExternalLink, Sparkles
+} from 'lucide-react';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface DocumentEvidence {
+  id: string;
+  control_number: string;
+  title: string;
+  description?: string;
+  document_type: string;
+  version: string;
+  effective_date?: string;
+  file_path?: string;
+  folder_name?: string;
+  folder_code?: string;
+  relevance: number;
+  snippet?: string;
+  matched_requirements?: string[];
+  cor_elements?: number[];
+  tags?: string[];
+  is_critical?: boolean;
+}
+
+interface DocumentGap {
+  requirement_id: string;
+  element_number: number;
+  severity: 'critical' | 'major' | 'minor';
+  description: string;
+  action_required: string;
+  estimated_effort_hours: number;
+=== app\(protected)\admin\audit-dashboard\element\[number]\element-detail-client.tsx ===
+=== app\(protected)\admin\audit-dashboard\element\[number]\page.tsx ===
+=== app\(protected)\admin\audit-dashboard\audit-dashboard-client.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import {
+  Shield,
+  Clock,
+  Calendar,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronRight,
+  RefreshCw,
+  FileText,
+  Download,
+  MessageSquare,
+  Target,
+  TrendingUp,
+  Users,
+  Loader2,
+  ExternalLink,
+  Filter,
+  Search,
+  ArrowUpRight,
+  Zap,
+  ClipboardList,
+  Sparkles,
+} from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+// Types
+interface ElementScore {
+  elementNumber: number;
+  elementName: string;
+  score: number;
+  maxScore: number;
+  percentage: number;
+  status: 'passing' | 'at-risk' | 'failing';
+=== app\(protected)\admin\audit-dashboard\page.tsx ===
+import { getServerUserOrRedirect } from '@/lib/auth/helpers';
+import { AuditDashboardClient } from './audit-dashboard-client';
+
+export default async function AuditDashboardPage() {
+  const user = await getServerUserOrRedirect();
+
+  // Check permissions - only admins and internal auditors can access
+  if (!['admin', 'super_admin', 'internal_auditor'].includes(user.role)) {
+    return (
+      <main className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-white mb-2">Access Denied</h1>
+          <p className="text-slate-400">You don't have permission to view the audit dashboard.</p>
+        </div>
+      </main>
+    );
+  }
+
+  return <AuditDashboardClient userRole={user.role} userId={user.userId} />;
+}
+=== app\(protected)\admin\auditsoft\export\page.tsx ===
+'use client';
+
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { AuditSoftExportWizard } from '@/components/integrations/auditsoft-export-wizard';
+
+export default function AuditSoftExportPage() {
+  const router = useRouter();
+
+  return (
+    <main className="min-h-screen p-8 bg-gradient-to-br from-[#0a0a0a] via-[#0f1419] to-[#0a0a0a]">
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <Link
+            href="/admin/auditsoft"
+            className="text-[var(--muted)] hover:text-[var(--foreground)] text-sm flex items-center gap-1 mb-2 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Back to AuditSoft
+          </Link>
+        </div>
+
+        {/* Export Wizard */}
+        <AuditSoftExportWizard onClose={() => router.push('/admin/auditsoft')} />
+      </div>
+    </main>
+  );
+}
+=== app\(protected)\admin\auditsoft\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import type { 
+  AuditSoftConnection, 
+  AuditSoftStats, 
+  AuditSoftSyncLog,
+  AuditSoftItemMapping,
+  ExportSummary 
+} from '@/lib/integrations/auditsoft/types';
+import { COR_ELEMENTS, INTERNAL_ITEM_TYPE_LABELS } from '@/lib/integrations/auditsoft/types';
+
+// Local types for export functionality
+interface ExportPreview {
+  total_items: number;
+  by_type: Record<string, number>;
+  by_element?: Record<number, number>;
+  date_range: { start: string; end: string };
+  elements_selected?: number[];
+  estimated_time_seconds: number;
+}
+
+interface ExportJob {
+  id: string;
+  status: 'pending' | 'validating' | 'exporting' | 'completed' | 'failed' | 'cancelled';
+  total_items: number;
+  processed_items: number;
+  success_count: number;
+  error_count: number;
+  auditsoft_batch_id?: string;
+}
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+type Tab = 'connection' | 'mappings' | 'export' | 'history';
+
+// =============================================================================
+=== app\(protected)\admin\certifications\bulk-upload\page.tsx ===
+'use client';
+
+import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface Worker {
+  id: string;
+  first_name: string;
+  last_name: string;
+}
+
+interface CertificationType {
+  id: string;
+  certification_code: string;
+  certification_name: string;
+  default_expiry_months: number | null;
+}
+
+interface PendingUpload {
+  id: string;
+  file: File;
+  preview: string;
+  workerId: string;
+  certTypeId: string;
+  expiryDate: string;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  error?: string;
+}
+
+// =============================================================================
+// SUPABASE CLIENT
+// =============================================================================
+
+function getSupabase() {
+=== app\(protected)\admin\certifications\new\page.tsx ===
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface Worker {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  position: string | null;
+}
+
+interface CertificationType {
+  id: string;
+  name: string;
+  short_code: string | null;
+  category: string;
+  default_expiry_months: number | null;
+}
+
+// =============================================================================
+// SUPABASE CLIENT
+// =============================================================================
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+// =============================================================================
+// MAIN COMPONENT
+=== app\(protected)\admin\certifications\notifications\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface NotificationStats {
+  total: number;
+  sent: number;
+  pending: number;
+  failed: number;
+  byType: {
+    '60_day': number;
+    '30_day': number;
+    '7_day': number;
+    'expired': number;
+  };
+}
+
+interface RecentNotification {
+  id: string;
+  reminder_type: string;
+  status: string;
+  sent_at: string | null;
+  worker_name: string;
+  cert_name: string;
+}
+
+// =============================================================================
+// MAIN COMPONENT
+// =============================================================================
+
+export default function NotificationsPage() {
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<NotificationStats | null>(null);
+  const [lastCheck, setLastCheck] = useState<string | null>(null);
+  const [running, setRunning] = useState(false);
+=== app\(protected)\admin\certifications\reports\page.tsx ===
+'use client';
+
+import { useState, useEffect, Suspense } from 'react';
+import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
+import { CERTIFICATION_CATEGORIES } from '@/lib/certifications/types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface ExpiryReportItem {
+  id: string;
+  name: string;
+  certificate_number: string | null;
+  expiry_date: string;
+  daysUntilExpiry: number;
+  urgency: 'expired' | 'critical' | 'warning' | 'notice';
+  worker: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    position: string | null;
+    department: string | null;
+  };
+  certification_type: {
+    id: string;
+    name: string;
+    short_code: string;
+    required_for_work: boolean;
+  } | null;
+}
+
+interface MatrixRow {
+  worker: {
+    id: string;
+    name: string;
+    email: string | null;
+    position: string | null;
+=== app\(protected)\admin\certifications\test\page.tsx ===
+'use client';
+
+import { useState } from 'react';
+import Link from 'next/link';
+
+// =============================================================================
+// TEST CHECKLIST COMPONENT
+// =============================================================================
+
+interface TestItem {
+  id: string;
+  title: string;
+  description: string;
+  steps: string[];
+  passed: boolean | null;
+  notes: string;
+}
+
+interface TestSection {
+  id: string;
+  title: string;
+  icon: string;
+  tests: TestItem[];
+}
+
+export default function CertificationTestPage() {
+  const [sections, setSections] = useState<TestSection[]>([
+    {
+      id: 'upload',
+      title: 'Certificate Upload',
+      icon: 'ðŸ“„',
+      tests: [
+        {
+          id: 'test1',
+          title: 'Add certification with PDF upload',
+          description: 'Test desktop PDF upload flow',
+          steps: [
+            'Go to /admin/employees/[id]/certifications',
+            'Click [+ Add]',
+            'Select: "Working at Heights"',
+=== app\(protected)\admin\certifications\training\new\page.tsx ===
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { createClient } from '@supabase/supabase-js';
+import { TRAINING_CATEGORIES, type TrainingCategory } from '@/lib/certifications/types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface Worker {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string | null;
+  position: string | null;
+}
+
+interface TrainingType {
+  id: string;
+  name: string;
+  category: string;
+  requires_hours: boolean;
+  default_hours: number | null;
+}
+
+// =============================================================================
+// SUPABASE CLIENT
+// =============================================================================
+
+function getSupabase() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+}
+
+// =============================================================================
+=== app\(protected)\admin\certifications\worker\[id]\page.tsx ===
+=== app\(protected)\admin\certifications\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
+import {
+  CERTIFICATION_STATUS_LABELS,
+  CERTIFICATION_CATEGORIES,
+  type CertificationStatus,
+} from '@/lib/certifications/types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface DashboardStats {
+  totalWorkers: number;
+  totalCertifications: number;
+  activeCertifications: number;
+  expiringSoon: number;
+  expiringWarning: number;
+  expired: number;
+  pendingVerification: number;
+  workersWithRestrictions: number;
+  complianceRate: number;
+}
+
+interface ExpiringCertification {
+  id: string;
+  name: string;
+  expiry_date: string;
+  status: string;
+  daysUntilExpiry: number;
+  worker: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
+  certification_type: {
+=== app\(protected)\admin\departments\[id]\page.tsx ===
+=== app\(protected)\admin\departments\page.tsx ===
+import { getServerUserOrRedirect } from '@/lib/auth/helpers';
+import { DepartmentsManager } from '@/components/admin/departments-manager';
+
+export default async function DepartmentsPage() {
+  await getServerUserOrRedirect();
+
+  return (
+    <main className="min-h-screen p-8 bg-gradient-to-br from-[#0a0a0a] via-[#0f1419] to-[#0a0a0a]">
+      <div className="max-w-7xl mx-auto">
+        <DepartmentsManager />
+      </div>
+    </main>
+  );
+}
+=== app\(protected)\admin\document-registry\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback, useRef } from 'react';
+import {
+  Upload, FolderOpen, FileText, Search, Plus, Filter,
+  ChevronRight, ChevronDown, MoreVertical, Edit, Trash2,
+  Move, Tag, CheckCircle, AlertCircle, Clock, Archive,
+  Folder, FolderPlus, Grid, List, SortAsc, SortDesc,
+  Download, Eye, RefreshCw, Loader2, X, Check, Sparkles,
+  ShieldCheck, FileCheck, BookOpen, ScrollText, GraduationCap,
+  AlertTriangle, ClipboardList
+} from 'lucide-react';
+import {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_STATUS_LABELS,
+  DOCUMENT_STATUS_COLORS,
+  FOLDER_TYPE_CONFIG,
+  type DocumentTypeCode,
+  type DocumentStatus,
+  type Document,
+  type DocumentFolder,
+  type FolderTreeNode,
+  type BulkUploadFile,
+  type SuggestedMetadata,
+} from '@/lib/documents/types';
+
+// ============================================================================
+// ICON MAPPING
+// ============================================================================
+
+const FOLDER_ICONS: Record<string, React.ElementType> = {
+  'scroll': ScrollText,
+  'clipboard-list': ClipboardList,
+  'shield-check': ShieldCheck,
+  'file-text': FileText,
+  'graduation-cap': GraduationCap,
+  'book-open': BookOpen,
+  'alert-triangle': AlertTriangle,
+  'folder': Folder,
+};
+=== app\(protected)\admin\documents\reviews\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  Calendar, AlertTriangle, Clock, CheckCircle, 
+  ChevronRight, FileText, RefreshCw, Filter, Bell
+} from 'lucide-react';
+import {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_STATUS_LABELS,
+  DOCUMENT_STATUS_COLORS,
+  type DocumentWithVersion,
+} from '@/lib/documents/types';
+
+export default function DocumentReviewsPage() {
+  const [documents, setDocuments] = useState<DocumentWithVersion[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [daysAhead, setDaysAhead] = useState(30);
+
+  const loadDocuments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/documents/evidence-report?action=reviews_due&days=${daysAhead}`);
+      const data = await res.json();
+      setDocuments(data || []);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [daysAhead]);
+
+  useEffect(() => {
+    loadDocuments();
+  }, [loadDocuments]);
+
+  const now = new Date();
+  const overdue = documents.filter(d => d.next_review_date && new Date(d.next_review_date) < now);
+  const dueThisWeek = documents.filter(d => {
+    if (!d.next_review_date) return false;
+=== app\(protected)\admin\documents\upload\page.tsx ===
+'use client';
+
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRouter } from 'next/navigation';
+import { 
+  Upload, FileText, FolderOpen, X, ChevronLeft, ChevronRight, 
+  Check, AlertTriangle, Clock, Loader2, Book, Shield, ClipboardList,
+  GraduationCap, AlertCircle, Plus, Trash2, FileCheck, ArrowRight,
+  Sparkles
+} from 'lucide-react';
+import { 
+  extractMetadataFromFile, 
+  QUICK_UPLOAD_PRESETS,
+  type MetadataExtractionResult,
+  type QuickUploadPresetKey 
+} from '@/lib/documents/metadata-extractor-client';
+
+// ============================================================================
+// TYPES
+// ============================================================================
+
+interface FileWithMetadata {
+  file: File;
+  metadata: MetadataExtractionResult | null;
+  isProcessing: boolean;
+  error?: string;
+  userOverrides: {
+    title?: string;
+    description?: string;
+    document_type?: string;
+    folder_id?: string;
+    cor_elements?: number[];
+    tags?: string[];
+    keywords?: string[];
+    applicable_to?: string[];
+    is_critical?: boolean;
+    worker_must_acknowledge?: boolean;
+    acknowledgment_deadline_days?: number;
+  };
+}
+=== app\(protected)\admin\documents\[id]\page.tsx ===
+=== app\(protected)\admin\documents\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { 
+  FileText, Search, Plus, Filter, ChevronDown, Calendar, 
+  AlertTriangle, CheckCircle, Clock, Archive, RefreshCw,
+  FolderOpen, FileCheck, FileX, SortAsc
+} from 'lucide-react';
+import {
+  DOCUMENT_TYPE_LABELS,
+  DOCUMENT_STATUS_LABELS,
+  DOCUMENT_STATUS_COLORS,
+  type DocumentTypeCode,
+  type DocumentStatus,
+  type DocumentWithVersion,
+  type DocumentRegistryStats,
+} from '@/lib/documents/types';
+
+export default function DocumentsPage() {
+  const [documents, setDocuments] = useState<DocumentWithVersion[]>([]);
+  const [stats, setStats] = useState<DocumentRegistryStats | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState<DocumentTypeCode | ''>('');
+  const [statusFilter, setStatusFilter] = useState<DocumentStatus | ''>('');
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const loadDocuments = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (searchQuery) params.set('query', searchQuery);
+      if (typeFilter) params.set('type', typeFilter);
+      if (statusFilter) params.set('status', statusFilter);
+      
+      const res = await fetch(`/api/documents?${params}`);
+      const data = await res.json();
+      setDocuments(data.documents || []);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+=== app\(protected)\admin\employees\[id]\certifications\page.tsx ===
+=== app\(protected)\admin\employees\[id]\page.tsx ===
+=== app\(protected)\admin\employees\page.tsx ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { createClient } from '@supabase/supabase-js';
+import Link from 'next/link';
+import type { UserRole } from '@/lib/db/types';
+
+// =============================================================================
+// TYPES
+// =============================================================================
+
+interface Employee {
+  id: string;
+  user_id: string;
+  company_id: string;
+  first_name: string | null;
+  last_name: string | null;
+  email: string;
+  position: string | null;
+  role: UserRole;
+  phone: string | null;
+  is_active: boolean;
+  first_admin: boolean;
+  last_login: string | null;
+  hire_date: string | null;
+  created_at: string;
+}
+
+interface PendingInvitation {
+  id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  position: string;
+  role: UserRole;
+  invited_at: string;
+  expires_at: string;
+  status: 'pending' | 'accepted' | 'expired' | 'revoked';
+}
+
+=== app\(protected)\admin\form-templates\[id]\edit\page.tsx ===
+=== app\(protected)\admin\form-templates\[id]\submissions\[submissionId]\page.tsx ===
+=== app\(protected)\admin\form-templates\[id]\submissions\page.tsx ===
+=== app\(protected)\admin\form-templates\page.tsx ===
+'use client';
+
+/**
+ * Form Template Library - Enhanced
+ * 
+ * Admin interface for browsing, creating, and managing form templates.
+ * Features COR element filtering, powerful search, bulk actions, and COR coverage visualization.
+ */
+
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+=== app\(protected)\admin\forms\import\page.tsx ===
+'use client';
+
+/**
+ * PDF Form Import Page
+ * 
+ * Admin interface for converting PDF forms to digital form templates.
+ */
+
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { PDFConverterWizard } from '@/components/pdf-converter';
+import { Loader2 } from 'lucide-react';
+
+export default function PDFImportPage() {
+  const router = useRouter();
+  const [companyId, setCompanyId] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch user's company ID
+  useEffect(() => {
+    async function fetchCompany() {
+      try {
+        const response = await fetch('/api/auth/me');
+        const data = await response.json();
+        
+        if (data.profile?.company_id) {
+          setCompanyId(data.profile.company_id);
+        }
+      } catch (error) {
+        console.error('Failed to fetch company:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchCompany();
+  }, []);
+
+  const handleComplete = (templateId: string) => {
+    router.push(`/admin/forms/${templateId}`);
+=== app\(protected)\admin\forms\[slug]\page.tsx ===
+=== app\(protected)\admin\forms\page.tsx ===
+'use client';
+
+/**
+ * Form Library - Admin Interface
+ * 
+ * Browse, create, edit, and manage form templates.
+ * Layer 4 of the Form Builder system.
+ */
+
+import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import type { FormTemplate, FormTemplateStatus } from '@/lib/forms/types';
+
+// =============================================================================
+// MOCK DATA (Replace with Supabase queries)
+// =============================================================================
+
+const MOCK_TEMPLATES: FormTemplate[] = [
+  {
+    id: 'a0000000-0000-0000-0000-000000000001',
+    company_id: null,
+    name: 'Pre-Task Hazard Assessment',
+    slug: 'pre-task-hazard-assessment',
+    description: 'Daily pre-task hazard identification and control planning',
+    icon: 'âš ï¸',
+    color: '#f59e0b',
+    cor_element: 'element_3',
+    audit_category: 'Hazard Identification',
+    schema: { fields: [], sections: [] },
+    settings: { require_signature: true, require_gps: true, allow_photos: true, offline_enabled: true },
+    status: 'published',
+    version: 1,
+    created_at: '2025-01-01T00:00:00Z',
+    updated_at: '2025-01-15T00:00:00Z',
+  },
+  {
+    id: 'a0000000-0000-0000-0000-000000000002',
+    company_id: null,
+    name: 'Site Safety Inspection',
+    slug: 'site-inspection',
+=== app\(protected)\admin\libraries\components\equipment-inventory-tab.tsx ===
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Equipment, EquipmentStatus } from './types';
+import { useEquipmentInventory } from '../hooks/use-equipment-inventory';
+
+const STATUS_CONFIG: Record<EquipmentStatus, { label: string; color: string; icon: string }> = {
+  active: { label: 'Active', color: 'bg-green-500', icon: 'âœ…' },
+  inactive: { label: 'Inactive', color: 'bg-gray-500', icon: 'â¸ï¸' },
+  maintenance: { label: 'In Maintenance', color: 'bg-yellow-500', icon: 'ðŸ”§' },
+  retired: { label: 'Retired', color: 'bg-red-500', icon: 'âŒ' },
+};
+
+const INSPECTION_STATUS_CONFIG = {
+  current: { label: 'Current', color: 'text-green-500 bg-green-500/10', icon: 'âœ…' },
+  due_soon: { label: 'Due Soon', color: 'text-yellow-500 bg-yellow-500/10', icon: 'âš ï¸' },
+  overdue: { label: 'Overdue', color: 'text-red-500 bg-red-500/10', icon: 'âŒ' },
+  na: { label: 'N/A', color: 'text-gray-500 bg-gray-500/10', icon: 'âž–' },
+};
+
+function StatusBadge({ status }: { status: EquipmentStatus }) {
+  // Safe: status is typed as EquipmentStatus enum, not arbitrary user input
+  // eslint-disable-next-line security/detect-object-injection
+  const config = STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white ${config.color}`}>
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+function InspectionBadge({ status }: { status: 'current' | 'due_soon' | 'overdue' | 'na' }) {
+  // Safe: status is typed as a union literal, not arbitrary user input
+  // eslint-disable-next-line security/detect-object-injection
+  const config = INSPECTION_STATUS_CONFIG[status];
+=== app\(protected)\admin\libraries\components\hazard-library-tab.tsx ===
+'use client';
+
+import { useState, useMemo, useCallback } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { 
+  Hazard, 
+  HazardCategory, 
+  RiskLevel, 
+  HazardFilters,
+  HAZARD_CATEGORY_CONFIG,
+  RISK_LEVEL_CONFIG,
+} from './types';
+import { useHazardLibrary } from '../hooks/use-hazard-library';
+
+// Risk level badge component
+function RiskBadge({ level }: { level: RiskLevel }) {
+  // Safe: level is typed as RiskLevel enum, not arbitrary user input
+  // eslint-disable-next-line security/detect-object-injection
+  const config = RISK_LEVEL_CONFIG[level];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${config.bgColor} ${config.color}`}>
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+// Category accordion header
+function CategoryHeader({ 
+  category, 
+  count, 
+  isExpanded, 
+  onToggle 
+}: { 
+  category: HazardCategory; 
+  count: number; 
+  isExpanded: boolean;
+=== app\(protected)\admin\libraries\components\jobsite-registry-tab.tsx ===
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Jobsite } from './types';
+import { useJobsiteRegistry } from '../hooks/use-jobsite-registry';
+
+const STATUS_CONFIG = {
+  planning: { label: 'Planning', color: 'bg-blue-500', icon: 'ðŸ“' },
+  active: { label: 'Active', color: 'bg-green-500', icon: 'ðŸ—ï¸' },
+  on_hold: { label: 'On Hold', color: 'bg-yellow-500', icon: 'â¸ï¸' },
+  completed: { label: 'Completed', color: 'bg-gray-500', icon: 'âœ…' },
+  closed: { label: 'Closed', color: 'bg-gray-700', icon: 'ðŸ”’' },
+};
+
+function StatusBadge({ status }: { status: keyof typeof STATUS_CONFIG }) {
+  // Safe: status is typed as keyof STATUS_CONFIG, not arbitrary user input
+  // eslint-disable-next-line security/detect-object-injection
+  const config = STATUS_CONFIG[status];
+  return (
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white ${config.color}`}>
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+function JobsiteCard({ jobsite, onViewDetails }: {
+  jobsite: Jobsite;
+  onViewDetails: (jobsite: Jobsite) => void;
+}) {
+  const daysRemaining = jobsite.expected_end_date 
+    ? Math.ceil((new Date(jobsite.expected_end_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : null;
+  
+  return (
+    <Card className="hover:border-[var(--primary)]/50 transition-colors cursor-pointer" onClick={() => onViewDetails(jobsite)}>
+=== app\(protected)\admin\libraries\components\legislation-library-tab.tsx ===
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Legislation, LegislationSection } from './types';
+import { useLegislationLibrary } from '../hooks/use-legislation-library';
+
+function LegislationCard({ legislation, onViewDetails }: {
+  legislation: Legislation;
+  onViewDetails: (legislation: Legislation) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <Card className="hover:border-[var(--primary)]/50 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div>
+            <h4 className="font-semibold">{legislation.short_name}</h4>
+            <p className="text-sm text-[var(--muted)]">{legislation.full_name}</p>
+          </div>
+          <Badge variant="outline">{legislation.jurisdiction}</Badge>
+        </div>
+        
+        {legislation.description && (
+          <p className="text-sm text-[var(--muted)] mb-3">
+            {legislation.description}
+          </p>
+        )}
+        
+        <div className="flex flex-wrap gap-3 text-xs text-[var(--muted)] mb-3">
+          {legislation.effective_date && (
+            <span>ðŸ“… Effective: {new Date(legislation.effective_date).toLocaleDateString()}</span>
+          )}
+          {legislation.last_amended && (
+            <span>âœï¸ Last Amended: {new Date(legislation.last_amended).toLocaleDateString()}</span>
+=== app\(protected)\admin\libraries\components\sds-library-tab.tsx ===
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { SDSEntry, WHMISHazardClass, WHMIS_PICTOGRAMS } from './types';
+import { useSDSLibrary } from '../hooks/use-sds-library';
+
+function WHMISBadge({ hazardClass }: { hazardClass: WHMISHazardClass }) {
+  // Safe: hazardClass is typed as WHMISHazardClass enum, not arbitrary user input
+  // eslint-disable-next-line security/detect-object-injection
+  const config = WHMIS_PICTOGRAMS[hazardClass];
+  if (!config) return null;
+  
+  return (
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-red-500/10 text-red-500 text-xs font-medium border border-red-500/30">
+      {config.icon} {config.label}
+    </span>
+  );
+}
+
+function SDSCard({ sds, onViewDetails }: {
+  sds: SDSEntry;
+  onViewDetails: (sds: SDSEntry) => void;
+}) {
+  const daysSinceRevision = sds.sds_revision_date
+    ? Math.floor((Date.now() - new Date(sds.sds_revision_date).getTime()) / (1000 * 60 * 60 * 24))
+    : null;
+  
+  const isStale = daysSinceRevision !== null && daysSinceRevision > 365 * 3; // 3 years old
+  const needsReview = sds.review_date && new Date(sds.review_date) <= new Date();
+  
+  return (
+    <Card className="hover:border-[var(--primary)]/50 transition-colors cursor-pointer" onClick={() => onViewDetails(sds)}>
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4 mb-2">
+          <div className="flex-1 min-w-0">
+=== app\(protected)\admin\libraries\components\task-library-tab.tsx ===
+'use client';
+
+import { useState, useMemo } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Task, RISK_LEVEL_CONFIG } from './types';
+import { useTaskLibrary } from '../hooks/use-task-library';
+
+function TaskCard({ task, onViewDetails, onUseTemplate }: {
+  task: Task;
+  onViewDetails: (task: Task) => void;
+  onUseTemplate: (task: Task) => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  
+  const highRiskHazards = task.hazards.filter(h => h.risk_level === 'critical' || h.risk_level === 'high');
+  
+  return (
+    <Card className="hover:border-[var(--primary)]/50 transition-colors">
+      <CardContent className="p-4">
+        <div className="flex items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="font-mono text-xs text-[var(--muted)]">{task.task_code}</span>
+              {!task.is_global && (
+                <Badge variant="outline" className="text-xs border-amber-500 text-amber-500">
+                  Custom
+                </Badge>
+              )}
+            </div>
+            <h4 className="font-semibold">{task.name}</h4>
+          </div>
+        </div>
+        
+        {/* Quick Stats */}
+        <div className="flex flex-wrap gap-3 mt-3 text-sm">
+          {task.typical_duration_hours && (
+=== app\(protected)\admin\libraries\components\types.ts ===
+// ============================================================================
+// MASTER LIBRARY TYPES
+// ============================================================================
+
+// Hazard Library Types
+export type HazardCategory = 
+  | 'physical'
+  | 'chemical'
+  | 'biological'
+  | 'ergonomic'
+  | 'psychosocial'
+  | 'electrical'
+  | 'mechanical'
+  | 'fall'
+  | 'struck_by'
+  | 'caught_in'
+  | 'environmental'
+  | 'fire_explosion'
+  | 'confined_space'
+  | 'radiation'
+  | 'other';
+
+export type RiskLevel = 'negligible' | 'low' | 'medium' | 'high' | 'critical';
+
+export interface HazardControl {
+  type: 'elimination' | 'substitution' | 'engineering' | 'administrative' | 'ppe';
+  control: string;
+  required: boolean;
+}
+
+export interface RegulatoryReference {
+  regulation: string;
+  section: string;
+  title: string;
+}
+
+export interface Hazard {
+  id: string;
+  hazard_code: string;
+  name: string;
+=== app\(protected)\admin\libraries\hooks\index.ts ===
+export { useHazardLibrary } from './use-hazard-library';
+export { useEquipmentInventory } from './use-equipment-inventory';
+export { useTaskLibrary } from './use-task-library';
+export { useJobsiteRegistry } from './use-jobsite-registry';
+export { useSDSLibrary } from './use-sds-library';
+export { useLegislationLibrary } from './use-legislation-library';
+=== app\(protected)\admin\libraries\hooks\use-equipment-inventory.ts ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
+import { Equipment } from '../components/types';
+
+// Mock data for development (will be replaced with actual Supabase data)
+const MOCK_EQUIPMENT: Equipment[] = [
+  {
+    id: '1',
+    company_id: '1',
+    equipment_code: 'EQP-001',
+    name: 'Extension Ladder 28\'',
+    equipment_type: 'Ladder',
+    category: 'Fall Protection',
+    make: 'Werner',
+    model: 'D6228-2',
+    serial_number: 'WRN2024-001',
+    purchase_date: '2024-03-15',
+    status: 'active',
+    current_location: 'Main Warehouse',
+    assigned_to: null,
+    assigned_jobsite_id: null,
+    inspection_frequency_days: 30,
+    last_inspection_date: '2025-01-10',
+    next_inspection_date: '2025-02-09',
+    inspection_status: 'current',
+    notes: 'CSA Type 1A rated, 300 lb capacity',
+    photo_url: null,
+    certifications_required: [],
+    created_at: '2024-03-15T00:00:00Z',
+    updated_at: '2025-01-10T00:00:00Z',
+  },
+  {
+    id: '2',
+    company_id: '1',
+    equipment_code: 'EQP-002',
+    name: 'Concrete Mixer 9cf',
+    equipment_type: 'Concrete Equipment',
+    category: 'Concrete',
+=== app\(protected)\admin\libraries\hooks\use-hazard-library.ts ===
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import { Hazard, HazardControl, RegulatoryReference } from '../components/types';
+
+export function useHazardLibrary() {
+  const [hazards, setHazards] = useState<Hazard[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchHazards = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      const response = await fetch('/api/admin/hazards');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load hazards');
+      }
+
+      // Transform the data to ensure proper typing
+      const transformedHazards: Hazard[] = (data.hazards || []).map((h: any) => ({
+        id: h.id,
+        hazard_code: h.hazard_code,
+        name: h.name,
+        description: h.description,
+        category: h.category,
+        subcategory: h.subcategory,
+        applicable_trades: h.applicable_trades || [],
+        applicable_activities: h.applicable_activities || [],
+        default_severity: h.default_severity || 3,
+        default_likelihood: h.default_likelihood || 3,
+        default_risk_score: h.default_risk_score || 9,
+        default_risk_level: h.default_risk_level || 'medium',
+        recommended_controls: (h.recommended_controls || []) as HazardControl[],
+        required_ppe: h.required_ppe || [],
+        regulatory_references: (h.regulatory_references || []) as RegulatoryReference[],
+        is_active: h.is_active,

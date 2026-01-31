@@ -180,6 +180,160 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section className="relative z-10 px-6 py-24">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h3 className="text-3xl md:text-4xl font-bold mb-4">
+              Simple,{' '}
+              <span className="bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">
+                Transparent Pricing
+              </span>
+            </h3>
+            <p className="text-slate-400 max-w-2xl mx-auto">
+              Choose the plan that fits your team size. All plans include every feature—no hidden costs.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Starter Plan */}
+            <div className="relative p-8 bg-slate-800/30 border border-slate-700/50 rounded-2xl hover:border-slate-600 transition-all">
+              <div className="mb-6">
+                <h4 className="text-xl font-semibold mb-2">Starter</h4>
+                <p className="text-slate-400 text-sm">Perfect for small crews</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$149</span>
+                <span className="text-slate-400">/month</span>
+              </div>
+              <div className="mb-6 pb-6 border-b border-slate-700">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium">
+                  <Users className="w-4 h-4" />
+                  1–5 Workers
+                </span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  All 14 COR elements
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Unlimited forms & documents
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Certification tracking
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Mobile app access
+                </li>
+              </ul>
+              <Link 
+                href="/register"
+                className="block w-full py-3 text-center bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Professional Plan - Featured */}
+            <div className="relative p-8 bg-gradient-to-b from-blue-500/10 to-indigo-500/10 border-2 border-blue-500/50 rounded-2xl shadow-xl shadow-blue-500/10">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <span className="px-4 py-1 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-full text-sm font-semibold">
+                  Most Popular
+                </span>
+              </div>
+              <div className="mb-6">
+                <h4 className="text-xl font-semibold mb-2">Professional</h4>
+                <p className="text-slate-400 text-sm">For growing companies</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$349</span>
+                <span className="text-slate-400">/month</span>
+              </div>
+              <div className="mb-6 pb-6 border-b border-slate-700">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium">
+                  <Users className="w-4 h-4" />
+                  6–15 Workers
+                </span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  All 14 COR elements
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Unlimited forms & documents
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Certification tracking
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Mobile app access
+                </li>
+              </ul>
+              <Link 
+                href="/register"
+                className="block w-full py-3 text-center bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 rounded-lg font-semibold shadow-lg shadow-blue-500/25 transition-all"
+              >
+                Get Started
+              </Link>
+            </div>
+
+            {/* Enterprise Plan */}
+            <div className="relative p-8 bg-slate-800/30 border border-slate-700/50 rounded-2xl hover:border-slate-600 transition-all">
+              <div className="mb-6">
+                <h4 className="text-xl font-semibold mb-2">Enterprise</h4>
+                <p className="text-slate-400 text-sm">For larger operations</p>
+              </div>
+              <div className="mb-6">
+                <span className="text-4xl font-bold">$599</span>
+                <span className="text-slate-400">/month</span>
+              </div>
+              <div className="mb-6 pb-6 border-b border-slate-700">
+                <span className="inline-flex items-center gap-2 px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded-full text-blue-400 text-sm font-medium">
+                  <Users className="w-4 h-4" />
+                  16–40 Workers
+                </span>
+              </div>
+              <ul className="space-y-3 mb-8">
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  All 14 COR elements
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Unlimited forms & documents
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Certification tracking
+                </li>
+                <li className="flex items-center gap-2 text-sm text-slate-300">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  Mobile app access
+                </li>
+              </ul>
+              <Link 
+                href="/register"
+                className="block w-full py-3 text-center bg-slate-700 hover:bg-slate-600 rounded-lg font-semibold transition-colors"
+              >
+                Get Started
+              </Link>
+            </div>
+          </div>
+
+          <p className="text-center text-slate-500 text-sm mt-8">
+            Need more than 40 workers? <a href="mailto:blake@calibrebusinesssolutions.ca" className="text-blue-400 hover:underline">Contact us</a> for custom enterprise pricing.
+          </p>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="relative z-10 px-6 py-24">
         <div className="max-w-4xl mx-auto">

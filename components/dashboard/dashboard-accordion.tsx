@@ -7,7 +7,7 @@ import {
   Wrench, Settings, BarChart3, ClipboardCheck, Building2,
   Camera, BookOpen, AlertTriangle, Calendar, Target,
   Upload, Bell, FileCheck, Layers, MapPin, Briefcase,
-  Package, CheckSquare, TrendingUp, HelpCircle, FolderPlus
+  Package, CheckSquare, TrendingUp, HelpCircle, FolderPlus, CreditCard
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -105,6 +105,7 @@ const dashboardCategories = [
       { title: 'Reports', href: '/admin/certifications/reports', icon: BarChart3, description: 'Generate reports' },
       { title: 'Notifications', href: '/admin/certifications/notifications', icon: Bell, description: 'Alert settings' },
       { title: 'Help Center', href: '/help', icon: HelpCircle, description: 'Guides & tutorials' },
+      { title: 'Pricing', href: '/pricing', icon: CreditCard, description: 'Plans & pricing' },
     ]
   },
 ];
