@@ -4,68 +4,91 @@ import Link from 'next/link';
 import { 
   Shield, FileText, Users, GraduationCap, FolderOpen, 
   Wrench, Settings, BarChart3, ClipboardCheck, Building2,
-  Camera, BookOpen, AlertTriangle, Calendar
+  Camera, BookOpen, AlertTriangle, Calendar, Target,
+  Upload, Bell, FileCheck, Layers, MapPin, Briefcase,
+  Package, Receipt, Clock, CheckSquare, TrendingUp, HelpCircle
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
-const quickActions = [
+const featureCategories = [
   {
-    title: 'COR Audit Dashboard',
-    description: 'Track your Certificate of Recognition progress',
-    href: '/audit',
-    icon: Shield,
+    category: 'COR Compliance',
     color: 'from-blue-500 to-indigo-600',
-    primary: true,
+    features: [
+      { title: 'COR Audit Dashboard', href: '/audit', icon: Shield, description: 'Track all 14 COR elements' },
+      { title: 'Compliance Scorecard', href: '/audit', icon: TrendingUp, description: 'View your audit readiness' },
+      { title: 'Action Plan', href: '/admin/action-plan', icon: Target, description: 'Tasks to certification' },
+      { title: 'COR Roadmap', href: '/phases', icon: MapPin, description: 'Your certification journey' },
+    ]
   },
   {
-    title: 'Forms & Inspections',
-    description: 'Create, fill, and manage safety forms',
-    href: '/forms',
-    icon: FileText,
+    category: 'Forms & Inspections',
     color: 'from-emerald-500 to-teal-600',
+    features: [
+      { title: 'Form Templates', href: '/admin/form-templates', icon: FileText, description: 'Create & manage forms' },
+      { title: 'Form Builder', href: '/form-builder', icon: Layers, description: 'Build custom forms' },
+      { title: 'Submissions', href: '/forms', icon: CheckSquare, description: 'View completed forms' },
+      { title: 'PDF Import', href: '/form-builder', icon: Upload, description: 'Import existing PDFs' },
+    ]
   },
   {
-    title: 'Employees',
-    description: 'Manage your team and training records',
-    href: '/admin/employees',
-    icon: Users,
+    category: 'Team Management',
     color: 'from-violet-500 to-purple-600',
+    features: [
+      { title: 'Employees', href: '/admin/employees', icon: Users, description: 'Manage your workforce' },
+      { title: 'Departments', href: '/admin/departments', icon: Building2, description: 'Organize your team' },
+      { title: 'Certifications', href: '/admin/certifications', icon: GraduationCap, description: 'Track training & tickets' },
+      { title: 'Bulk Upload Certs', href: '/admin/certifications/bulk-upload', icon: Upload, description: 'Upload multiple certs' },
+    ]
   },
   {
-    title: 'Certifications',
-    description: 'Track expiring certifications and training',
-    href: '/admin/certifications',
-    icon: GraduationCap,
-    color: 'from-amber-500 to-orange-600',
-  },
-  {
-    title: 'Documents',
-    description: 'Document registry and control',
-    href: '/admin/documents',
-    icon: FolderOpen,
+    category: 'Documents',
     color: 'from-cyan-500 to-blue-600',
+    features: [
+      { title: 'Document Registry', href: '/admin/documents', icon: FolderOpen, description: 'All company documents' },
+      { title: 'Upload Documents', href: '/admin/documents/upload', icon: Upload, description: 'Add new documents' },
+      { title: 'Document Reviews', href: '/admin/documents/reviews', icon: FileCheck, description: 'Pending approvals' },
+      { title: 'Audit Documents', href: '/admin/audit/documents', icon: Shield, description: 'COR evidence files' },
+    ]
   },
   {
-    title: 'Equipment & Maintenance',
-    description: 'Track equipment inspections and repairs',
-    href: '/admin/maintenance',
-    icon: Wrench,
+    category: 'Equipment & Maintenance',
     color: 'from-rose-500 to-pink-600',
+    features: [
+      { title: 'Maintenance Dashboard', href: '/admin/maintenance', icon: Wrench, description: 'Equipment overview' },
+      { title: 'Work Orders', href: '/admin/maintenance', icon: ClipboardCheck, description: 'Track repairs' },
+      { title: 'Equipment List', href: '/admin/libraries', icon: Package, description: 'All equipment' },
+      { title: 'Inspection Schedules', href: '/admin/maintenance', icon: Calendar, description: 'Upcoming inspections' },
+    ]
   },
   {
-    title: 'Master Libraries',
-    description: 'Hazards, tasks, SDS, and legislation',
-    href: '/admin/libraries',
-    icon: BookOpen,
-    color: 'from-indigo-500 to-blue-600',
+    category: 'Libraries & Reference',
+    color: 'from-amber-500 to-orange-600',
+    features: [
+      { title: 'Hazard Library', href: '/admin/libraries', icon: AlertTriangle, description: 'Hazards & controls' },
+      { title: 'Task Library', href: '/admin/libraries', icon: Briefcase, description: 'Standard tasks' },
+      { title: 'SDS Library', href: '/admin/libraries', icon: FileText, description: 'Safety data sheets' },
+      { title: 'Legislation', href: '/admin/libraries', icon: BookOpen, description: 'Regulatory references' },
+    ]
   },
   {
-    title: 'Company Settings',
-    description: 'Configure your company profile',
-    href: '/admin/settings',
-    icon: Settings,
+    category: 'Integrations & Export',
+    color: 'from-indigo-500 to-purple-600',
+    features: [
+      { title: 'AuditSoft Export', href: '/admin/auditsoft', icon: Package, description: 'Export to AuditSoft' },
+      { title: 'Reports', href: '/admin/certifications/reports', icon: BarChart3, description: 'Generate reports' },
+      { title: 'Notifications', href: '/admin/certifications/notifications', icon: Bell, description: 'Alert settings' },
+    ]
+  },
+  {
+    category: 'Settings & Help',
     color: 'from-slate-500 to-gray-600',
+    features: [
+      { title: 'Company Settings', href: '/admin/settings', icon: Settings, description: 'Company profile' },
+      { title: 'Help Center', href: '/help', icon: HelpCircle, description: 'Guides & tutorials' },
+      { title: 'About', href: '/about', icon: Building2, description: 'About COR Pathway' },
+    ]
   },
 ];
 
@@ -109,85 +132,55 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        {/* Main Navigation Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-          {quickActions.map((action) => (
-            <Link
-              key={action.href}
-              href={action.href}
-              className={`group relative p-5 rounded-xl border transition-all duration-300 hover:scale-[1.02] hover:shadow-xl ${
-                action.primary 
-                  ? 'bg-gradient-to-br from-blue-600 to-indigo-700 border-blue-500/50 shadow-lg shadow-blue-500/20' 
-                  : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600 hover:bg-slate-800'
-              }`}
-            >
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-3 ${
-                action.primary 
-                  ? 'bg-white/20' 
-                  : `bg-gradient-to-br ${action.color}`
-              } shadow-lg group-hover:scale-110 transition-transform`}>
-                <action.icon className="w-6 h-6 text-white" />
+        {/* All Features by Category */}
+        <div className="space-y-8">
+          {featureCategories.map((cat) => (
+            <div key={cat.category}>
+              <h2 className={`text-lg font-semibold mb-4 flex items-center gap-2`}>
+                <span className={`w-3 h-3 rounded-full bg-gradient-to-r ${cat.color}`} />
+                {cat.category}
+              </h2>
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                {cat.features.map((feature) => (
+                  <Link
+                    key={feature.href + feature.title}
+                    href={feature.href}
+                    className="group flex items-start gap-3 p-4 rounded-xl bg-slate-800/50 border border-slate-700/50 hover:border-slate-600 hover:bg-slate-800 transition-all duration-200 hover:scale-[1.01]"
+                  >
+                    <div className={`w-10 h-10 rounded-lg bg-gradient-to-br ${cat.color} flex items-center justify-center flex-shrink-0 group-hover:scale-110 transition-transform`}>
+                      <feature.icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-medium text-sm">{feature.title}</h3>
+                      <p className="text-xs text-slate-400 truncate">{feature.description}</p>
+                    </div>
+                  </Link>
+                ))}
               </div>
-              <h3 className="font-semibold mb-1">{action.title}</h3>
-              <p className={`text-sm ${action.primary ? 'text-blue-100' : 'text-slate-400'}`}>
-                {action.description}
-              </p>
-            </Link>
+            </div>
           ))}
         </div>
 
-        {/* Quick Actions Row */}
-        <div className="grid md:grid-cols-2 gap-6">
-          {/* Upload Certificates Card */}
-          <div className="p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30">
-            <div className="flex items-start gap-4">
+        {/* Quick Action - Upload Certificates */}
+        <div className="mt-10 p-6 rounded-xl bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div className="flex items-center gap-4">
               <div className="w-12 h-12 rounded-xl bg-emerald-500/20 flex items-center justify-center">
                 <Camera className="w-6 h-6 text-emerald-400" />
               </div>
-              <div className="flex-1">
-                <h3 className="font-semibold mb-1">Upload Training Certificates</h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  Take a photo of your safety tickets, training certificates, or licenses.
-                </p>
-                <Link 
-                  href="/my-certificates" 
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <Camera className="w-4 h-4" />
-                  Upload Certificate
-                </Link>
+              <div>
+                <h3 className="font-semibold">Upload Training Certificates</h3>
+                <p className="text-sm text-slate-400">Take a photo of your safety tickets or licenses</p>
               </div>
             </div>
+            <Link 
+              href="/my-certificates" 
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg font-medium transition-colors"
+            >
+              <Camera className="w-4 h-4" />
+              Upload Certificate
+            </Link>
           </div>
-
-          {/* Action Plan Card */}
-          <div className="p-6 rounded-xl bg-gradient-to-r from-amber-500/10 to-orange-500/10 border border-amber-500/30">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/20 flex items-center justify-center">
-                <ClipboardCheck className="w-6 h-6 text-amber-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold mb-1">COR Action Plan</h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  Track your tasks and progress toward COR certification.
-                </p>
-                <Link 
-                  href="/action-plan" 
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-sm font-medium transition-colors"
-                >
-                  <ClipboardCheck className="w-4 h-4" />
-                  View Action Plan
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Help Link */}
-        <div className="mt-8 text-center">
-          <Link href="/help" className="text-slate-400 hover:text-white text-sm transition-colors">
-            Need help? Visit our Help Center →
-          </Link>
         </div>
       </div>
     </main>

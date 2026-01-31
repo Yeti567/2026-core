@@ -18,7 +18,7 @@ export function FloatingMenu() {
     }
 
     const menuItems = [
-        { href: '/audit', label: 'Home', icon: Home },
+        { href: '/dashboard', label: 'Home', icon: Home },
         { href: '/about', label: 'About', icon: Info },
         { href: '/admin/settings', label: 'Settings', icon: Settings },
         { href: '/help', label: 'Help', icon: HelpCircle },
