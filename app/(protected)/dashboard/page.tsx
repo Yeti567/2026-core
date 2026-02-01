@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { Shield, HelpCircle } from 'lucide-react';
 import { ComplianceStatsWidget } from '@/components/dashboard/compliance-stats-widget';
 import { DashboardAccordion } from '@/components/dashboard/dashboard-accordion';
+import { TrialBannerWrapper } from '@/components/dashboard/trial-banner-wrapper';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,6 +47,9 @@ export default async function DashboardPage() {
           </div>
         </header>
 
+        {/* Trial Banner */}
+        <TrialBannerWrapper />
+
         {/* Compliance Stats Dashboard */}
         <div className="mb-10">
           <ComplianceStatsWidget />
@@ -61,7 +65,7 @@ export default async function DashboardPage() {
             Questions about COR Pathway? Our team is here to help.
           </p>
           <a 
-            href="mailto:blake@calibribusinesssolutions.ca"
+            href="mailto:blake@calibrebusinesssolutions.ca"
             className="inline-flex items-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-lg font-medium transition-colors"
           >
             <HelpCircle className="w-4 h-4" />

@@ -21,6 +21,9 @@ export type UserRole =
 // TABLE ROW TYPES
 // =============================================================================
 
+export type SubscriptionStatus = 'trial' | 'active' | 'past_due' | 'cancelled' | 'expired';
+export type SubscriptionPlan = 'starter' | 'professional' | 'enterprise' | null;
+
 export interface Company {
   id: string;
   name: string;
@@ -32,6 +35,10 @@ export interface Company {
   phone: string | null;
   company_email: string | null;
   registration_status: 'pending' | 'active' | 'suspended';
+  subscription_status: SubscriptionStatus;
+  subscription_plan: SubscriptionPlan;
+  trial_started_at: string | null;
+  trial_ends_at: string | null;
   created_at: string;
 }
 
@@ -183,6 +190,10 @@ export interface CompanyInsert {
   phone?: string | null;
   company_email?: string | null;
   registration_status?: 'pending' | 'active' | 'suspended';
+  subscription_status?: SubscriptionStatus;
+  subscription_plan?: SubscriptionPlan;
+  trial_started_at?: string | null;
+  trial_ends_at?: string | null;
   created_at?: string;
 }
 
@@ -285,6 +296,10 @@ export interface CompanyUpdate {
   phone?: string | null;
   company_email?: string | null;
   registration_status?: 'pending' | 'active' | 'suspended';
+  subscription_status?: SubscriptionStatus;
+  subscription_plan?: SubscriptionPlan;
+  trial_started_at?: string | null;
+  trial_ends_at?: string | null;
 }
 
 export interface UserProfileUpdate {
